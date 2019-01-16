@@ -1,14 +1,9 @@
 {
   "name": "wtc-gl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ES6 Web GL library for 2D(ish) work.",
   "main": "src/wtc-gl.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel src/ --presets babel-preset-es2015 --out-dir dist",
-    "prepublish": "npm run build",
-    "start": "babel-node --presets babel-preset-es2015 test.js"
-  },
+  "scripts": {},
   "dependencies": {},
   "devDependencies": {},
   "repository": {

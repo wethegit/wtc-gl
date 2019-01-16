@@ -1,14 +1,4 @@
-class WTCGL {
-  static TYPE_INT = 0;
-  static TYPE_FLOAT = 1;
-  static TYPE_V2 = 2;
-  static TYPE_V3 = 3;
-  static TYPE_V4 = 4;
-
-  static IMAGETYPE_REGULAR = 0;
-  static IMAGETYPE_TILE = 1;
-  static IMAGETYPE_MIRROR = 2;
-  
+class WTCGL {  
   constructor(el, vertexShaderSource, fragmentShaderSource, width, height) {
     this.run = this.run.bind(this);
     
@@ -298,5 +288,15 @@ class WTCGL {
     return shader;
   }
 }
+
+WTCGL.TYPE_INT = 0;
+WTCGL.TYPE_FLOAT = 1;
+WTCGL.TYPE_V2 = 2;
+WTCGL.TYPE_V3 = 3;
+WTCGL.TYPE_V4 = 4;
+
+WTCGL.IMAGETYPE_REGULAR = 0;
+WTCGL.IMAGETYPE_TILE = 1;
+WTCGL.IMAGETYPE_MIRROR = 2;
 
 export default WTCGL;
