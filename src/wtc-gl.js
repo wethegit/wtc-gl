@@ -1,5 +1,5 @@
 class WTCGL {  
-  constructor(el, vertexShaderSource, fragmentShaderSource, width, height) {
+  constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio) {
     this.run = this.run.bind(this);
     
     this._el = el;
@@ -39,6 +39,8 @@ class WTCGL {
     
     // Tell WebGL to use our program when drawing
     this._ctx.useProgram(this._program);
+    
+    this.pxratio = pxratio;
     
     this.resize(width, height);
   }
