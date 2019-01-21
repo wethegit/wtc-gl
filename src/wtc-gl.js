@@ -3,8 +3,14 @@ class WTCGL {
     this.run = this.run.bind(this);
     
     this._el = el;
-		this._ctx = this._el.getContext("webgl", { alpha: true });
-    
+    this._ctx = this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+
+    if (!this._ctx) {
+      console.log('Browser doesn\'t support WebGL ');
+      return null;
+    }
+
+        
     this._vertexShader = WTCGL.createShaderOfType(this._ctx, this._ctx.VERTEX_SHADER, vertexShaderSource);
     this._fragmentShader = WTCGL.createShaderOfType(this._ctx, this._ctx.FRAGMENT_SHADER, fragmentShaderSource);
     
@@ -187,6 +193,10 @@ class WTCGL {
     this.includeModelViewMatrix && this._ctx.uniformMatrix4fv( this._programInfo.uniforms.modelViewMatrix, false, this.modelViewMatrix);
 
     this._ctx.drawArrays(this._ctx.TRIANGLE_STRIP, 0, 4);
+  }
+
+  get webgl_params() {
+    return { alpha: true };
   }
   
   set styleElement(value) {
