@@ -1,5 +1,5 @@
 class WTCGL {  
-  constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio) {
+  constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement) {
     this.run = this.run.bind(this);
     
     this._el = el;
@@ -41,6 +41,8 @@ class WTCGL {
     this._ctx.useProgram(this._program);
     
     this.pxratio = pxratio;
+
+    this.styleElement = styleElement !== true;
     
     this.resize(width, height);
   }
@@ -49,8 +51,10 @@ class WTCGL {
     this._el.width = w * this.pxratio;
     this._el.height = h * this.pxratio;
     this._size = [w * this.pxratio, h * this.pxratio];
-    this._el.style.width = w + 'px';
-    this._el.style.height = h + 'px';
+    if(this.styleElement) {
+      this._el.style.width = w + 'px';
+      this._el.style.height = h + 'px';
+    }
     
     this._ctx.viewportWidth = w * this.pxratio;
     this._ctx.viewportHeight = h * this.pxratio;
@@ -183,6 +187,17 @@ class WTCGL {
     this.includeModelViewMatrix && this._ctx.uniformMatrix4fv( this._programInfo.uniforms.modelViewMatrix, false, this.modelViewMatrix);
 
     this._ctx.drawArrays(this._ctx.TRIANGLE_STRIP, 0, 4);
+  }
+  
+  set styleElement(value) {
+    this._styleElement = value === true;
+    if(this._styleElement === false && this._el) {
+      this._el.style.width = '';
+      this._el.style.height = '';
+    }
+  }
+  get styleElement() {
+    return this._styleElement !== false;
   }
   
   set time(value) {
