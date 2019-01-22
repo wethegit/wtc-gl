@@ -1,12 +1,13 @@
 {
   "name": "wtc-gl",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "ES6 Web GL library for 2D(ish) work.",
   "main": "dist/wtc-gl.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx webpack --config webpack.config.js",
-    "prepublish": "npm run build"
+    "build": "babel src/ --presets @babel/preset-env --out-dir dist",
+    "build-ES5": "npx webpack --config webpack.config.js",
+    "prepublish": "npm run build && npm run build-ES5"
   },
   "dependencies": {
     "@babel/polyfill": "^7.2.5"

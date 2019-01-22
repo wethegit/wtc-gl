@@ -5,7 +5,7 @@ module.exports = {
   entry: "./src/wtc-gl.js",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: 'wtc-gl.js',
+    filename: 'es5-bundle.js',
     library: 'WTCGL'
   },
   module: {
