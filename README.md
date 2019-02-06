@@ -65,12 +65,10 @@ twodWebGL.running = true;
 ```
 
 Here is a more comprehensive example.
-<p class="codepen" data-height="265" data-theme-id="0" data-default-tab="result" data-user="shubniggurath" data-slug-hash="REOZLY" style="height: 265px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid black; margin: 1em 0; padding: 1em;" data-pen-title="Codepen Challenge - Primaries">
-  <span>See the Pen <a href="https://codepen.io/shubniggurath/pen/REOZLY/">
-  Codepen Challenge - Primaries</a> by Liam Egan (<a href="https://codepen.io/shubniggurath">@shubniggurath</a>)
-  on <a href="https://codepen.io">CodePen</a>.</span>
-</p>
-<script async src="https://static.codepen.io/assets/embed/ei.js"></script>
+<iframe height="265" style="width: 100%;" scrolling="no" title="Codepen Challenge - Primaries" src="//codepen.io/shubniggurath/embed/REOZLY/?height=265&theme-id=0&default-tab=js,result" frameborder="no" allowtransparency="true" allowfullscreen="true">
+  See the Pen <a href='https://codepen.io/shubniggurath/pen/REOZLY/'>Codepen Challenge - Primaries</a> by Liam Egan
+  (<a href='https://codepen.io/shubniggurath'>@shubniggurath</a>) on <a href='https://codepen.io'>CodePen</a>.
+</iframe>
 
 ## Documentation
 Documentation can be found [here](https://wethegit.github.io/wtc-gl/docs/)
