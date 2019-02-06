@@ -1,4 +1,4 @@
-# wtc-vector
+# wtc-gl
 A basic Web GL class. Mostly used for simple webgl animations and effects.
 
 ## Installation
