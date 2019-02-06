@@ -164,7 +164,7 @@ class WTCGL {
   
   run(delta) {
     this.running && requestAnimationFrame(this.run);
-    this.time = delta * .0002;
+    this.time = this.startTime + delta * .0002;
     this._ctx.uniform1f( this._programInfo.uniforms.time, this.time);
     this.render();
   }
@@ -211,6 +211,15 @@ class WTCGL {
   }
   get styleElement() {
     return this._styleElement !== false;
+  }
+
+  set startTime(value) {
+    if(!isNaN(value)) {
+      this._startTime = value;
+    }
+  }
+  get startTime() {
+    return this._startTime || 0;
   }
   
   set time(value) {
