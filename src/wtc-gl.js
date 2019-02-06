@@ -3,7 +3,10 @@ class WTCGL {
     this.run = this.run.bind(this);
     
     this._el = el;
-    this._ctx = this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    this._ctx = this._el.getContext("webgl2", this.webgl_params) || this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    
+    this._ctx.getExtension('OES_standard_derivatives');
+    this._ctx.getExtension('EXT_shader_texture_lod');
 
     if (!this._ctx) {
       console.log('Browser doesn\'t support WebGL ');
