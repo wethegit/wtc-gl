@@ -7,7 +7,7 @@ npm install wtc-gl --save
 ```
 
 ## Usage
-The following usage is the most basic example.
+The following usage is a basic example.
 ```
 import WTCGL from 'wtc-gl';
 console.clear();
@@ -63,8 +63,9 @@ window.addEventListener('resize', () => {
 
 twodWebGL.running = true;
 ```
+Fragment shader code courtesy (Danguafer)[https://www.shadertoy.com/user/Danguafer]
 
 Here is a more comprehensive example. - https://codepen.io/shubniggurath/pen/REOZLY/
 
 ## Documentation
-Documentation can be found [here](https://wethegit.github.io/wtc-gl/docs/)
+Documentation can be found [here](https://wethegit.github.io/wtc-gl/WTCGL.html)
