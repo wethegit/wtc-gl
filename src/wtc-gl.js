@@ -200,8 +200,6 @@ class WTCGL {
    * @return {WebGLTexture} The texture object
    */
   addTexture(name, type, image, liveUpdate = false) {
-    let textures = this.textures;
-    
     var texture = this._ctx.createTexture();
     this._ctx.pixelStorei(this._ctx.UNPACK_FLIP_Y_WEBGL, true);
     this._ctx.bindTexture(this._ctx.TEXTURE_2D, texture);
@@ -563,6 +561,16 @@ class WTCGL {
                    [-0.0, 0.0, -1.]);  // amount to translate
     
     return modelViewMatrix;
+  }
+  
+  /**
+   * (getter/setter) context. Return the webgl context object
+   *
+   * @readonly
+   * @type {WebGLContext}
+   */
+  get context() {
+    return this._ctx || null;
   }
   
   /**
