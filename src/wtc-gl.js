@@ -6,7 +6,7 @@
  *
  * @class WTCGL
  * @author Liam Egan <liam@wethecollective.com>
- * @version 0.0.8
+ * @version 0.0.10
  * @created Jan 16, 2019
  */
 class WTCGL {  
