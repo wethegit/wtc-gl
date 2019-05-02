@@ -32,6 +32,11 @@ class WTCGL {
     this.run = this.run.bind(this);
     
     this._onRun = ()=>{};
+    
+    // Destructure if an object is aprovided instead a series of parameters
+    if(el instanceof Object && el.el) {
+      ({el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, webgl2, styleElement} = el);
+    }
 
     // If the HTML element isn't a canvas, return null
     if(!el instanceof HTMLElement || el.nodeName.toLowerCase() !== 'canvas') {
@@ -50,6 +55,7 @@ class WTCGL {
     // Set up the extensions
     this._ctx.getExtension('OES_standard_derivatives');
     this._ctx.getExtension('EXT_shader_texture_lod');
+    this._ctx.getExtension('OES_texture_float');
 
     // We can't make the context so return an error
     if (!this._ctx) {
@@ -81,6 +87,9 @@ class WTCGL {
        1.0, -1.0, -1.,
     ]);
     
+    // Initialise the frame buffers
+    this.frameBuffers = [];
+    
     // The program information object. This is essentially a state machine for the webGL instance
     this._programInfo = {
       attribs: {
@@ -108,6 +117,48 @@ class WTCGL {
   /**
    * Public methods
    */
+  
+  addFrameBuffer(w, h) {
+    // create to render to
+    const gl = this._ctx;
+    const targetTextureWidth = w * this.pxratio;
+    const targetTextureHeight = h * this.pxratio;
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    {
+      // define size and format of level 0
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const border = 0;
+      const format = gl.RGBA;
+      const type = gl.UNSIGNED_BYTE;
+      const data = null;
+      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    targetTextureWidth, targetTextureHeight, border,
+                    format, type, data);
+
+      // set the filtering so we don't need mips
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    
+    // Create and bind the framebuffer
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+    // attach the texture as the first color attachment
+    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    const level = 0;
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+    return {
+      w: w * this.pxratio,
+      h: h * this.pxratio,
+      fb: fb,
+      frameTexture: targetTexture
+    };
+  }
   
 
 	/**
@@ -200,7 +251,6 @@ class WTCGL {
    * @return {WebGLTexture} The texture object
    */
   addTexture(name, type, image, liveUpdate = false) {
-    let textures = this.textures;
     
     var texture = this._ctx.createTexture();
     this._ctx.pixelStorei(this._ctx.UNPACK_FLIP_Y_WEBGL, true);
@@ -226,20 +276,10 @@ class WTCGL {
     // add the texture to the array of textures.
     this.pushTexture(name, texture, image, this._ctx.TEXTURE_2D, liveUpdate);
     
+    
     return texture;
   }
   
-	/**
-	 * Pushes a texture into the texture stack. This is here so we can 
-   * add textures externally, if necessary.
-	 *
-	 * @param  {String} name The name of the texture
-	 * @param  {WebGLTexture} texture The texture location
-	 * @param  {Mixed} image The image object to be used to render the texture sampler
-	 * @param  {WebGLTarget} target The target texture type
-	 * @param  {Bool} liveUpdate The flag that determines whether the texture needs to be live updated (updated every frame)
-	 * @return {Void}
-	 */
   pushTexture(name, texture, image, target, liveUpdate = false) {
     let textures = this.textures;
     
@@ -303,18 +343,18 @@ class WTCGL {
 	 *
 	 * @return {Void}
 	 */
-  render() {
+  render(buffer = {}) {
+    this._ctx.bindFramebuffer(this._ctx.FRAMEBUFFER, buffer.fb || null);
     // Update the time uniform
     this._ctx.uniform1f( this._programInfo.uniforms.time, this.time);
     
-    // Check for and update live textures
     this.textures.forEach((textureInfo) => {
       if(textureInfo.liveUpdate === true) {
         this.updateTexture(textureInfo.tex, textureInfo.image);
       }
     });
 
-    this._ctx.viewport(0, 0, this._ctx.viewportWidth, this._ctx.viewportHeight);
+    this._ctx.viewport(0, 0, buffer.w || this._ctx.viewportWidth, buffer.h || this._ctx.viewportHeight);
     if(this.clearing) {
       this._ctx.clearColor(1.0, 0.0, 0.0, 0.0);
       // this._ctx.clearDepth(1.0);
@@ -503,22 +543,6 @@ class WTCGL {
   }
   
   /**
-   * (getter/setter) onRun. A method that runs on every frame render. We can use
-   * this to run external bits every frame like updating uniforms etc.
-   *
-   * @type {number}
-   * @default 1
-   */
-  set onRun(runMethod) {
-    if(typeof runMethod == 'function') {
-      this._onRun = runMethod.bind(this);
-    }
-  }
-  get onRun() {
-    return this._onRun;
-  }
-  
-  /**
    * (getter/setter) perspectiveMatrix. Calculate a perspective matrix, a 
    * special matrix that is used to simulate the distortion of perspective in 
    * a camera. Our field of view is 45 degrees, with a width/height ratio 
@@ -565,6 +589,19 @@ class WTCGL {
     return modelViewMatrix;
   }
   
+  set onRun(runMethod) {
+    if(typeof runMethod == 'function') {
+      this._onRun = runMethod.bind(this);
+    }
+  }
+  get onRun() {
+    return this._onRun;
+  }
+  
+  get context() {
+    return this._ctx || null;
+  }
+  
   /**
    * Static Methods
    */
@@ -603,5 +640,3 @@ WTCGL.TYPE_BOOL = 5;
 WTCGL.IMAGETYPE_REGULAR = 0;
 WTCGL.IMAGETYPE_TILE = 1;
 WTCGL.IMAGETYPE_MIRROR = 2;
-
-export default WTCGL;
