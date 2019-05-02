@@ -179,6 +179,9 @@ class WTCGL {
       case WTCGL.TYPE_V4 : 
         if(value instanceof Array && value.length === 4.) this._ctx.uniform4fv( uniform, value);
         break;
+      case WTCGL.TYPE_BOOL : 
+        if(!isNaN(value)) this._ctx.uniform1i( uniform, value);
+        break;
     }
     this._programInfo.uniforms[name] = uniform;
     return uniform;
@@ -571,6 +574,7 @@ WTCGL.TYPE_FLOAT = 1;
 WTCGL.TYPE_V2 = 2;
 WTCGL.TYPE_V3 = 3;
 WTCGL.TYPE_V4 = 4;
+WTCGL.TYPE_BOOL = 5;
 
 WTCGL.IMAGETYPE_REGULAR = 0;
 WTCGL.IMAGETYPE_TILE = 1;
