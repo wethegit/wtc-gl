@@ -32,6 +32,11 @@ class WTCGL {
     this.run = this.run.bind(this);
     
     this._onRun = ()=>{};
+    
+    // Destructure if an object is aprovided instead a series of parameters
+    if(el instanceof Object && el.el) {
+      ({el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, webgl2, styleElement} = el);
+    }
 
     // If the HTML element isn't a canvas, return null
     if(!el instanceof HTMLElement || el.nodeName.toLowerCase() !== 'canvas') {
