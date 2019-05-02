@@ -1,4 +1,3 @@
-
 /**
  * A basic Web GL class. This provides a very basic setup for GLSL shader code.
  * Currently it doesn't support anything except for clip-space 3d, but this was
@@ -27,8 +26,9 @@ class WTCGL {
    * @param {number} [height] The height of the webGL context. This will default to the canvas dimensions
    * @param {number} [pxratio=1] The pixel aspect ratio of the canvas
    * @param {boolean} [styleElement] A boolean indicating whether to apply a style property to the canvas (resizing the canvas by the inverse of the pixel ratio)
+   * @param {boolean} [webgl2] A boolean indicating whether to try to create a webgl2 context instead of a regulart context
 	 */
-  constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement) {
+  constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement, webgl2) {
     this.run = this.run.bind(this);
 
     // If the HTML element isn't a canvas, return null
@@ -39,7 +39,11 @@ class WTCGL {
     
     this._el = el;
     // The context should be either webgl2, webgl or experimental-webgl
-    this._ctx = this._el.getContext("webgl2", this.webgl_params) || this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    if(webgl2 === true) {
+      this._ctx = this._el.getContext("webgl2", this.webgl_params) || this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    } else {
+      this._ctx = this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    }
     
     // Set up the extensions
     this._ctx.getExtension('OES_standard_derivatives');
