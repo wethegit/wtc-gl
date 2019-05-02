@@ -55,6 +55,7 @@ class WTCGL {
     // Set up the extensions
     this._ctx.getExtension('OES_standard_derivatives');
     this._ctx.getExtension('EXT_shader_texture_lod');
+    this._ctx.getExtension('OES_texture_float');
 
     // We can't make the context so return an error
     if (!this._ctx) {
@@ -85,6 +86,9 @@ class WTCGL {
       -1.0, -1.0, -1.,
        1.0, -1.0, -1.,
     ]);
+    
+    // Initialise the frame buffers
+    this.frameBuffers = [];
     
     // The program information object. This is essentially a state machine for the webGL instance
     this._programInfo = {
@@ -252,6 +256,64 @@ class WTCGL {
     this.textures = textures;
   }
 
+  /**
+   * Adds a framebuffer object to the webGL context for use later
+   * by an extenal process. This method returns an object 
+   * containing useful propertues and objects in the form of:
+   * {
+   *    {Number} w - The width of the frame buffer
+   *    {Number} h - The height of the frame buffee
+   *    {WebGLFrameBuffer} fb - the frame buffer object for use in binding the buffer
+   *    {WebGLTexture} frameTexture - the texture object for use in binding the buffer to a uniform
+   * }
+   *
+   * @public
+	 * @param  {Number} w The width of the frame buffer
+   * @param  {Number} h The height o fthe frame buffer
+   * @return {Object} A general object representing the added frame buffer
+   */
+  addFrameBuffer(w, h) {
+    // create to render to
+    const gl = this._ctx;
+    const targetTextureWidth = w * this.pxratio;
+    const targetTextureHeight = h * this.pxratio;
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    {
+      // define size and format of level 0
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const border = 0;
+      const format = gl.RGBA;
+      const type = gl.UNSIGNED_BYTE;
+      const data = null;
+      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    targetTextureWidth, targetTextureHeight, border,
+                    format, type, data);
+
+      // set the filtering so we don't need mips
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    
+    // Create and bind the framebuffer
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+    // attach the texture as the first color attachment
+    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    const level = 0;
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+    return {
+      w: w * this.pxratio,
+      h: h * this.pxratio,
+      fb: fb,
+      frameTexture: targetTexture
+    };
+  }
+
 	/**
 	 * Updates a texture location for a given WebGLTexture with an image
 	 *
@@ -304,9 +366,12 @@ class WTCGL {
 	/**
 	 * Render the program
 	 *
+   * @param  {object} buffer The frame buffer object to render to
 	 * @return {Void}
 	 */
-  render() {
+  render(buffer = {}) {
+    // bind either to the provided buffer or null (screen)
+    this._ctx.bindFramebuffer(this._ctx.FRAMEBUFFER, buffer.fb || null);
     // Update the time uniform
     this._ctx.uniform1f( this._programInfo.uniforms.time, this.time);
     
@@ -317,7 +382,7 @@ class WTCGL {
       }
     });
 
-    this._ctx.viewport(0, 0, this._ctx.viewportWidth, this._ctx.viewportHeight);
+    this._ctx.viewport(0, 0, buffer.w || this._ctx.viewportWidth, buffer.h || this._ctx.viewportHeight);
     if(this.clearing) {
       this._ctx.clearColor(1.0, 0.0, 0.0, 0.0);
       // this._ctx.clearDepth(1.0);
