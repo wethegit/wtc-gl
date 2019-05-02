@@ -30,6 +30,8 @@ class WTCGL {
 	 */
   constructor(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement, webgl2) {
     this.run = this.run.bind(this);
+    
+    this._onRun = ()=>{};
 
     // If the HTML element isn't a canvas, return null
     if(!el instanceof HTMLElement || el.nodeName.toLowerCase() !== 'canvas') {
@@ -272,6 +274,7 @@ class WTCGL {
   run(delta) {
     this.running && requestAnimationFrame(this.run);
     this.time = this.startTime + delta * .0002;
+    this.onRun(delta);
     this.render();
   }
   
@@ -470,6 +473,22 @@ class WTCGL {
   }
   get pxratio() {
     return this._pxratio || 1;
+  }
+  
+  /**
+   * (getter/setter) onRun. A method that runs on every frame render. We can use
+   * this to run external bits every frame like updating uniforms etc.
+   *
+   * @type {number}
+   * @default 1
+   */
+  set onRun(runMethod) {
+    if(typeof runMethod == 'function') {
+      this._onRun = runMethod.bind(this);
+    }
+  }
+  get onRun() {
+    return this._onRun;
   }
   
   /**
