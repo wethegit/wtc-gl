@@ -19,7 +19,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * @class WTCGL
  * @author Liam Egan <liam@wethecollective.com>
- * @version 0.0.8
+ * @version 0.0.10
  * @created Jan 16, 2019
  */
 var WTCGL =
@@ -40,11 +40,28 @@ function () {
     * @param {number} [height] The height of the webGL context. This will default to the canvas dimensions
     * @param {number} [pxratio=1] The pixel aspect ratio of the canvas
     * @param {boolean} [styleElement] A boolean indicating whether to apply a style property to the canvas (resizing the canvas by the inverse of the pixel ratio)
+    * @param {boolean} [webgl2] A boolean indicating whether to try to create a webgl2 context instead of a regulart context
    */
-  function WTCGL(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement) {
+  function WTCGL(el, vertexShaderSource, fragmentShaderSource, width, height, pxratio, styleElement, webgl2) {
     _classCallCheck(this, WTCGL);
 
-    this.run = this.run.bind(this); // If the HTML element isn't a canvas, return null
+    this.run = this.run.bind(this);
+
+    this._onRun = function () {}; // Destructure if an object is aprovided instead a series of parameters
+
+
+    if (el instanceof Object && el.el) {
+      var _el = el;
+      el = _el.el;
+      vertexShaderSource = _el.vertexShaderSource;
+      fragmentShaderSource = _el.fragmentShaderSource;
+      width = _el.width;
+      height = _el.height;
+      pxratio = _el.pxratio;
+      webgl2 = _el.webgl2;
+      styleElement = _el.styleElement;
+    } // If the HTML element isn't a canvas, return null
+
 
     if (!el instanceof HTMLElement || el.nodeName.toLowerCase() !== 'canvas') {
       console.log('Provided element should be a canvas element');
@@ -53,11 +70,18 @@ function () {
 
     this._el = el; // The context should be either webgl2, webgl or experimental-webgl
 
-    this._ctx = this._el.getContext("webgl2", this.webgl_params) || this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params); // Set up the extensions
+    if (webgl2 === true) {
+      this._ctx = this._el.getContext("webgl2", this.webgl_params) || this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    } else {
+      this._ctx = this._el.getContext("webgl", this.webgl_params) || this._el.getContext("experimental-webgl", this.webgl_params);
+    } // Set up the extensions
+
 
     this._ctx.getExtension('OES_standard_derivatives');
 
-    this._ctx.getExtension('EXT_shader_texture_lod'); // We can't make the context so return an error
+    this._ctx.getExtension('EXT_shader_texture_lod');
+
+    this._ctx.getExtension('OES_texture_float'); // We can't make the context so return an error
 
 
     if (!this._ctx) {
@@ -84,7 +108,9 @@ function () {
     } // Initialise the vertex buffers
 
 
-    this.initBuffers([-1.0, 1.0, -1., 1.0, 1.0, -1., -1.0, -1.0, -1., 1.0, -1.0, -1.]); // The program information object. This is essentially a state machine for the webGL instance
+    this.initBuffers([-1.0, 1.0, -1., 1.0, 1.0, -1., -1.0, -1.0, -1., 1.0, -1.0, -1.]); // Initialise the frame buffers
+
+    this.frameBuffers = []; // The program information object. This is essentially a state machine for the webGL instance
 
     this._programInfo = {
       attribs: {
@@ -188,6 +214,10 @@ function () {
         case WTCGL.TYPE_V4:
           if (value instanceof Array && value.length === 4.) this._ctx.uniform4fv(uniform, value);
           break;
+
+        case WTCGL.TYPE_BOOL:
+          if (!isNaN(value)) this._ctx.uniform1i(uniform, value);
+          break;
       }
 
       this._programInfo.uniforms[name] = uniform;
@@ -209,7 +239,7 @@ function () {
   }, {
     key: "addTexture",
     value: function addTexture(name, type, image) {
-      var textures = this.textures;
+      var liveUpdate = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
       var texture = this._ctx.createTexture();
 
@@ -236,13 +266,89 @@ function () {
       this._ctx.texImage2D(this._ctx.TEXTURE_2D, 0, this._ctx.RGBA, this._ctx.RGBA, this._ctx.UNSIGNED_BYTE, image); // add the texture to the array of textures.
 
 
+      this.pushTexture(name, texture, image, this._ctx.TEXTURE_2D, liveUpdate);
+      return texture;
+    }
+    /**
+     * Pushes a texture into the texture stack. This is here so we can 
+      * add textures externally, if necessary.
+     *
+     * @param  {String} name The name of the texture
+     * @param  {WebGLTexture} texture The texture location
+     * @param  {Mixed} image The image object to be used to render the texture sampler
+     * @param  {WebGLTarget} target The target texture type
+     * @param  {Bool} liveUpdate The flag that determines whether the texture needs to be live updated (updated every frame)
+     * @return {Void}
+     */
+
+  }, {
+    key: "pushTexture",
+    value: function pushTexture(name, texture, image, target) {
+      var liveUpdate = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+      var textures = this.textures;
       textures.push({
         name: name,
-        tex: texture
+        tex: texture,
+        liveUpdate: liveUpdate,
+        image: image,
+        target: target
       }); // Finally set the this.textures (this is just to get around the funnyness of default getters)
 
       this.textures = textures;
-      return texture;
+    }
+    /**
+     * Adds a framebuffer object to the webGL context for use later
+     * by an extenal process. This method returns an object 
+     * containing useful propertues and objects in the form of:
+     * {
+     *    {Number} w - The width of the frame buffer
+     *    {Number} h - The height of the frame buffee
+     *    {WebGLFrameBuffer} fb - the frame buffer object for use in binding the buffer
+     *    {WebGLTexture} frameTexture - the texture object for use in binding the buffer to a uniform
+     * }
+     *
+     * @public
+    * @param  {Number} w The width of the frame buffer
+     * @param  {Number} h The height o fthe frame buffer
+     * @return {Object} A general object representing the added frame buffer
+     */
+
+  }, {
+    key: "addFrameBuffer",
+    value: function addFrameBuffer(w, h) {
+      // create to render to
+      var gl = this._ctx;
+      var targetTextureWidth = w * this.pxratio;
+      var targetTextureHeight = h * this.pxratio;
+      var targetTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+      {
+        // define size and format of level 0
+        var _level = 0;
+        var internalFormat = gl.RGBA;
+        var border = 0;
+        var format = gl.RGBA;
+        var type = gl.UNSIGNED_BYTE;
+        var data = null;
+        gl.texImage2D(gl.TEXTURE_2D, _level, internalFormat, targetTextureWidth, targetTextureHeight, border, format, type, data); // set the filtering so we don't need mips
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      } // Create and bind the framebuffer
+
+      var fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb); // attach the texture as the first color attachment
+
+      var attachmentPoint = gl.COLOR_ATTACHMENT0;
+      var level = 0;
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+      return {
+        w: w * this.pxratio,
+        h: h * this.pxratio,
+        fb: fb,
+        frameTexture: targetTexture
+      };
     }
     /**
      * Updates a texture location for a given WebGLTexture with an image
@@ -280,7 +386,7 @@ function () {
         this._ctx.activeTexture(this._ctx["TEXTURE".concat(i)]); // Finally, bind the texture
 
 
-        this._ctx.bindTexture(this._ctx.TEXTURE_2D, this.textures[i].tex);
+        this._ctx.bindTexture(this.textures[i].target, this.textures[i].tex);
       }
     }
     /**
@@ -296,21 +402,37 @@ function () {
     value: function run(delta) {
       this.running && requestAnimationFrame(this.run);
       this.time = this.startTime + delta * .0002;
+      this.onRun(delta);
       this.render();
     }
     /**
      * Render the program
      *
+      * @param  {object} buffer The frame buffer object to render to
      * @return {Void}
      */
 
   }, {
     key: "render",
     value: function render() {
-      // Update the time uniform
-      this._ctx.uniform1f(this._programInfo.uniforms.time, this.time);
+      var _this = this;
 
-      this._ctx.viewport(0, 0, this._ctx.viewportWidth, this._ctx.viewportHeight);
+      var buffer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      // bind either to the provided buffer or null (screen)
+      this._ctx.bindFramebuffer(this._ctx.FRAMEBUFFER, buffer.fb || null); // Update the time uniform
+
+
+      this._ctx.uniform1f(this._programInfo.uniforms.time, this.time); // Check for and update live textures
+
+
+      this.textures.forEach(function (textureInfo) {
+        if (textureInfo.liveUpdate === true) {
+          _this.updateTexture(textureInfo.tex, textureInfo.image);
+        }
+      });
+
+      this._ctx.viewport(0, 0, buffer.w || this._ctx.viewportWidth, buffer.h || this._ctx.viewportHeight);
 
       if (this.clearing) {
         this._ctx.clearColor(1.0, 0.0, 0.0, 0.0); // this._ctx.clearDepth(1.0);
@@ -518,6 +640,24 @@ function () {
       return this._pxratio || 1;
     }
     /**
+     * (getter/setter) onRun. A method that runs on every frame render. We can use
+     * this to run external bits every frame like updating uniforms etc.
+     *
+     * @type {number}
+     * @default 1
+     */
+
+  }, {
+    key: "onRun",
+    set: function set(runMethod) {
+      if (typeof runMethod == 'function') {
+        this._onRun = runMethod.bind(this);
+      }
+    },
+    get: function get() {
+      return this._onRun;
+    }
+    /**
      * (getter/setter) perspectiveMatrix. Calculate a perspective matrix, a 
      * special matrix that is used to simulate the distortion of perspective in 
      * a camera. Our field of view is 45 degrees, with a width/height ratio 
@@ -564,6 +704,18 @@ function () {
       return modelViewMatrix;
     }
     /**
+     * (getter/setter) context. Return the webgl context object
+     *
+     * @readonly
+     * @type {WebGLContext}
+     */
+
+  }, {
+    key: "context",
+    get: function get() {
+      return this._ctx || null;
+    }
+    /**
      * Static Methods
      */
 
@@ -602,6 +754,7 @@ WTCGL.TYPE_FLOAT = 1;
 WTCGL.TYPE_V2 = 2;
 WTCGL.TYPE_V3 = 3;
 WTCGL.TYPE_V4 = 4;
+WTCGL.TYPE_BOOL = 5;
 WTCGL.IMAGETYPE_REGULAR = 0;
 WTCGL.IMAGETYPE_TILE = 1;
 WTCGL.IMAGETYPE_MIRROR = 2;
