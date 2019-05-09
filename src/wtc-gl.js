@@ -176,6 +176,9 @@ class WTCGL {
     let uniform = this._programInfo.uniforms[name];
     uniform = this._ctx.getUniformLocation(this._program, `u_${name}`);
     switch(type) {
+      case WTCGL.TYPE_INT : 
+        if(!isNaN(value)) this._ctx.uniform1i( uniform, value);
+        break;
       case WTCGL.TYPE_FLOAT : 
         if(!isNaN(value)) this._ctx.uniform1f( uniform, value);
         break;
