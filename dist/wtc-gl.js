@@ -1,10 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -19,16 +14,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * @class WTCGL
  * @author Liam Egan <liam@wethecollective.com>
- * @version 0.0.10
+ * @version 0.0.8
  * @created Jan 16, 2019
  */
 var WTCGL =
 /*#__PURE__*/
 function () {
   /**
-   * The WTCGL Class constructor. If construction of the webGL context fails 
+   * The WTCGL Class constructor. If construction of the webGL context fails
     * for any reason this will return null.
-    * 
+    *
     * @TODO make the dimension properties properly optional
     * @TODO provide the ability to allow for programmable buffers
    *
@@ -81,7 +76,11 @@ function () {
 
     this._ctx.getExtension('EXT_shader_texture_lod');
 
-    this._ctx.getExtension('OES_texture_float'); // We can't make the context so return an error
+    this._ctx.getExtension('OES_texture_float');
+
+    this._ctx.getExtension('WEBGL_color_buffer_float');
+
+    this._ctx.getExtension('OES_texture_float_linear'); // We can't make the context so return an error
 
 
     if (!this._ctx) {
@@ -134,16 +133,66 @@ function () {
    * Public methods
    */
 
-  /**
-   * Resizes the canvas to a specified width and height, respecting the pixel ratio
-   *
-   * @param  {number} w The width of the canvas
-   * @param  {number} h The height of the canvas
-   * @return {Void}
-   */
-
 
   _createClass(WTCGL, [{
+    key: "addFrameBuffer",
+    value: function addFrameBuffer(w, h) {
+      var tiling = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+      var buffertype = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+      // create to render to
+      var gl = this._ctx;
+      var targetTextureWidth = w * this.pxratio;
+      var targetTextureHeight = h * this.pxratio;
+      var targetTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+      {
+        // define size and format of level 0
+        var _level = 0;
+        var internalFormat = gl.RGBA;
+        var border = 0;
+        var format = gl.RGBA;
+        var type = buffertype === WTCGL.TEXTYPE_FLOAT ? gl.FLOAT : gl.UNSIGNED_BYTE;
+        var data = null;
+        gl.texImage2D(gl.TEXTURE_2D, _level, internalFormat, targetTextureWidth, targetTextureHeight, border, format, type, data); // gl.generateMipmap(gl.TEXTURE_2D);
+        // set the filtering so we don't need mips
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); // Set the parameters based on the passed type
+
+        if (tiling === WTCGL.IMAGETYPE_TILE) {
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        } else if (tiling === WTCGL.IMAGETYPE_MIRROR) {
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+        } else if (tiling === WTCGL.IMAGETYPE_REGULAR) {
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        }
+      } // Create and bind the framebuffer
+
+      var fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb); // attach the texture as the first color attachment
+
+      var attachmentPoint = gl.COLOR_ATTACHMENT0;
+      var level = 0;
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+      return {
+        w: w * this.pxratio,
+        h: h * this.pxratio,
+        fb: fb,
+        frameTexture: targetTexture
+      };
+    }
+    /**
+     * Resizes the canvas to a specified width and height, respecting the pixel ratio
+     *
+     * @param  {number} w The width of the canvas
+     * @param  {number} h The height of the canvas
+     * @return {Void}
+     */
+
+  }, {
     key: "resize",
     value: function resize(w, h) {
       this._el.width = w * this.pxratio;
@@ -187,8 +236,8 @@ function () {
       * - Vector 4 - WTCGL.TYPE_V4
      *
      * @param  {string} name The name of the uniform. N.B. your name will be prepended with a `u_` in your shaders. So providing a name of `foo` here will result in a uniform named `u_foo`
-     * @param  {WTCGL.UNIFORM_TYPE} type The unfiform type 
-     * @param  {number|array} value The unfiform value. The type depends on the uniform type being created 
+     * @param  {WTCGL.UNIFORM_TYPE} type The unfiform type
+     * @param  {number|array} value The unfiform value. The type depends on the uniform type being created
      * @return {WebGLUniformLocation} The uniform location for later reference
      */
 
@@ -199,6 +248,10 @@ function () {
       uniform = this._ctx.getUniformLocation(this._program, "u_".concat(name));
 
       switch (type) {
+        case WTCGL.TYPE_INT:
+          if (!isNaN(value)) this._ctx.uniform1i(uniform, value);
+          break;
+
         case WTCGL.TYPE_FLOAT:
           if (!isNaN(value)) this._ctx.uniform1f(uniform, value);
           break;
@@ -269,18 +322,6 @@ function () {
       this.pushTexture(name, texture, image, this._ctx.TEXTURE_2D, liveUpdate);
       return texture;
     }
-    /**
-     * Pushes a texture into the texture stack. This is here so we can 
-      * add textures externally, if necessary.
-     *
-     * @param  {String} name The name of the texture
-     * @param  {WebGLTexture} texture The texture location
-     * @param  {Mixed} image The image object to be used to render the texture sampler
-     * @param  {WebGLTarget} target The target texture type
-     * @param  {Bool} liveUpdate The flag that determines whether the texture needs to be live updated (updated every frame)
-     * @return {Void}
-     */
-
   }, {
     key: "pushTexture",
     value: function pushTexture(name, texture, image, target) {
@@ -295,60 +336,6 @@ function () {
       }); // Finally set the this.textures (this is just to get around the funnyness of default getters)
 
       this.textures = textures;
-    }
-    /**
-     * Adds a framebuffer object to the webGL context for use later
-     * by an extenal process. This method returns an object 
-     * containing useful propertues and objects in the form of:
-     * {
-     *    {Number} w - The width of the frame buffer
-     *    {Number} h - The height of the frame buffee
-     *    {WebGLFrameBuffer} fb - the frame buffer object for use in binding the buffer
-     *    {WebGLTexture} frameTexture - the texture object for use in binding the buffer to a uniform
-     * }
-     *
-     * @public
-    * @param  {Number} w The width of the frame buffer
-     * @param  {Number} h The height o fthe frame buffer
-     * @return {Object} A general object representing the added frame buffer
-     */
-
-  }, {
-    key: "addFrameBuffer",
-    value: function addFrameBuffer(w, h) {
-      // create to render to
-      var gl = this._ctx;
-      var targetTextureWidth = w * this.pxratio;
-      var targetTextureHeight = h * this.pxratio;
-      var targetTexture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-      {
-        // define size and format of level 0
-        var _level = 0;
-        var internalFormat = gl.RGBA;
-        var border = 0;
-        var format = gl.RGBA;
-        var type = gl.UNSIGNED_BYTE;
-        var data = null;
-        gl.texImage2D(gl.TEXTURE_2D, _level, internalFormat, targetTextureWidth, targetTextureHeight, border, format, type, data); // set the filtering so we don't need mips
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      } // Create and bind the framebuffer
-
-      var fb = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fb); // attach the texture as the first color attachment
-
-      var attachmentPoint = gl.COLOR_ATTACHMENT0;
-      var level = 0;
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
-      return {
-        w: w * this.pxratio,
-        h: h * this.pxratio,
-        fb: fb,
-        frameTexture: targetTexture
-      };
     }
     /**
      * Updates a texture location for a given WebGLTexture with an image
@@ -408,7 +395,6 @@ function () {
     /**
      * Render the program
      *
-      * @param  {object} buffer The frame buffer object to render to
      * @return {Void}
      */
 
@@ -419,12 +405,10 @@ function () {
 
       var buffer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-      // bind either to the provided buffer or null (screen)
       this._ctx.bindFramebuffer(this._ctx.FRAMEBUFFER, buffer.fb || null); // Update the time uniform
 
 
-      this._ctx.uniform1f(this._programInfo.uniforms.time, this.time); // Check for and update live textures
-
+      this._ctx.uniform1f(this._programInfo.uniforms.time, this.time);
 
       this.textures.forEach(function (textureInfo) {
         if (textureInfo.liveUpdate === true) {
@@ -474,7 +458,8 @@ function () {
     key: "webgl_params",
     get: function get() {
       return {
-        alpha: true
+        alpha: true,
+        premultipliedAlpha: false
       };
     }
     /**
@@ -499,8 +484,8 @@ function () {
       return this._styleElement !== false;
     }
     /**
-     * (getter/setter) startTime. This is a value to begin the `u_time` 
-     * unform at. This is here in case you want `u_time` to begin at a 
+     * (getter/setter) startTime. This is a value to begin the `u_time`
+     * unform at. This is here in case you want `u_time` to begin at a
      * specific value other than 0.
      *
      * @type {number}
@@ -538,7 +523,7 @@ function () {
       return this._time || 0;
     }
     /**
-     * (getter/setter) includePerspectiveMatrix. This determines whether the 
+     * (getter/setter) includePerspectiveMatrix. This determines whether the
      * perspecive matrix is included in the program. This doesn't really make
      * a difference right now, but this is here to provide future interoperability.
      *
@@ -555,7 +540,7 @@ function () {
       return this._includePerspectiveMatrix === true;
     }
     /**
-     * (getter/setter) includeModelViewMatrix. This determines whether the 
+     * (getter/setter) includeModelViewMatrix. This determines whether the
      * model view matrix is included in the program. This doesn't really make
      * a difference right now, but this is here to provide future interoperability.
      *
@@ -590,7 +575,7 @@ function () {
       return this._textures || [];
     }
     /**
-     * (getter/setter) clearing. Specifies whether the program should clear the screen 
+     * (getter/setter) clearing. Specifies whether the program should clear the screen
      * before drawing anew.
      *
      * @type {boolean}
@@ -606,7 +591,7 @@ function () {
       return this._clearing === true;
     }
     /**
-     * (getter/setter) running. Specifies whether the programming is running. Setting 
+     * (getter/setter) running. Specifies whether the programming is running. Setting
      * this to true will create a RaF loop which will call the run function.
      *
      * @type {boolean}
@@ -640,28 +625,10 @@ function () {
       return this._pxratio || 1;
     }
     /**
-     * (getter/setter) onRun. A method that runs on every frame render. We can use
-     * this to run external bits every frame like updating uniforms etc.
-     *
-     * @type {number}
-     * @default 1
-     */
-
-  }, {
-    key: "onRun",
-    set: function set(runMethod) {
-      if (typeof runMethod == 'function') {
-        this._onRun = runMethod.bind(this);
-      }
-    },
-    get: function get() {
-      return this._onRun;
-    }
-    /**
-     * (getter/setter) perspectiveMatrix. Calculate a perspective matrix, a 
-     * special matrix that is used to simulate the distortion of perspective in 
-     * a camera. Our field of view is 45 degrees, with a width/height ratio 
-     * that matches the display size of the canvas and we only want to see 
+     * (getter/setter) perspectiveMatrix. Calculate a perspective matrix, a
+     * special matrix that is used to simulate the distortion of perspective in
+     * a camera. Our field of view is 45 degrees, with a width/height ratio
+     * that matches the display size of the canvas and we only want to see
      * objects between 0.1 units and 100 units away from the camera.
      *
      * @readonly
@@ -703,13 +670,16 @@ function () {
 
       return modelViewMatrix;
     }
-    /**
-     * (getter/setter) context. Return the webgl context object
-     *
-     * @readonly
-     * @type {WebGLContext}
-     */
-
+  }, {
+    key: "onRun",
+    set: function set(runMethod) {
+      if (typeof runMethod == 'function') {
+        this._onRun = runMethod.bind(this);
+      }
+    },
+    get: function get() {
+      return this._onRun;
+    }
   }, {
     key: "context",
     get: function get() {
@@ -758,5 +728,5 @@ WTCGL.TYPE_BOOL = 5;
 WTCGL.IMAGETYPE_REGULAR = 0;
 WTCGL.IMAGETYPE_TILE = 1;
 WTCGL.IMAGETYPE_MIRROR = 2;
-var _default = WTCGL;
-exports.default = _default;
+WTCGL.TEXTYPE_FLOAT = 0;
+WTCGL.TEXTYPE_UNSIGNED_BYTE = 1;
