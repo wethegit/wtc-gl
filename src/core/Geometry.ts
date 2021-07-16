@@ -197,6 +197,7 @@ export class Geometry {
    * @param {Program} program - The program to use to determine attribute locations
    */
   createVAO(program: Program): void {
+    // The reason for keying it using the program's attributeOrder is in order to make sure that we're using the appropriate vertex array if we're sharing this geometry between multiple programs
     this.VAOs[program.attributeOrder] = this.gl.renderer.createVertexArray()
     this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
     this.bindAttributes(program)

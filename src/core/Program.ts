@@ -15,28 +15,96 @@ interface WTCGLUniformArray {
 
 let ID = 1
 
+/**
+ * The program class prvides the rendering setup, internal logic, and state for rendering an object.
+ */
 export class Program {
+  /**
+   * The ID of the program. Simple auto-incremening. Used for identifying the program for setup.
+   */
   id: number
+  /**
+   * The WTCGL rendering context object
+   */
   gl: WTCGLRenderingContext
 
+  /**
+   * The array uf uniforms for this program
+   */
   uniforms: WTCGLUniformArray
 
+  /**
+   * Whether to render transparency.
+   * @default false
+   */
   transparent: boolean
+  /**
+   * Whether to depth test objects in this program
+   * @default true
+   */
   depthTest: boolean
+  /**
+   * Whether to write depth information
+   * @default true
+   */
   depthWrite: boolean
+  /**
+   * Face culling used.
+   * @default gl.BACK
+   */
   cullFace: GLenum
+  /**
+   * How to determine if a face is front-facing, whether it's points are drawn clockwise or counter-clockwise. Default is counter-clockwise.
+   * @default gl.CCW
+   */
   frontFace: GLenum
+  /**
+   * The depth function to use when determinging the current pixel against the depth buffer
+   * @default gl.LESS
+   */
   depthFunc: GLenum
 
+  /**
+   * The blend function to use
+   */
   blendFunc: WTCGLBlendFunction
+  /**
+   * The blend equation to use
+   */
   blendEquation: WTCGLBlendEquation
 
+  /**
+   * The webgl program store
+   */
   program: WebGLProgram
 
+  /**
+   * A map of uniform locations in use within the program shaders
+   */
   uniformLocations: WTCGLUniformMap
+  /**
+   * A map of attribute locations in use within the program shaders
+   */
   attributeLocations: WTCGLAttributeMap
+  /**
+   * A join of the found attributes. Used for addressing vertex array objects on the geometry.
+   */
   attributeOrder: string
 
+  /**
+   * Create a Program
+   * @param gl - The WTCGL Rendering context
+   * @param __namedParameters - The parameters for the Program
+   * @param vertex - The vertext shader
+   * @param fragment - The fragment shader
+   * @param uniforms - An object of uniforms for use in the program
+   * @param transparent - Whether to render the program with transparency
+   * @param cullFace - What method to use for determining face culling
+   * @param frontFace - What method to use for determining the front of a face
+   * @param depthTest - Whether to test the depth of a fragment against the depth buffer
+   * @param depthWrite - Whether to write the depth information
+   * @param depthFunc - The function to use when depth testing
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -167,6 +235,13 @@ export class Program {
     this.attributeOrder = locations.join('')
   }
 
+  /**
+   * Set the blend function based on source and destination parameters
+   * @param src - the source blend function
+   * @param dst - The destination blend function
+   * @param srcAlpha - the source blend function for alpha blending
+   * @param dstAlpha - the destination blend function for alpha blending
+   */
   setBlendFunc(
     src: GLenum,
     dst: GLenum,
@@ -180,11 +255,19 @@ export class Program {
     if (src) this.transparent = true
   }
 
+  /**
+   * set the blend equation
+   * @param modeRGB - The mode to blend when using RGB
+   * @param modeAlpha - The mode to blend when using RGBA
+   */
   setBlendEquation(modeRGB: GLenum, modeAlpha: GLenum): void {
     this.blendEquation.modeRGB = modeRGB
     this.blendEquation.modeAlpha = modeAlpha
   }
 
+  /**
+   * Apply the program state object to the renderer
+   */
   applyState(): void {
     if (this.depthTest) this.gl.renderer.enable(this.gl.DEPTH_TEST)
     else this.gl.renderer.disable(this.gl.DEPTH_TEST)
@@ -212,6 +295,10 @@ export class Program {
     )
   }
 
+  /**
+   * Set up the program for use
+   * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
+   */
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     let textureUnit = -1
     const programActive = this.gl.renderer.currentProgram === this.id
@@ -292,6 +379,9 @@ export class Program {
         this.frontFace === this.gl.CCW ? this.gl.CW : this.gl.CCW
   }
 
+  /**
+   * Delete the program
+   */
   remove() {
     this.gl.deleteProgram(this.program)
   }
