@@ -146,7 +146,7 @@ class Texture {
     // Make sure that texture is bound to its texture unit
     if (needsUpdate || this.glState.textureUnits[textureUnit] !== this.id) {
       // set active texture unit to perform texture functions
-      this.gl.renderer.activeTexture(textureUnit)
+      this.gl.renderer.activeTexture = textureUnit
       this.bind()
     }
 

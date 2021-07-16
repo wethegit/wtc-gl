@@ -65,6 +65,13 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Create a renderer. This is responsible for bringing together the whole state and, eventually, rendering to screen.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -102,7 +109,6 @@
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#drawElementsInstanced" class="tsd-kind-icon">draw<wbr>Elements<wbr>Instanced</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#extensions" class="tsd-kind-icon">extensions</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#gl" class="tsd-kind-icon">gl</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#id" class="tsd-kind-icon">id</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#isWebgl2" class="tsd-kind-icon">is<wbr>Webgl2</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#parameters" class="tsd-kind-icon">parameters</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Renderer.html#premultipliedAlpha" class="tsd-kind-icon">premultiplied<wbr>Alpha</a></li>
@@ -114,17 +120,17 @@
 						<section class="tsd-index-section ">
 							<h3>Accessors</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-set-signature tsd-parent-kind-class"><a href="Renderer.html#cullFace" class="tsd-kind-icon">cull<wbr>Face</a></li>
-								<li class="tsd-kind-set-signature tsd-parent-kind-class"><a href="Renderer.html#depthFunc" class="tsd-kind-icon">depth<wbr>Func</a></li>
-								<li class="tsd-kind-set-signature tsd-parent-kind-class"><a href="Renderer.html#depthMask" class="tsd-kind-icon">depth<wbr>Mask</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#activeTexture" class="tsd-kind-icon">active<wbr>Texture</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#cullFace" class="tsd-kind-icon">cull<wbr>Face</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#depthFunc" class="tsd-kind-icon">depth<wbr>Func</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#depthMask" class="tsd-kind-icon">depth<wbr>Mask</a></li>
 								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#dimensions" class="tsd-kind-icon">dimensions</a></li>
-								<li class="tsd-kind-set-signature tsd-parent-kind-class"><a href="Renderer.html#frontFace" class="tsd-kind-icon">front<wbr>Face</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="Renderer.html#frontFace" class="tsd-kind-icon">front<wbr>Face</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Renderer.html#activeTexture" class="tsd-kind-icon">active<wbr>Texture</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Renderer.html#bindFramebuffer" class="tsd-kind-icon">bind<wbr>Framebuffer</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Renderer.html#disable" class="tsd-kind-icon">disable</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Renderer.html#enable" class="tsd-kind-icon">enable</a></li>
@@ -154,52 +160,98 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L66">src/core/Renderer.ts:66</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L144">src/core/Renderer.ts:144</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>create a renderer</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>alpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>antialias<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>autoClear<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>canvas<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol">; </span>depth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>dpr<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>powerPreference<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>premultipliedAlpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>preserveDrawingBuffer<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>stencil<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>webgl<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>width<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = {}</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The parameters to initialise the renderer.</p>
+										</div>
+									</div>
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> alpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to render an alpha channel.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> antialias<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> auto<wbr>Clear<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to clear the canvas between draw.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> canvas<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">HTMLCanvasElement</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The canvas HTML element to render to.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> depth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to render a depth buffer.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> dpr<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The pixel aspect ratio of the canvas.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The height of the canvas.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> power<wbr>Preference<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>WebGL power preference.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> premultiplied<wbr>Alpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to use premultiplied alpha.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> preserve<wbr>Drawing<wbr>Buffer<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Preserve the drawing buffer between calls. Useful for when downloading the canvas to an image.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> stencil<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to render a stencil buffer.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> webgl<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The webGL version to try to use - 1, or 2</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> width<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The width of the canvas.</p>
+											</div>
 										</li>
 									</ul>
 								</li>
@@ -217,9 +269,14 @@
 					<div class="tsd-signature tsd-kind-icon">#dimensions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vec2</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L28">src/core/Renderer.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L26">src/core/Renderer.ts:26</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The dimensions of the renderer</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="alpha" class="tsd-anchor"></a>
@@ -227,9 +284,19 @@
 					<div class="tsd-signature tsd-kind-icon">alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L30">src/core/Renderer.ts:30</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L32">src/core/Renderer.ts:32</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to render an alpha channel. This property is passed to the rendering context.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>false</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="autoClear" class="tsd-anchor"></a>
@@ -237,9 +304,19 @@
 					<div class="tsd-signature tsd-kind-icon">auto<wbr>Clear<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L35">src/core/Renderer.ts:35</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L57">src/core/Renderer.ts:57</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to automatically clear the buffers before render.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>true</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="bindVertexArray" class="tsd-anchor"></a>
@@ -247,9 +324,14 @@
 					<div class="tsd-signature tsd-kind-icon">bind<wbr>Vertex<wbr>Array<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>vertexArray<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">WebGLVertexArrayObject</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L60">src/core/Renderer.ts:60</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L115">src/core/Renderer.ts:115</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.bindVertexArray() method of the WebGL 2 API binds a passed WebGLVertexArrayObject object to the buffer.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -259,6 +341,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.bindVertexArray() method of the WebGL 2 API binds a passed WebGLVertexArrayObject object to the buffer.</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -278,9 +365,19 @@
 					<div class="tsd-signature tsd-kind-icon">colour<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L31">src/core/Renderer.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L37">src/core/Renderer.ts:37</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to clear the color bit</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>true</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="createVertexArray" class="tsd-anchor"></a>
@@ -288,9 +385,14 @@
 					<div class="tsd-signature tsd-kind-icon">create<wbr>Vertex<wbr>Array<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">WebGLVertexArrayObject</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L59">src/core/Renderer.ts:59</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L111">src/core/Renderer.ts:111</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.createVertexArray() method of the WebGL 2 API creates and initializes a WebGLVertexArrayObject object that represents a vertex array object (VAO) pointing to vertex array data and which provides names for different sets of vertex data.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -300,6 +402,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.createVertexArray() method of the WebGL 2 API creates and initializes a WebGLVertexArrayObject object that represents a vertex array object (VAO) pointing to vertex array data and which provides names for different sets of vertex data.</p>
+											</div>
+										</div>
 										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">WebGLVertexArrayObject</span></h4>
 									</li>
 								</ul>
@@ -313,9 +420,14 @@
 					<div class="tsd-signature tsd-kind-icon">current<wbr>Geometry<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L43">src/core/Renderer.ts:43</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L83">src/core/Renderer.ts:83</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Stores the current geometry being rendered. Used to otimise geo rendering.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="currentProgram" class="tsd-anchor"></a>
@@ -323,7 +435,7 @@
 					<div class="tsd-signature tsd-kind-icon">current<wbr>Program<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L64">src/core/Renderer.ts:64</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L126">src/core/Renderer.ts:126</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -333,9 +445,14 @@
 					<div class="tsd-signature tsd-kind-icon">delete<wbr>Vertex<wbr>Array<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>vertexArray<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">WebGLVertexArrayObject</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L61">src/core/Renderer.ts:61</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L119">src/core/Renderer.ts:119</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.deleteVertexArray() method of the WebGL 2 API deletes a given WebGLVertexArrayObject object.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -345,6 +462,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.deleteVertexArray() method of the WebGL 2 API deletes a given WebGLVertexArrayObject object.</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -364,9 +486,19 @@
 					<div class="tsd-signature tsd-kind-icon">depth<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L32">src/core/Renderer.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L42">src/core/Renderer.ts:42</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to render a depth buffer. This property is passed to the rendering context.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>true</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="dpr" class="tsd-anchor"></a>
@@ -374,9 +506,19 @@
 					<div class="tsd-signature tsd-kind-icon">dpr<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L27">src/core/Renderer.ts:27</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L22">src/core/Renderer.ts:22</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The pixel aspect ratio of the renderer.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>window.devicePixelRatio or 2, whichever is smaller.</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="drawArraysInstanced" class="tsd-anchor"></a>
@@ -384,9 +526,14 @@
 					<div class="tsd-signature tsd-kind-icon">draw<wbr>Arrays<wbr>Instanced<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>mode<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, first<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, instanceCound<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L46">src/core/Renderer.ts:46</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L92">src/core/Renderer.ts:92</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.drawArraysInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawArrays() method. In addition, it can execute multiple instances of the range of elements.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -396,6 +543,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.drawArraysInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawArrays() method. In addition, it can execute multiple instances of the range of elements.</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -424,9 +576,14 @@
 					<div class="tsd-signature tsd-kind-icon">draw<wbr>Buffers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>buffers<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L62">src/core/Renderer.ts:62</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L123">src/core/Renderer.ts:123</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.drawBuffers() method of the WebGL 2 API defines draw buffers to which fragment colors are written into. The draw buffer settings are part of the state of the currently bound framebuffer or the drawingbuffer if no framebuffer is bound.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -436,6 +593,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.drawBuffers() method of the WebGL 2 API defines draw buffers to which fragment colors are written into. The draw buffer settings are part of the state of the currently bound framebuffer or the drawingbuffer if no framebuffer is bound.</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -455,9 +617,14 @@
 					<div class="tsd-signature tsd-kind-icon">draw<wbr>Elements<wbr>Instanced<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>mode<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, count<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, offset<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, instanceCount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L52">src/core/Renderer.ts:52</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L101">src/core/Renderer.ts:101</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.drawElementsInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawElements() method. In addition, it can execute multiple instances of a set of elements.</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -467,6 +634,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.drawElementsInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawElements() method. In addition, it can execute multiple instances of a set of elements.</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -498,9 +670,14 @@
 					<div class="tsd-signature tsd-kind-icon">extensions<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLExtensions.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLExtensions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L40">src/core/Renderer.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L74">src/core/Renderer.ts:74</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Stores the enabled extensions</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="gl" class="tsd-anchor"></a>
@@ -508,19 +685,14 @@
 					<div class="tsd-signature tsd-kind-icon">gl<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L38">src/core/Renderer.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L66">src/core/Renderer.ts:66</a></li>
 						</ul>
 					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="id" class="tsd-anchor"></a>
-					<h3>id</h3>
-					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L26">src/core/Renderer.ts:26</a></li>
-						</ul>
-					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WTCGL rendering context.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="isWebgl2" class="tsd-anchor"></a>
@@ -528,9 +700,14 @@
 					<div class="tsd-signature tsd-kind-icon">is<wbr>Webgl2<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L36">src/core/Renderer.ts:36</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L61">src/core/Renderer.ts:61</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether the context we&#39;ve retrieved is webGL2 or not.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="parameters" class="tsd-anchor"></a>
@@ -538,9 +715,14 @@
 					<div class="tsd-signature tsd-kind-icon">parameters<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLRendererParams.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRendererParams</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L41">src/core/Renderer.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L78">src/core/Renderer.ts:78</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Stored device parameters such as max allowable units etc.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="premultipliedAlpha" class="tsd-anchor"></a>
@@ -548,9 +730,19 @@
 					<div class="tsd-signature tsd-kind-icon">premultiplied<wbr>Alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L34">src/core/Renderer.ts:34</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L52">src/core/Renderer.ts:52</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to use premultiplied alphs. This property is passed to the rendering context.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>false</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="state" class="tsd-anchor"></a>
@@ -558,9 +750,14 @@
 					<div class="tsd-signature tsd-kind-icon">state<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLRendererState.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRendererState</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L39">src/core/Renderer.ts:39</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L70">src/core/Renderer.ts:70</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The rendering state. Allows us to avoid redundant calls on methods used internally</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="stencil" class="tsd-anchor"></a>
@@ -568,9 +765,19 @@
 					<div class="tsd-signature tsd-kind-icon">stencil<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L33">src/core/Renderer.ts:33</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L47">src/core/Renderer.ts:47</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to render a stencil buffer. This property is passed to the rendering context.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>false</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="vertexAttribDivisor" class="tsd-anchor"></a>
@@ -578,9 +785,14 @@
 					<div class="tsd-signature tsd-kind-icon">vertex<wbr>Attrib<wbr>Divisor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, divisor<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L45">src/core/Renderer.ts:45</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L88">src/core/Renderer.ts:88</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL2RenderingContext.vertexAttribDivisor() method of the WebGL 2 API modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives with</p>
+						</div>
+					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -590,6 +802,11 @@
 								</ul>
 								<ul class="tsd-descriptions">
 									<li class="tsd-description">
+										<div class="tsd-comment tsd-typography">
+											<div class="lead">
+												<p>The WebGL2RenderingContext.vertexAttribDivisor() method of the WebGL 2 API modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives with</p>
+											</div>
+										</div>
 										<h4 class="tsd-parameters-title">Parameters</h4>
 										<ul class="tsd-parameters">
 											<li>
@@ -609,19 +826,80 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Accessors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-set-signature tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="activeTexture" class="tsd-anchor"></a>
+					<h3>active<wbr>Texture</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> activeTexture<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> activeTexture<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L456">src/core/Renderer.ts:456</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the active texture value</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L451">src/core/Renderer.ts:451</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the active texture value</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
 					<a name="cullFace" class="tsd-anchor"></a>
 					<h3>cull<wbr>Face</h3>
-					<ul class="tsd-signatures tsd-kind-set-signature tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> cullFace<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> cullFace<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L298">src/core/Renderer.ts:298</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L408">src/core/Renderer.ts:408</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the cull face bit</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L403">src/core/Renderer.ts:403</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the cull face bit</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -632,19 +910,38 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-set-signature tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
 					<a name="depthFunc" class="tsd-anchor"></a>
 					<h3>depth<wbr>Func</h3>
-					<ul class="tsd-signatures tsd-kind-set-signature tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> depthFunc<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> depthFunc<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L316">src/core/Renderer.ts:316</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L444">src/core/Renderer.ts:444</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the depth function bit</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L439">src/core/Renderer.ts:439</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the depth function bit</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -655,19 +952,38 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-set-signature tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
 					<a name="depthMask" class="tsd-anchor"></a>
 					<h3>depth<wbr>Mask</h3>
-					<ul class="tsd-signatures tsd-kind-set-signature tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> depthMask<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> depthMask<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L310">src/core/Renderer.ts:310</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L432">src/core/Renderer.ts:432</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the depth mask bit</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L427">src/core/Renderer.ts:427</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the depth mask bit</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -689,7 +1005,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L226">src/core/Renderer.ts:226</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L299">src/core/Renderer.ts:299</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Vec2</span></h4>
@@ -697,7 +1013,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L220">src/core/Renderer.ts:220</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L293">src/core/Renderer.ts:293</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -710,19 +1026,38 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-set-signature tsd-parent-kind-class">
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
 					<a name="frontFace" class="tsd-anchor"></a>
 					<h3>front<wbr>Face</h3>
-					<ul class="tsd-signatures tsd-kind-set-signature tsd-parent-kind-class">
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> frontFace<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
 						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> frontFace<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L304">src/core/Renderer.ts:304</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L420">src/core/Renderer.ts:420</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the front face bit</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L415">src/core/Renderer.ts:415</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets the front face bit</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -737,29 +1072,6 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="activeTexture" class="tsd-anchor"></a>
-					<h3>active<wbr>Texture</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">active<wbr>Texture<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L322">src/core/Renderer.ts:322</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>value: <span class="tsd-signature-type">number</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="bindFramebuffer" class="tsd-anchor"></a>
 					<h3>bind<wbr>Framebuffer</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -769,9 +1081,14 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L328">src/core/Renderer.ts:328</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L467">src/core/Renderer.ts:467</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Binds a given WebGLFramebuffer to a target .</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -779,9 +1096,15 @@
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> buffer<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">WebGLFramebuffer</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>A WebGLFramebuffer object to bind. If framebuffer is null, then the canvas (which has no WebGLFramebuffer object) is bound.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> target<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>A GLenum specifying the binding point (target). Typically only <code>gl.FRAMEBUFFER</code> see <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer">MDN</a> for more information</p>
+											</div>
 										</li>
 									</ul>
 								</li>
@@ -800,13 +1123,21 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L256">src/core/Renderer.ts:256</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L343">src/core/Renderer.ts:343</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Disables specific WebGL capabilities for this context.</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>id: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the capability to enable</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -823,13 +1154,22 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L250">src/core/Renderer.ts:250</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L333">src/core/Renderer.ts:333</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Enables specific WebGL capabilities for this context.
+									See <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/enable">MDN</a> for more details</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>id: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The ID of the capability to enable</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -846,22 +1186,39 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L337">src/core/Renderer.ts:337</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L483">src/core/Renderer.ts:483</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Finds and enables a webGL extension and, if it has a corresponding function, returns that.</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>extension: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The extension identifier.</p>
+									</div>
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> webgl2Func: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>-The name of the webGL2 function to return.</p>
+									</div>
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> extFunc: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The name of the webGL1 functiont to return.</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							<ul>
+								<li>A WebGL function, bound to this renderer or null (if no function exists)</li>
+							</ul>
 						</li>
 					</ul>
 				</section>
@@ -875,9 +1232,14 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L390">src/core/Renderer.ts:390</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L563">src/core/Renderer.ts:563</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Retrieves the list of renderable objects sorted by position, explicit render order and applied depth</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
@@ -885,20 +1247,35 @@
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter">
 											<h5>camera<span class="tsd-signature-symbol">: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The camera to use to determine the render list, applies frustum culling etc.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5>frustum<wbr>Cull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to apply frustum culling</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The root scene to render.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5>sort<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to sort the list at all.</p>
+											</div>
 										</li>
 									</ul>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a><span class="tsd-signature-symbol">[]</span></h4>
+							<ul>
+								<li>An array of renderable objects</li>
+							</ul>
 						</li>
 					</ul>
 				</section>
@@ -906,40 +1283,66 @@
 					<a name="render" class="tsd-anchor"></a>
 					<h3>render</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">render<span class="tsd-signature-symbol">(</span>__namedParameters<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a><span class="tsd-signature-symbol">; </span>clear<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>frustumCull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">; </span>sort<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>target<span class="tsd-signature-symbol">: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a><span class="tsd-signature-symbol">; </span>update<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">render<span class="tsd-signature-symbol">(</span>__namedParameters<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">?: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a><span class="tsd-signature-symbol">; </span>clear<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>frustumCull<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">; </span>sort<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>target<span class="tsd-signature-symbol">?: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a><span class="tsd-signature-symbol">; </span>update<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L451">src/core/Renderer.ts:451</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L635">src/core/Renderer.ts:635</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Renders a scene</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a><span class="tsd-signature-symbol">; </span>clear<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>frustumCull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">; </span>sort<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>target<span class="tsd-signature-symbol">: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a><span class="tsd-signature-symbol">; </span>update<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span></h5>
+									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">?: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a><span class="tsd-signature-symbol">; </span>clear<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>frustumCull<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">; </span>sort<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>target<span class="tsd-signature-symbol">?: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a><span class="tsd-signature-symbol">; </span>update<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span></h5>
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter">
-											<h5>camera<span class="tsd-signature-symbol">: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> camera<span class="tsd-signature-symbol">?: </span><a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The camera to render with. If not supplied will just render as is.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
-											<h5>clear<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> clear<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to clear the scene prior to rendering. Only matters if renderer.autoClear is false.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
-											<h5>frustum<wbr>Cull<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> frustum<wbr>Cull<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to apply frustum culling prior to rendering.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5>scene<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The renderable object to render.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
-											<h5>sort<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> sort<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to sort the objects prior to rendering.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
-											<h5>target<span class="tsd-signature-symbol">: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> target<span class="tsd-signature-symbol">?: </span><a href="RenderTarget.html" class="tsd-signature-type" data-tsd-kind="Class">RenderTarget</a></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The render target to render to.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
-											<h5>update<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+											<h5><span class="tsd-flag ts-flagOptional">Optional</span> update<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to update all of the object worl matrices prior to rendering.</p>
+											</div>
 										</li>
 									</ul>
 								</li>
@@ -958,16 +1361,28 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L284">src/core/Renderer.ts:284</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L386">src/core/Renderer.ts:386</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Sets a blending function for use in the application.
+									See <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendEquation">MDN</a> for more information</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>modeRGB: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The function to be used in RGB models</p>
+									</div>
 								</li>
 								<li>
 									<h5>modeAlpha: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The functions to be used for both RGB and alpha models</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -984,22 +1399,41 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L262">src/core/Renderer.ts:262</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L358">src/core/Renderer.ts:358</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set&#39;s various blend functions are used for blending pixel calculations
+										See <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc">MDN</a> for more details
+									If alpha functions are provided, this will call gl.blendFuncSeparate, otherwise blendFunc</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>src: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A WebGL_API.Types specifying a multiplier for the RGB source blending factors.</p>
+									</div>
 								</li>
 								<li>
 									<h5>dst: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A WebGL_API.Types specifying a multiplier for the RGB destination blending factors.</p>
+									</div>
 								</li>
 								<li>
 									<h5>srcAlpha: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A WebGL_API.Types specifying a multiplier for the alpha source blending factor.</p>
+									</div>
 								</li>
 								<li>
 									<h5>dstAlpha: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A WebGL_API.Types specifying a multiplier for the alpha destination blending factor.</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1016,16 +1450,27 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L230">src/core/Renderer.ts:230</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L308">src/core/Renderer.ts:308</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set up the viewport for rendering.</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>dimensions: <span class="tsd-signature-type">Vec2</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The dimensions of the viewport</p>
+									</div>
 								</li>
 								<li>
 									<h5>position: <span class="tsd-signature-type">Vec2</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The position of the viewport</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -1042,19 +1487,31 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L357">src/core/Renderer.ts:357</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L509">src/core/Renderer.ts:509</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>An array sort for opaque elements</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>a: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 								<li>
 									<h5>b: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>The number to determine relative position</p>
 						</li>
 					</ul>
 				</section>
@@ -1068,19 +1525,31 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L369">src/core/Renderer.ts:369</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L527">src/core/Renderer.ts:527</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>An array sort for transparent elements</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>a: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 								<li>
 									<h5>b: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>The number to determine relative position</p>
 						</li>
 					</ul>
 				</section>
@@ -1094,19 +1563,31 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/ed7fa31/src/core/Renderer.ts#L380">src/core/Renderer.ts:380</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/Renderer.ts#L544">src/core/Renderer.ts:544</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>An array sort for UI (no depth) elements</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>a: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 								<li>
 									<h5>b: <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A renderable object for sorting</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>The number to determine relative position</p>
 						</li>
 					</ul>
 				</section>
@@ -1203,9 +1684,6 @@
 								<a href="Renderer.html#gl" class="tsd-kind-icon">gl</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Renderer.html#id" class="tsd-kind-icon">id</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="Renderer.html#isWebgl2" class="tsd-kind-icon">is<wbr>Webgl2</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
@@ -1223,23 +1701,23 @@
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="Renderer.html#vertexAttribDivisor" class="tsd-kind-icon">vertex<wbr>Attrib<wbr>Divisor</a>
 							</li>
-							<li class=" tsd-kind-set-signature tsd-parent-kind-class">
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="Renderer.html#activeTexture" class="tsd-kind-icon">active<wbr>Texture</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
 								<a href="Renderer.html#cullFace" class="tsd-kind-icon">cull<wbr>Face</a>
 							</li>
-							<li class=" tsd-kind-set-signature tsd-parent-kind-class">
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
 								<a href="Renderer.html#depthFunc" class="tsd-kind-icon">depth<wbr>Func</a>
 							</li>
-							<li class=" tsd-kind-set-signature tsd-parent-kind-class">
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
 								<a href="Renderer.html#depthMask" class="tsd-kind-icon">depth<wbr>Mask</a>
 							</li>
 							<li class=" tsd-kind-accessor tsd-parent-kind-class">
 								<a href="Renderer.html#dimensions" class="tsd-kind-icon">dimensions</a>
 							</li>
-							<li class=" tsd-kind-set-signature tsd-parent-kind-class">
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
 								<a href="Renderer.html#frontFace" class="tsd-kind-icon">front<wbr>Face</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="Renderer.html#activeTexture" class="tsd-kind-icon">active<wbr>Texture</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="Renderer.html#bindFramebuffer" class="tsd-kind-icon">bind<wbr>Framebuffer</a>

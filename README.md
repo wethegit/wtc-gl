@@ -10,6 +10,10 @@ ES6 Web GL library for simple WebGL work. Much of this 1.0 version has been adda
 - upload identity matrix if null ?
 - sampler Cube
 
+### Renderer
+
+- Handle context loss https://www.khronos.org/webgl/wiki/HandlingContextLost
+
 ### Geometry
 
 - fit in transform feedback
