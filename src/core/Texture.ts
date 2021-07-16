@@ -4,11 +4,6 @@ import {
   WTCGLRenderingContext
 } from './types'
 
-// TODO: delete texture
-// TODO: use texSubImage2D for updates (video or when loaded)
-// TODO: need? encoding = linearEncoding
-// TODO: support non-compressed mipmaps uploads
-
 const emptyPixel = new Uint8Array(4)
 
 function isPowerOf2(value) {
@@ -17,39 +12,148 @@ function isPowerOf2(value) {
 
 let ID = 1
 
+/**
+ * A texture class contains image data for use in a shader. Along with the image data, the texture contains state variable that determine how secondary conditions, like wrapping and interpolation work.
+ */
 class Texture {
+  /**
+   * A unique ID for the texture object, allows us to determine whether a texture has already been bound or not.
+   */
   id: number
 
+  /**
+   * The WTCGL rendering context.
+   */
   gl: WTCGLRenderingContext
 
-  image: HTMLImageElement
+  /**
+   * The image element representing the texture. Can be an HTML image, video, or canvas
+   */
+  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  /**
+   * The WebGL texture object containing the data and state for WebGL
+   */
   texture: WebGLTexture
 
+  /**
+   * The width of the texture.
+   */
   width: number
+  /**
+   * The height of the texture.
+   */
   height: number
 
+  /**
+   * The binding point for the texture.
+   * @default gl.TEXTURE_2D
+   */
   target: GLenum
+  /**
+   * The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * @default gl.UNSIGNED_BYTE
+   */
   type: GLenum
+  /**
+   * The texture format.
+   * @default gl.RGBA
+   */
   format: GLenum
+  /**
+   * the texture internal format.
+   * @default gl.RGBA
+   */
   internalFormat: GLenum
+  /**
+   * The filter to use when rendering smaller.
+   */
   minFilter: GLenum
+  /**
+   * The filter to use when rendering larger.
+   */
   magFilter: GLenum
+  /**
+   * Wrapping. Normally one of gl.CLAMP_TO_EDGE, gl.REPEAT, gl.MIRRORED REPEAT
+   * @default gl.CLAMP_TO_EDGE
+   */
   wrapS: GLenum
+  /**
+   * Wrapping. Normally one of gl.CLAMP_TO_EDGE, gl.REPEAT, gl.MIRRORED REPEAT
+   * @default gl.CLAMP_TO_EDGE
+   */
   wrapT: GLenum
 
+  /**
+   * Whether to generate mip maps for this texture. This requires that the texture be power of 2 in size
+   * @default true
+   */
   generateMipmaps: boolean
+  /**
+   * Whether the texture is interpolated as having premultiplied alpha.
+   * @default false
+   */
   premultiplyAlpha: boolean
+  /**
+   * Whether to flip the Y direction of the texture
+   */
   flipY: boolean
 
+  /**
+   * The unpack alignment for pixel stores.
+   */
   unpackAlignment: 1 | 2 | 4 | 8
+  /**
+   * The anistropic filtering level for the texture.
+   * @default 0
+   */
   anisotropy: number
+  /**
+   * A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
+   * @default 0
+   */
   level: number
 
-  store: { image: HTMLImageElement | null }
+  /**
+   * The image store
+   */
+  store: {
+    image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | null
+  }
+  /**
+   * A local reference to the renderer state
+   */
   glState: WTCGLRendererState
+  /**
+   * Texture state, contains the basic texture properties.
+   */
   state: WTCGLTextureState
 
+  /**
+   * Whether the texture needs an update in memory
+   */
   needsUpdate: boolean
+
+  /**
+   * Create a render target object.
+   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
+   * @param __namedParameters - The parameters to initialise the renderer.
+   * @param target - The binding point for the frame buffers.
+   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * @param format - The texture format.
+   * @param internalFormat - the texture internalFormat.
+   * @param wrapS - Wrapping
+   * @param wrapT - Wrapping
+   * @param generateMipmaps - Whether to generate mips for this texture
+   * @param minFilter - The filter to use when rendering smaller
+   * @param magFilter - The filter to use when enlarging
+   * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
+   * @param flipY - Whether to flip the Y component of the supplied image
+   * @param anistropy - The anistropic filtering level for the texture.
+   * @param unpackAlignment - The unpack alignment for pixel stores.
+   * @param level - A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
+   * @param width - The width of the render target.
+   * @param height - The height of the render target.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -71,7 +175,7 @@ class Texture {
       width, // used for RenderTargets or Data Textures
       height = width
     }: {
-      image?: HTMLImageElement
+      image?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
       target?: GLenum
       type?: GLenum
       format?: GLenum
@@ -132,6 +236,9 @@ class Texture {
     }
   }
 
+  /**
+   * Bind the texture. Skips over if it's determined that the texture is already bound.
+   */
   bind() {
     // Already bound to active texture unit
     if (this.glState.textureUnits[this.glState.activeTextureUnit] === this.id)
@@ -140,6 +247,11 @@ class Texture {
     this.glState.textureUnits[this.glState.activeTextureUnit] = this.id
   }
 
+  /**
+   * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
+   * @param textureUnit The texture unit to update against.
+   * @returns
+   */
   update(textureUnit = 0) {
     const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
 
