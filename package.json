@@ -17,7 +17,7 @@
     "document": "npx typedoc src/index.ts"
   },
   "dependencies": {
-    "wtc-math": "^1.0.5"
+    "wtc-math": "^1.0.6"
   },
   "devDependencies": {
     "husky": "^5.1.3",

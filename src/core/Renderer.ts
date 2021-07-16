@@ -403,7 +403,7 @@ class Renderer {
     if (camera && frustumCull) camera.updateFrustum()
 
     // Get visible
-    scene.traverse((node: any) => {
+    scene.traverse((node: Obj): boolean | null => {
       if (!node.visible) return true
       if (!(node instanceof Drawable)) return
 

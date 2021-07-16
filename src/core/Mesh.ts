@@ -3,17 +3,60 @@ import { Mat3, Mat4 } from 'wtc-math'
 import { Drawable } from './Drawable'
 import { Geometry } from './Geometry'
 import { Program } from './Program'
+import { Camera } from './Camera'
+import { Uniform } from './Uniform'
 
+type MeshCallback = ({ mesh: Mesh, camera: Camera }) => void
+
+/**
+ * Class representing a mesh. A mesh is a binding point between geometry and a program.
+ * @extends Drawable
+ **/
 class Mesh extends Drawable {
+  /**
+   * The geometry to render.
+   */
   geometry: Geometry
 
+  /**
+   * The mode to use to draw this mesh. Can be one of:
+   * - gl.POINTS: Draws a single dot for each vertex
+   * - gl.LINE_STRIP: Draws a straight line between the vertices
+   * - gl.LINE_LOOP: As above, but loops back.
+   * - gl.LINES: Draws many lines between each vertex pair
+   * - gl.TRIANGLE_STRIP: Draws a series of triangles between each vertice trio
+   * - gl.TRIANGLE_FAN: Draws a series of triangles between each vertice trio, treating the first vertex as the origin of each triangle
+   * - gl.TRIANGLES: Draws a triangle for a group of three vertices
+   */
   mode: GLenum
 
+  /**
+   * The world matrix projected by the camera's view matrix
+   */
   modelViewMatrix: Mat4
+  /**
+   * The model-view normal matrix
+   */
   normalMatrix: Mat3
+  /**
+   * Any callbacks to run before render
+   */
   beforeRenderCallbacks: { ({ mesh: Mesh, camera: number }): void }[]
+  /**
+   * Any callbacks to run after render
+   */
   afterRenderCallbacks: { ({ mesh: Mesh, camera: number }): void }[]
 
+  /**
+   * Create a mesh
+   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
+   * @param {Object} __namedParameters - The parameters for the attribute
+   * @param {Geometry} geometry - The geometry for the mesh to render
+   * @param {Program} program - The program - shaders and uniforms - used to render the geometry
+   * @param {GLenum} mode - The mode to render using
+   * @param {boolean} frustumCulled - Whether to apply culling to this object
+   * @param {number} renderOrder - The explicit render order of the object. If this is zero, then it will be instead calculated at render time.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -44,35 +87,106 @@ class Mesh extends Drawable {
     this.afterRenderCallbacks = []
   }
 
-  onBeforeRender(f) {
+  /**
+   * Add a before render callback.
+   * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
+   **/
+  addBeforeRender(f: MeshCallback) {
     this.beforeRenderCallbacks.push(f)
     return this
   }
 
-  onAfterRender(f) {
+  /**
+   * Remove a before render callback.
+   * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
+   **/
+  removeBeforeRender(f: MeshCallback) {
+    this.beforeRenderCallbacks.forEach((_f, i) => {
+      if (_f == f) this.beforeRenderCallbacks.splice(i, 1)
+    })
+  }
+
+  /**
+   * Remove all before render callbacks
+   */
+  removeAllBeforeRender() {
+    this.beforeRenderCallbacks = []
+  }
+
+  /**
+   * Add an after render callback.
+   * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
+   **/
+  addAfterRender(f: MeshCallback) {
     this.afterRenderCallbacks.push(f)
     return this
   }
 
-  draw({ camera }: { camera?: any } = {}): void {
+  /**
+   * Remove an after render callback.
+   * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
+   **/
+  removeAfterRender(f: MeshCallback) {
+    this.afterRenderCallbacks.forEach((_f, i) => {
+      if (_f == f) this.afterRenderCallbacks.splice(i, 1)
+    })
+  }
+
+  /**
+   * Remove all afyer render callbacks
+   */
+  removeAllAfterRender() {
+    this.afterRenderCallbacks = []
+  }
+
+  /**
+   * Drw the mesh. If a camera is supplied to the draw call, its various matrices will be added to the program uniforms
+   * @param {Camera} camera - The camera to use to supply transformation matrices
+   */
+  draw({ camera }: { camera?: Camera } = {}): void {
     this.beforeRenderCallbacks.forEach((f) => f && f({ mesh: this, camera }))
     if (camera) {
       // Add empty matrix uniforms to program if unset
       if (!this.program.uniforms.modelMatrix) {
         Object.assign(this.program.uniforms, {
-          modelMatrix: { value: null },
-          viewMatrix: { value: null },
-          modelViewMatrix: { value: null },
-          normalMatrix: { value: null },
-          projectionMatrix: { value: null },
-          cameraPosition: { value: null }
+          u_modelMatrix: new Uniform({
+            name: 'modelMatrix',
+            value: null,
+            kind: 'mat4'
+          }),
+          u_viewMatrix: new Uniform({
+            name: 'viewMatrix',
+            value: null,
+            kind: 'mat4'
+          }),
+          u_modelViewMatrix: new Uniform({
+            name: 'modelViewMatrix',
+            value: null,
+            kind: 'mat4'
+          }),
+          u_normalMatrix: new Uniform({
+            name: 'normalMatrix',
+            value: null,
+            kind: 'mat3'
+          }),
+          u_projectionMatrix: new Uniform({
+            name: 'projectionMatrix',
+            value: null,
+            kind: 'mat4'
+          }),
+          u_cameraPosition: new Uniform({
+            name: 'cameraPosition',
+            value: null,
+            kind: 'float_vec3'
+          })
         })
       }
 
       // Set the matrix uniforms
-      this.program.uniforms.projectionMatrix.value = camera.projectionMatrix
-      this.program.uniforms.cameraPosition.value = camera.worldPosition
-      this.program.uniforms.viewMatrix.value = camera.viewMatrix
+      this.program.uniforms.projectionMatrix.value =
+        camera.projectionMatrix.array
+      this.program.uniforms.cameraPosition.value = camera.worldPosition.array
+      this.program.uniforms.viewMatrix.value = camera.viewMatrix.array
       this.modelViewMatrix = camera.viewMatrix.multiplyNew(this.worldMatrix)
       this.normalMatrix = Mat3.fromMat4(this.modelViewMatrix)
       this.program.uniforms.modelMatrix.value = this.worldMatrix.array
