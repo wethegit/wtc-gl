@@ -4,6 +4,12 @@ ES6 Web GL library for simple WebGL work. Much of this 1.0 version has been adda
 
 ## To-dos
 
+### Program
+
+- upload empty texture if null ? maybe not
+- upload identity matrix if null ?
+- sampler Cube
+
 ### Geometry
 
 - fit in transform feedback

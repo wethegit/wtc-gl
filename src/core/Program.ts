@@ -9,10 +9,6 @@ import {
 import { Texture } from './Texture'
 import { Uniform } from './Uniform'
 
-// TODO: upload empty texture if null ? maybe not
-// TODO: upload identity matrix if null ?
-// TODO: sampler Cube
-
 interface WTCGLUniformArray {
   [index: string]: Uniform
 }
