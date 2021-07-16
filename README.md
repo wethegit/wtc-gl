@@ -14,6 +14,13 @@ ES6 Web GL library for simple WebGL work. Much of this 1.0 version has been adda
 
 - Handle context loss https://www.khronos.org/webgl/wiki/HandlingContextLost
 
+### Render Target
+
+- multi target rendering
+- test stencil and depth
+- destroy
+- blit on resize?
+
 ### Geometry
 
 - fit in transform feedback

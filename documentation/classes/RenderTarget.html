@@ -65,6 +65,13 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Create a render target. A render target allows you to render a scene to a texture, instead of to screen. And can be used to either render a different view for composition to a scene, or to create advanced post processing effects.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -96,9 +103,14 @@
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#stencil" class="tsd-kind-icon">stencil</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#stencilBuffer" class="tsd-kind-icon">stencil<wbr>Buffer</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#target" class="tsd-kind-icon">target</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#texture" class="tsd-kind-icon">texture</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#textures" class="tsd-kind-icon">textures</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="RenderTarget.html#width" class="tsd-kind-icon">width</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="RenderTarget.html#texture" class="tsd-kind-icon">texture</a></li>
 							</ul>
 						</section>
 					</div>
@@ -116,64 +128,124 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L27">src/core/RenderTarget.ts:27</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L82">src/core/RenderTarget.ts:82</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a render target object.</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>gl: <a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The WTCGL Rendering context</p>
+										</div>
+									</div>
 								</li>
 								<li>
 									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>colour<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>depth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>depthTexture<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a><span class="tsd-signature-symbol">; </span>format<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>internalFormat<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>magFilter<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>minFilter<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>premultiplyAlpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>stencil<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>target<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>unpackAlignment<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">1</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">2</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">4</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">8</span><span class="tsd-signature-symbol">; </span>width<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>wrapS<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>wrapT<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = {}</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The parameters to initialise the renderer.</p>
+										</div>
+									</div>
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> colour<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The number of colour attachments to create.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> depth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to create a depth buffer</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> depth<wbr>Texture<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a></h5>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> format<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The texture format.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The height of the render target.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> internal<wbr>Format<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>the texture internalFormat.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> mag<wbr>Filter<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The filter to use when enlarging</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> min<wbr>Filter<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The filter to use when rendering smaller</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> premultiply<wbr>Alpha<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to use premultiplied alpha for stored textures.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> stencil<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Whether to create a stencil buffer</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> target<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The binding point foe the frame buffers.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> type<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> unpack<wbr>Alignment<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">1</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">2</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">4</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">8</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The unpack alignment for pixel stores.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> width<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>The width of the render target.</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> wrapS<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Wrapping</p>
+											</div>
 										</li>
 										<li class="tsd-parameter">
 											<h5><span class="tsd-flag ts-flagOptional">Optional</span> wrapT<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
+											<div class="tsd-comment tsd-typography">
+												<p>Wrapping</p>
+											</div>
 										</li>
 									</ul>
 								</li>
@@ -191,9 +263,14 @@
 					<div class="tsd-signature tsd-kind-icon">buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WebGLFramebuffer</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L11">src/core/RenderTarget.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L16">src/core/RenderTarget.ts:16</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WebGL frame buffer object to render to.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="depth" class="tsd-anchor"></a>
@@ -201,9 +278,14 @@
 					<div class="tsd-signature tsd-kind-icon">depth<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L22">src/core/RenderTarget.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L50">src/core/RenderTarget.ts:50</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to render a depth buffer.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="depthBuffer" class="tsd-anchor"></a>
@@ -211,9 +293,14 @@
 					<div class="tsd-signature tsd-kind-icon">depth<wbr>Buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WebGLFramebuffer</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L14">src/core/RenderTarget.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L24">src/core/RenderTarget.ts:24</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The depth buffer.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="depthStencilBuffer" class="tsd-anchor"></a>
@@ -221,9 +308,14 @@
 					<div class="tsd-signature tsd-kind-icon">depth<wbr>Stencil<wbr>Buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WebGLFramebuffer</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L16">src/core/RenderTarget.ts:16</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L32">src/core/RenderTarget.ts:32</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The depth-stencil buffer.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="depthTexture" class="tsd-anchor"></a>
@@ -231,9 +323,14 @@
 					<div class="tsd-signature tsd-kind-icon">depth<wbr>Texture<span class="tsd-signature-symbol">:</span> <a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L17">src/core/RenderTarget.ts:17</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L36">src/core/RenderTarget.ts:36</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The depth texture.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="gl" class="tsd-anchor"></a>
@@ -241,9 +338,14 @@
 					<div class="tsd-signature tsd-kind-icon">gl<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L10">src/core/RenderTarget.ts:10</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L12">src/core/RenderTarget.ts:12</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The WTCGL rendering context.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="height" class="tsd-anchor"></a>
@@ -251,9 +353,14 @@
 					<div class="tsd-signature tsd-kind-icon">height<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L20">src/core/RenderTarget.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L45">src/core/RenderTarget.ts:45</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The height of the target.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="stencil" class="tsd-anchor"></a>
@@ -261,9 +368,14 @@
 					<div class="tsd-signature tsd-kind-icon">stencil<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L23">src/core/RenderTarget.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L54">src/core/RenderTarget.ts:54</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Whether to render a stencil buffer.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="stencilBuffer" class="tsd-anchor"></a>
@@ -271,9 +383,14 @@
 					<div class="tsd-signature tsd-kind-icon">stencil<wbr>Buffer<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">WebGLFramebuffer</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L15">src/core/RenderTarget.ts:15</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L28">src/core/RenderTarget.ts:28</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The stencil buffer.</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="target" class="tsd-anchor"></a>
@@ -281,19 +398,19 @@
 					<div class="tsd-signature tsd-kind-icon">target<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L25">src/core/RenderTarget.ts:25</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L60">src/core/RenderTarget.ts:60</a></li>
 						</ul>
 					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="texture" class="tsd-anchor"></a>
-					<h3>texture</h3>
-					<div class="tsd-signature tsd-kind-icon">texture<span class="tsd-signature-symbol">:</span> <a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L13">src/core/RenderTarget.ts:13</a></li>
-						</ul>
-					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>A GLEnum representing the binding point for the texture / buffer.</p>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>default</dt>
+							<dd><p>gl.FRAMEBUFFER</p>
+							</dd>
+						</dl>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="textures" class="tsd-anchor"></a>
@@ -301,9 +418,14 @@
 					<div class="tsd-signature tsd-kind-icon">textures<span class="tsd-signature-symbol">:</span> <a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L12">src/core/RenderTarget.ts:12</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L20">src/core/RenderTarget.ts:20</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The texture array. If you supply only one colour, you can just output this as you normally would with gl_FragColor, otherwise you need to output one at a time with gl_FragData[x]</p>
+						</div>
+					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="width" class="tsd-anchor"></a>
@@ -311,9 +433,39 @@
 					<div class="tsd-signature tsd-kind-icon">width<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/699d3c1/src/core/RenderTarget.ts#L19">src/core/RenderTarget.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L41">src/core/RenderTarget.ts:41</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The width of the target.</p>
+						</div>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="texture" class="tsd-anchor"></a>
+					<h3>texture</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> texture<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/24419cf/src/core/RenderTarget.ts#L221">src/core/RenderTarget.ts:221</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Returns the first texture, for the majority os use cases.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="Texture.html" class="tsd-signature-type" data-tsd-kind="Class">Texture</a></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 		</div>
@@ -387,13 +539,13 @@
 								<a href="RenderTarget.html#target" class="tsd-kind-icon">target</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="RenderTarget.html#texture" class="tsd-kind-icon">texture</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="RenderTarget.html#textures" class="tsd-kind-icon">textures</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="RenderTarget.html#width" class="tsd-kind-icon">width</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="RenderTarget.html#texture" class="tsd-kind-icon">texture</a>
 							</li>
 						</ul>
 					</li>

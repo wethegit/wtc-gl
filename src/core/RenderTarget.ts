@@ -1,39 +1,93 @@
 import { WTCGLRenderingContext } from './types'
 
-// TODO: multi target rendering
-// TODO: test stencil and depth
-// TODO: destroy
-// TODO: blit on resize?
 import { Texture } from './Texture'
 
+/**
+ * Create a render target. A render target allows you to render a scene to a texture, instead of to screen. And can be used to either render a different view for composition to a scene, or to create advanced post processing effects.
+ */
 class RenderTarget {
+  /**
+   * The WTCGL rendering context.
+   */
   gl: WTCGLRenderingContext
+  /**
+   * The WebGL frame buffer object to render to.
+   */
   buffer: WebGLFramebuffer
+  /**
+   * The texture array. If you supply only one colour, you can just output this as you normally would with gl_FragColor, otherwise you need to output one at a time with gl_FragData[x]
+   */
   textures: Texture[]
-  texture: Texture
+  /**
+   * The depth buffer.
+   */
   depthBuffer: WebGLFramebuffer
+  /**
+   * The stencil buffer.
+   */
   stencilBuffer: WebGLFramebuffer
+  /**
+   * The depth-stencil buffer.
+   */
   depthStencilBuffer: WebGLFramebuffer
+  /**
+   * The depth texture.
+   */
   depthTexture: Texture | null
 
+  /**
+   * The width of the target.
+   */
   width: number
+  /**
+   * The height of the target.
+   */
   height: number
 
+  /**
+   * Whether to render a depth buffer.
+   */
   depth: boolean
+  /**
+   * Whether to render a stencil buffer.
+   */
   stencil: boolean
 
+  /**
+   * A GLEnum representing the binding point for the texture / buffer.
+   * @default gl.FRAMEBUFFER
+   */
   target: GLenum
 
+  /**
+   * Create a render target object.
+   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
+   * @param __namedParameters - The parameters to initialise the renderer.
+   * @param width - The width of the render target.
+   * @param height - The height of the render target.
+   * @param target - The binding point foe the frame buffers.
+   * @param colour - The number of colour attachments to create.
+   * @param depth - Whether to create a depth buffer
+   * @param stencil - Whether to create a stencil buffer
+   * @param wrapS - Wrapping
+   * @param wrapT - Wrapping
+   * @param minFilter - The filter to use when rendering smaller
+   * @param magFilter - The filter to use when enlarging
+   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * @param format - The texture format.
+   * @param internalFormat - the texture internalFormat.
+   * @param unpackAlignment - The unpack alignment for pixel stores.
+   * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
       width = gl.canvas.width,
       height = gl.canvas.height,
       target = gl.FRAMEBUFFER,
-      colour = 1, // number of color attachments
+      colour = 1,
       depth = true,
       stencil = false,
-      depthTexture = null, // note - stencil breaks
       wrapS = gl.CLAMP_TO_EDGE,
       wrapT = gl.CLAMP_TO_EDGE,
       minFilter = gl.LINEAR,
@@ -41,8 +95,8 @@ class RenderTarget {
       type = gl.UNSIGNED_BYTE,
       format = gl.RGBA,
       internalFormat = format,
-      unpackAlignment,
-      premultiplyAlpha
+      unpackAlignment = 4,
+      premultiplyAlpha = false
     }: {
       width?: number
       height?: number
@@ -106,89 +160,66 @@ class RenderTarget {
     // For multi-render targets shader access
     if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
 
-    // alias for majority of use cases
-    this.texture = this.textures[0]
-
-    // note depth textures break stencil - so can't use together
-    if (
-      depthTexture &&
-      (this.gl.renderer.isWebgl2 ||
-        this.gl.renderer.getExtension('WEBGL_depth_texture'))
-    ) {
-      this.depthTexture = new Texture(gl, {
+    // Render buffers
+    if (depth && !stencil) {
+      this.depthBuffer = this.gl.createRenderbuffer()
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer)
+      this.gl.renderbufferStorage(
+        this.gl.RENDERBUFFER,
+        this.gl.DEPTH_COMPONENT16,
         width,
-        height,
-        minFilter: this.gl.NEAREST,
-        magFilter: this.gl.NEAREST,
-        format: this.gl.DEPTH_COMPONENT,
-        internalFormat: gl.renderer.isWebgl2
-          ? this.gl.DEPTH_COMPONENT16
-          : this.gl.DEPTH_COMPONENT,
-        type: this.gl.UNSIGNED_INT
-      })
-      this.depthTexture.update()
-      this.gl.framebufferTexture2D(
+        height
+      )
+      this.gl.framebufferRenderbuffer(
         this.target,
         this.gl.DEPTH_ATTACHMENT,
-        this.gl.TEXTURE_2D,
-        this.depthTexture.texture,
-        0 /* level */
+        this.gl.RENDERBUFFER,
+        this.depthBuffer
       )
-    } else {
-      // Render buffers
-      if (depth && !stencil) {
-        this.depthBuffer = this.gl.createRenderbuffer()
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer)
-        this.gl.renderbufferStorage(
-          this.gl.RENDERBUFFER,
-          this.gl.DEPTH_COMPONENT16,
-          width,
-          height
-        )
-        this.gl.framebufferRenderbuffer(
-          this.target,
-          this.gl.DEPTH_ATTACHMENT,
-          this.gl.RENDERBUFFER,
-          this.depthBuffer
-        )
-      }
+    }
 
-      if (stencil && !depth) {
-        this.stencilBuffer = this.gl.createRenderbuffer()
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.stencilBuffer)
-        this.gl.renderbufferStorage(
-          this.gl.RENDERBUFFER,
-          this.gl.STENCIL_INDEX8,
-          width,
-          height
-        )
-        this.gl.framebufferRenderbuffer(
-          this.target,
-          this.gl.STENCIL_ATTACHMENT,
-          this.gl.RENDERBUFFER,
-          this.stencilBuffer
-        )
-      }
+    if (stencil && !depth) {
+      this.stencilBuffer = this.gl.createRenderbuffer()
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.stencilBuffer)
+      this.gl.renderbufferStorage(
+        this.gl.RENDERBUFFER,
+        this.gl.STENCIL_INDEX8,
+        width,
+        height
+      )
+      this.gl.framebufferRenderbuffer(
+        this.target,
+        this.gl.STENCIL_ATTACHMENT,
+        this.gl.RENDERBUFFER,
+        this.stencilBuffer
+      )
+    }
 
-      if (depth && stencil) {
-        this.depthStencilBuffer = this.gl.createRenderbuffer()
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthStencilBuffer)
-        this.gl.renderbufferStorage(
-          this.gl.RENDERBUFFER,
-          this.gl.DEPTH_STENCIL,
-          width,
-          height
-        )
-        this.gl.framebufferRenderbuffer(
-          this.target,
-          this.gl.DEPTH_STENCIL_ATTACHMENT,
-          this.gl.RENDERBUFFER,
-          this.depthStencilBuffer
-        )
-      }
+    if (depth && stencil) {
+      this.depthStencilBuffer = this.gl.createRenderbuffer()
+      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthStencilBuffer)
+      this.gl.renderbufferStorage(
+        this.gl.RENDERBUFFER,
+        this.gl.DEPTH_STENCIL,
+        width,
+        height
+      )
+      this.gl.framebufferRenderbuffer(
+        this.target,
+        this.gl.DEPTH_STENCIL_ATTACHMENT,
+        this.gl.RENDERBUFFER,
+        this.depthStencilBuffer
+      )
     }
 
     this.gl.bindFramebuffer(this.target, null)
+  }
+
+  /**
+   * Returns the first texture, for the majority os use cases.
+   */
+  get texture() {
+    return this.textures[0]
   }
 }
 
