@@ -19,7 +19,6 @@ ES6 Web GL library for simple WebGL work. Much of this 1.0 version has been adda
 - multi target rendering
 - test stencil and depth
 - destroy
-- blit on resize?
 
 ### Texture
 

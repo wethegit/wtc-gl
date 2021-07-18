@@ -223,9 +223,6 @@ class Texture {
       image: null
     }
 
-    // Alias for state store to avoid redundant calls for global state
-    this.glState = this.gl.renderer.state
-
     // State store to avoid redundant calls for per-texture state
     this.state = {
       minFilter: this.gl.NEAREST_MIPMAP_LINEAR,
@@ -241,10 +238,16 @@ class Texture {
    */
   bind() {
     // Already bound to active texture unit
-    if (this.glState.textureUnits[this.glState.activeTextureUnit] === this.id)
+    if (
+      this.gl.renderer.state.textureUnits[
+        this.gl.renderer.state.activeTextureUnit
+      ] === this.id
+    )
       return
     this.gl.bindTexture(this.target, this.texture)
-    this.glState.textureUnits[this.glState.activeTextureUnit] = this.id
+    this.gl.renderer.state.textureUnits[
+      this.gl.renderer.state.activeTextureUnit
+    ] = this.id
   }
 
   /**
@@ -256,7 +259,10 @@ class Texture {
     const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
 
     // Make sure that texture is bound to its texture unit
-    if (needsUpdate || this.glState.textureUnits[textureUnit] !== this.id) {
+    if (
+      needsUpdate ||
+      this.gl.renderer.state.textureUnits[textureUnit] !== this.id
+    ) {
       // set active texture unit to perform texture functions
       this.gl.renderer.activeTexture = textureUnit
       this.bind()
@@ -265,22 +271,22 @@ class Texture {
     if (!needsUpdate) return
     this.needsUpdate = false
 
-    if (this.flipY !== this.glState.flipY) {
+    if (this.flipY !== this.gl.renderer.state.flipY) {
       this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
-      this.glState.flipY = this.flipY
+      this.gl.renderer.state.flipY = this.flipY
     }
 
-    if (this.premultiplyAlpha !== this.glState.premultiplyAlpha) {
+    if (this.premultiplyAlpha !== this.gl.renderer.state.premultiplyAlpha) {
       this.gl.pixelStorei(
         this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
         this.premultiplyAlpha
       )
-      this.glState.premultiplyAlpha = this.premultiplyAlpha
+      this.gl.renderer.state.premultiplyAlpha = this.premultiplyAlpha
     }
 
-    if (this.unpackAlignment !== this.glState.unpackAlignment) {
+    if (this.unpackAlignment !== this.gl.renderer.state.unpackAlignment) {
       this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
-      this.glState.unpackAlignment = this.unpackAlignment
+      this.gl.renderer.state.unpackAlignment = this.unpackAlignment
     }
 
     if (this.minFilter !== this.state.minFilter) {

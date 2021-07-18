@@ -2,26 +2,76 @@ import { Renderer } from './Renderer'
 import { Texture } from './Texture'
 import { Vec3 } from 'wtc-math'
 
+/**
+ * Represents a collection of all of the properties that make up a complete blending function.
+ * @interface
+ */
 export interface WTCGLBlendFunction {
+  /**
+   * The source blend function
+   */
   src?: GLenum
+  /**
+   * The destination blend function
+   */
   dst?: GLenum
+  /**
+   * The source blend function for alpha blending
+   */
   srcAlpha?: GLenum
+  /**
+   * The destination blend function for alpha blending
+   */
   dstAlpha?: GLenum
 }
 
+/**
+ * Represents a collection of modes used to make up a blend equation.
+ * @interface
+ */
 export interface WTCGLBlendEquation {
+  /**
+   * The mode to blend when using RGB
+   */
   modeRGB?: GLenum
+  /**
+   * The mode to blend when using RGBA
+   */
   modeAlpha?: GLenum
 }
 
+/**
+ * Representes an extention of the standard Web GL active info for uniforms and attributes.
+ * See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLActiveInfo) for more information on WebGLActiveInfo.
+ * @interface
+ * @extends WebGLActiveInfo
+ */
 export interface WTCGLActiveInfo extends WebGLActiveInfo {
+  /**
+   * The uniform name, used for associating active info with WTCGLUniform objects
+   */
   uniformName?: string
+  /**
+   * If a uniform location points to a structure array.
+   */
   isStructArray?: boolean
+  /**
+   * If the uniform points to a structure.
+   */
   isStruct?: boolean
+  /**
+   * The index within the structure.
+   */
   structIndex?: number
+  /**
+   * The property within the structure to target.
+   */
   structProperty?: string
 }
 
+/**
+ * Represents a value that can be bound to a uniform.
+ */
 export type WTCGLUniformValue =
   | Texture
   | Texture[]
@@ -30,22 +80,63 @@ export type WTCGLUniformValue =
   | number
   | boolean
   | Float32Array
+/**
+ * Represents a map of uniforms returned from a program.
+ */
 export type WTCGLUniformMap = Map<WTCGLActiveInfo, WebGLUniformLocation>
+/**
+ * Represents a map of uniform locations to values. Used for caching uniforms in renderer state.
+ */
 export type WTCGLRendererUniformMap = Map<
   WebGLUniformLocation,
   WTCGLUniformValue
 >
+/**
+ * Represents an map of attributes to attribute locations.
+ */
 export type WTCGLAttributeMap = Map<WTCGLActiveInfo, GLint>
 
+/**
+ * Represents the cached state of the renderer. All of these properties can be considered "in use".
+ * @interface
+ */
 export interface WTCGLRendererState {
+  /**
+   * The blend function
+   */
   blendFunc: WTCGLBlendFunction
+  /**
+   * The blend equation
+   */
   blendEquation: WTCGLBlendEquation
+  /**
+   * Which face to cull. gl.CULL_FACE or null
+   */
   cullFace: GLenum | null
+  /**
+   * A GLEnum representing the order to face vertices to use to determine whether what the "front" face of a polygon is.
+   * Eother gl.CCW or gl.CW
+   */
   frontFace: GLenum | null
+  /**
+   * Whether to write depth information.
+   */
   depthMask: boolean
+  /**
+   * The function to use when depth testing.
+   */
   depthFunc: GLenum | null
+  /**
+   * Whether to use premultiplied alpha.
+   */
   premultiplyAlpha: boolean
+  /**
+   * Whether to flip the Y component of loaded textures in memory
+   */
   flipY: boolean
+  /**
+   * The unpack alignment for pixel stores.
+   */
   unpackAlignment: number
   framebuffer: any // TO DO Update with better type
   viewport: {
