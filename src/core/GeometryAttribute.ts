@@ -1,4 +1,4 @@
-import { WTCGLGeometryAttribute } from './types'
+import { WTCGLRenderingContext, WTCGLGeometryAttribute } from './types'
 
 /**
  * Class representing a geometry attribute. A discrete piece of data used to render some geometry.
@@ -71,7 +71,7 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     size = 1,
     stride = 0,
     offset = 0,
-    instanced,
+    instanced = 0,
     type,
     normalized = false,
     data
@@ -88,9 +88,27 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     this.stride = stride
     this.offset = offset
     this.instanced = instanced
-    this.type = type
-    this.normalized = normalized
     this.data = data
+    this.type =
+      type ||
+      (this.data.constructor === Float32Array
+        ? window.WebGL2RenderingContext.FLOAT
+        : this.data.constructor === Uint16Array
+        ? window.WebGL2RenderingContext.UNSIGNED_SHORT
+        : window.WebGL2RenderingContext.UNSIGNED_INT)
+    this.normalized = normalized
+  }
+  /**
+   * Udpate an attribute for rendering
+   * @param {WTCGLRenderingContext} gl - The WTCGL rendering context.
+   */
+  updateAttribute(gl: WTCGLRenderingContext): void {
+    if (gl.renderer.state.boundBuffer !== this.buffer) {
+      gl.bindBuffer(this.target, this.buffer)
+      gl.renderer.state.boundBuffer = this.buffer
+    }
+    gl.bufferData(this.target, this.data, gl.STATIC_DRAW)
+    this.needsUpdate = false
   }
 }
 

@@ -96,6 +96,8 @@ export interface WTCGLGeometryAttribute {
   normalized: boolean
 
   needsUpdate: boolean
+
+  updateAttribute(gl: WTCGLRenderingContext): void
 }
 
 export interface WTCGLRenderingContext extends WebGLRenderingContext {

@@ -81,20 +81,17 @@ export class Geometry {
     this.attributes = attributes
     this.id = ID++
 
-    // Store one VAO per program attribute locations order
     this.VAOs = {}
 
-    this.drawRange = { start: 0, count: 0 }
-    this.instancedCount = 0
-
-    // Unbind current VAO so that new buffers don't get added to active mesh
+    // Unbind existing VAOs
     this.gl.renderer.bindVertexArray(null)
     this.gl.renderer.currentGeometry = null
 
-    // Alias for state store to avoid redundant calls for global state
-    this.glState = this.gl.renderer.state
+    // Initialise the draw range and instance count with default values
+    this.drawRange = { start: 0, count: 0 }
+    this.instancedCount = 0
 
-    // create the buffers
+    // Initialise the attribute buffers
     for (let key in attributes) {
       this.addAttribute(key, attributes[key])
     }
@@ -108,33 +105,21 @@ export class Geometry {
   addAttribute(key: string, attr: WTCGLGeometryAttribute): void {
     this.attributes[key] = attr
 
-    // Set options
-    attr.size = attr.size || 1
-    attr.type =
-      attr.type ||
-      (attr.data.constructor === Float32Array
-        ? this.gl.FLOAT
-        : attr.data.constructor === Uint16Array
-        ? this.gl.UNSIGNED_SHORT
-        : this.gl.UNSIGNED_INT) // Uint32Array
+    // Attribute options
     attr.target =
       key === 'index' ? this.gl.ELEMENT_ARRAY_BUFFER : this.gl.ARRAY_BUFFER
-    attr.normalized = attr.normalized || false
-    attr.stride = attr.stride || 0
-    attr.offset = attr.offset || 0
     attr.count =
       attr.count ||
       (attr.stride
         ? attr.data.byteLength / attr.stride
         : attr.data.length / attr.size)
-    attr.divisor = attr.instanced || 0
     attr.needsUpdate = false
 
     if (!attr.buffer) {
       attr.buffer = this.gl.createBuffer()
 
-      // Push data to buffer
-      this.updateAttribute(attr)
+      // Push data to the buffer
+      attr.updateAttribute(this.gl)
     }
 
     // Update geometry counts. If indexed, ignore regular attributes
@@ -159,19 +144,6 @@ export class Geometry {
     } else if (!this.attributes.index) {
       this.drawRange.count = Math.max(this.drawRange.count, attr.count)
     }
-  }
-
-  /**
-   * Udpate an attribute for rendering
-   * @param {WTCGLGeometryAttribute} attr - The attribute to be updated in mem
-   */
-  updateAttribute(attr: WTCGLGeometryAttribute): void {
-    if (this.glState.boundBuffer !== attr.buffer) {
-      this.gl.bindBuffer(attr.target, attr.buffer)
-      this.glState.boundBuffer = attr.buffer
-    }
-    this.gl.bufferData(attr.target, attr.data, this.gl.STATIC_DRAW)
-    attr.needsUpdate = false
   }
 
   /**
@@ -219,7 +191,7 @@ export class Geometry {
       const attr = this.attributes[name]
 
       this.gl.bindBuffer(attr.target, attr.buffer)
-      this.glState.boundBuffer = attr.buffer
+      this.gl.renderer.state.boundBuffer = attr.buffer
 
       // For matrix attributes, buffer needs to be defined per column
       let numLoc = 1
@@ -281,7 +253,7 @@ export class Geometry {
     // Check if any attributes need updating
     program.attributeLocations.forEach((location, { name }) => {
       const attr = this.attributes[name]
-      if (attr.needsUpdate) this.updateAttribute(attr)
+      if (attr.needsUpdate) attr.updateAttribute(this.gl)
     })
 
     if (this.isInstanced) {

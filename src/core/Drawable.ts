@@ -55,7 +55,7 @@ class Drawable extends Obj {
     } = {}
   ) {
     super()
-    if (!gl.canvas) console.error('gl not passed as first argument to Mesh')
+    if (!gl.canvas) console.error('gl not passed as first argument to Object')
     this.gl = gl
     this.id = ID++
 
