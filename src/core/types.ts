@@ -138,64 +138,181 @@ export interface WTCGLRendererState {
    * The unpack alignment for pixel stores.
    */
   unpackAlignment: number
+  /**
+   * The currently bound framebuffer. Null if writing to screen.
+   */
   framebuffer: any // TO DO Update with better type
+  /**
+   * An object representing the current viewport
+   */
   viewport: {
     x: number | null
     y: number | null
     width: number | null
     height: number | null
   }
+  /**
+   * The store of all texture units currently in memory and use.
+   */
   textureUnits: any // TO DO Update with better type
+  /**
+   * The active texture unit being written to - used when initialising textures
+   */
   activeTextureUnit: number
+  /**
+   * The current attribute buffer being written to.
+   */
   boundBuffer: any // TO DO Update with better type
+  /**
+   * The cached uniform location map.
+   */
   uniformLocations: WTCGLRendererUniformMap
 }
 
+/**
+ * Texture state, contains the WebGL texture properties for a given texture.
+ * @interface
+ */
 export interface WTCGLTextureState {
+  /**
+   * The filter to use when rendering smaller.
+   */
   minFilter: GLenum
+  /**
+   * The filter to use when enlarging.
+   */
   magFilter: GLenum
+  /**
+   * Wrapping.
+   */
   wrapS: GLenum
+  /**
+   * Wrapping.
+   */
   wrapT: GLenum
+  /**
+   * The anistropic filtering level for the texture.
+   */
   anisotropy: number
 }
 
+/**
+ * An object defining the boundary of the geometry.
+ */
 export type WTCGLBounds = {
+  /**
+   * A vector representing the minimum positions for each axis.
+   */
   min: Vec3
+  /**
+   * A vector representing the maximum positions for each axis.
+   */
   max: Vec3
+  /**
+   * A vector representing the avg center of the object.
+   */
   center: Vec3
+  /**
+   * A vector representing the the scale of the object as defined by `max - min`.
+   */
   scale: Vec3
+  /**
+   * The radius of the boundary of the object.
+   */
   radius: number
 }
 
+/**
+ * The collection of supplied attributes that define a geometry.
+ */
 export type WTCGLGeometryAttributeCollection = {
   [key: string]: WTCGLGeometryAttribute
 }
+/**
+ * Represents a geometry attribute.
+ * @interface
+ */
 export interface WTCGLGeometryAttribute {
+  /**
+   * The size of each element in the attribute. For example if you're describing 3D vectors, this would be 3.
+   */
   size: number
+  /**
+   * How big a stride should this attribute have. Should be 0 for all attributes that are uncombined.
+   */
   stride: number
+  /**
+   * How many bytes to offset when passing in the buffer.
+   */
   offset: number
+  /**
+   * the number of elements in the attribute
+   */
   count: number
+  /**
+   * The divisor, used in instanced attributes.
+   */
   divisor: number
+  /**
+   * The number of instances for this attribute. If zero this object is determined to be non-instanced.
+   */
   instanced: number
 
+  /**
+   * A typed array of data for the attribute.
+   */
   data: Float32Array | Float64Array | Uint16Array | Uint32Array
+  /**
+   * The WebGL buffer containing the static attribute data.
+   */
   buffer: WebGLBuffer
 
+  /**
+   * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others.
+   */
   type: GLenum
+  /**
+   * gl.ELEMENT_ARRAY_BUFFER or gl.ARRAY_BUFFER depending on whether this is an index attribute or not.
+   */
   target: GLenum
 
+  /**
+   * Whether integer data values should be normalized into a certain range when being cast to a float.
+   */
   normalized: boolean
 
+  /**
+   * Whether this attribute needs an update. Set after the attribute changes to have it recast to memory.
+   */
   needsUpdate: boolean
 
+  /**
+   * Udpate an attribute for rendering
+   *@param {WTCGLRenderingContext} gl - The WTCGL rendering context.
+   */
   updateAttribute(gl: WTCGLRenderingContext): void
 }
 
+/**
+ * A simple extension of [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext) that supplies a couple of convenient variables.
+ * @interface
+ * @extends WebGLRenderingContext
+ */
 export interface WTCGLRenderingContext extends WebGLRenderingContext {
+  /**
+   * The WTCGL Renderer object
+   */
   renderer?: Renderer
+  /**
+   * The HTML canvas element. Supplied here because the in-built interface doesn't contain it.
+   */
   canvas: HTMLCanvasElement
 }
 
+/**
+ * A list of enabled extenions.
+ * @interface
+ */
 export interface WTCGLExtensions {
   EXT_color_buffer_float?: string
   OES_texture_float_linear?: string
@@ -209,6 +326,9 @@ export interface WTCGLExtensions {
   WEBGL_draw_buffers?: string
 }
 
+/**
+ * A list of hardware limit values.
+ */
 export interface WTCGLRendererParams {
   maxTextureUnits: number
   maxAnisotropy: number
