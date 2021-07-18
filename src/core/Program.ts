@@ -370,7 +370,7 @@ export class Program {
         }
       }
 
-      uniform.setUniform(this.gl, activeUniform.type, location, uniform.value)
+      uniform.setUniform(this.gl, activeUniform.type, location)
     })
 
     this.applyState()

@@ -22,10 +22,29 @@ type Kind =
 // cache of typed arrays used to flatten uniform arrays
 const arrayCacheF32 = {}
 
+/**
+ * A uniform is just a basic container for simple uniform information.
+ */
 class Uniform {
+  /**
+   * The uniform name. Currently unused, but for future use in auto-parsing name
+   */
   name: string
+  /**
+   * The uniform value.
+   */
   value: WTCGLUniformValue
+  /**
+   * The uniform kind. Currently unused but useful in future for testing against supplied bind type.
+   */
   kind: Kind
+  /**
+   * Create a unform object
+   * @param __namedParameters
+   * @param name - The name of the uniform.
+   * @param value - The value for the uniform.
+   * @param kind - The type of uniform.
+   */
   constructor({
     name = 'uniform',
     value = [1, 1],
@@ -39,11 +58,18 @@ class Uniform {
     this.value = value
     this.kind = kind
   }
+  /**
+   * Set the uniform in the stated program.
+   * @param gl - The WTCGL rendering context object.
+   * @param type - A GLEnum representing the passed uniform type.
+   * @param location - The uniform location (just an address to a uniform in program space)
+   * @param value - The value of the uniform
+   */
   setUniform(
     gl: WTCGLRenderingContext,
     type: GLenum,
     location: WebGLUniformLocation,
-    value: WTCGLUniformValue
+    value: WTCGLUniformValue = this.value
   ): void {
     if (value instanceof Array) {
       value = flatten(value)

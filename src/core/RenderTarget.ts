@@ -65,7 +65,7 @@ class RenderTarget {
    * @param __namedParameters - The parameters to initialise the renderer.
    * @param width - The width of the render target.
    * @param height - The height of the render target.
-   * @param target - The binding point foe the frame buffers.
+   * @param target - The binding point for the frame buffers.
    * @param colour - The number of colour attachments to create.
    * @param depth - Whether to create a depth buffer
    * @param stencil - Whether to create a stencil buffer
