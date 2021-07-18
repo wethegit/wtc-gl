@@ -1,6 +1,6 @@
 {
   "name": "wtc-gl",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.0",
   "description": "ES6 Web GL library for 2D(ish) work.",
   "source": "src/index.js",
   "main": "dist/wtc-gl.umd.js",
