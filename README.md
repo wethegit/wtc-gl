@@ -32,3 +32,7 @@ ES6 Web GL library for simple WebGL work. Much of this 1.0 version has been adda
 - fit in transform feedback
 - when would I disableVertexAttribArray ?
 - use offset/stride if exists
+
+### Uniform
+
+- Consolidate uniform functionality.
