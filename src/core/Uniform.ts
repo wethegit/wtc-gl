@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext, WTCGLUniformValue } from './types'
+import { WTCGLRenderingContext, WTCGLUniformValue } from '../types'
 import { Texture } from './Texture'
 
 type Floats = number | number[] | Float32Array | Int32Array

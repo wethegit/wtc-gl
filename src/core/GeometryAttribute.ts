@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext, WTCGLGeometryAttribute } from './types'
+import { WTCGLRenderingContext, WTCGLGeometryAttribute } from '../types'
 
 /**
  * Class representing a geometry attribute. A discrete piece of data used to render some geometry.

@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext } from './types'
+import { WTCGLRenderingContext } from '../types'
 import { Obj } from './Object'
 import { Program } from './Program'
 
@@ -55,7 +55,10 @@ class Drawable extends Obj {
     } = {}
   ) {
     super()
-    if (!gl.canvas) console.error('gl not passed as first argument to Object')
+    if (!gl.canvas)
+      console.error(
+        'WTCGLRenderingContext should be passed as the first argument to Object'
+      )
     this.gl = gl
     this.id = ID++
 

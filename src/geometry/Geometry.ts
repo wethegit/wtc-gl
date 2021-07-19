@@ -4,9 +4,9 @@ import {
   WTCGLGeometryAttributeCollection,
   WTCGLGeometryAttribute,
   WTCGLBounds
-} from './types'
+} from '../types'
 import { Vec3 } from 'wtc-math'
-import { Program } from './Program'
+import { Program } from '../core/Program'
 
 const tempVec3 = new Vec3()
 

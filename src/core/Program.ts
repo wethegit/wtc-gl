@@ -5,7 +5,7 @@ import {
   WTCGLUniformMap,
   WTCGLAttributeMap,
   WTCGLActiveInfo
-} from './types'
+} from '../types'
 import { Texture } from './Texture'
 import { Uniform } from './Uniform'
 

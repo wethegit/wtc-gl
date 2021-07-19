@@ -1,5 +1,5 @@
-import { WTCGLRenderingContext } from '../core/types'
-import { Geometry } from '../core/Geometry'
+import { WTCGLRenderingContext } from '../types'
+import { Geometry } from './Geometry'
 import { GeometryAttribute } from '../core/GeometryAttribute'
 
 class Triangle extends Geometry {

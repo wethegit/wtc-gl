@@ -1,5 +1,5 @@
-import { Renderer } from './Renderer'
-import { Texture } from './Texture'
+import { Renderer } from './core/Renderer'
+import { Texture } from './core/Texture'
 import { Vec3 } from 'wtc-math'
 
 /**

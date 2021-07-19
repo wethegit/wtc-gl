@@ -2,7 +2,7 @@ import {
   WTCGLRendererState,
   WTCGLTextureState,
   WTCGLRenderingContext
-} from './types'
+} from '../types'
 
 const emptyPixel = new Uint8Array(4)
 

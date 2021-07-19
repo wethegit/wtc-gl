@@ -4,7 +4,7 @@ import {
   WTCGLRenderingContext,
   WTCGLExtensions,
   WTCGLRendererParams
-} from './types'
+} from '../types'
 import { Camera } from './Camera'
 import { RenderTarget } from './RenderTarget'
 import { Obj } from './Object'

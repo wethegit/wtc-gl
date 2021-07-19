@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext } from './types'
+import { WTCGLRenderingContext } from '../types'
 
 import { Texture } from './Texture'
 
