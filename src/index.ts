@@ -10,3 +10,7 @@ export { GeometryAttribute } from './core/GeometryAttribute'
 export { Camera } from './core/Camera'
 export { RenderTarget } from './core/RenderTarget'
 export * from './core/types'
+
+export { Triangle } from './geometry/Triangle'
+export { Plane } from './geometry/Plane'
+export { Box } from './geometry/Box'
