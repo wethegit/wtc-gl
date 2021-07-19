@@ -149,6 +149,12 @@ class Uniform {
         return gl.uniformMatrix4fv(location, false, val)
     }
   }
+  /**
+   * Binds the uniform to the program.
+   * @param program - The program to which to bind the uniform.
+   * @param location - A flag representing the uniform's location in memory.
+   * @param activeUniform - Representes an extention of the standard Web GL active info for uniform.
+   */
   bind(
     program: Program,
     location: WebGLUniformLocation,
