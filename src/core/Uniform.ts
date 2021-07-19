@@ -1,7 +1,10 @@
-import { WTCGLRenderingContext, WTCGLUniformValue } from '../types'
+import {
+  WTCGLRenderingContext,
+  WTCGLUniformValue,
+  WTCGLActiveInfo
+} from '../types'
 import { Texture } from './Texture'
-
-type Floats = number | number[] | Float32Array | Int32Array
+import { Program } from './Program'
 
 type Kind =
   | 'int'
@@ -145,6 +148,55 @@ class Uniform {
         // FLOAT_MAT4
         return gl.uniformMatrix4fv(location, false, val)
     }
+  }
+  bind(
+    program: Program,
+    location: WebGLUniformLocation,
+    activeUniform: WTCGLActiveInfo
+  ) {
+    let uniform = this
+
+    if (this.value === undefined) {
+      console.warn(`${this.name} uniform is missing a value`)
+      return
+    }
+
+    if (uniform.kind === 'texture' && uniform.value instanceof Texture) {
+      const textureUnit = ++program.textureUnit
+
+      // Check if texture needs to be updated
+      uniform.value.update(textureUnit)
+      return uniform.setUniform(
+        program.gl,
+        activeUniform.type,
+        location,
+        textureUnit
+      )
+    }
+
+    // For texture arrays, set uniform as an array of texture units instead of just one
+    if (uniform.kind === 'texture_array') {
+      if (
+        uniform.value instanceof Array &&
+        uniform.value[0] instanceof Texture
+      ) {
+        const textureUnits = []
+        uniform.value.forEach((value) => {
+          const textureUnit = ++program.textureUnit
+          value.update(textureUnit)
+          textureUnits.push(textureUnit)
+        })
+
+        return uniform.setUniform(
+          program.gl,
+          activeUniform.type,
+          location,
+          textureUnits
+        )
+      }
+    }
+
+    uniform.setUniform(program.gl, activeUniform.type, location)
   }
 }
 

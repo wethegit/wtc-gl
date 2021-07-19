@@ -6,7 +6,6 @@ import {
   WTCGLAttributeMap,
   WTCGLActiveInfo
 } from '../types'
-import { Texture } from './Texture'
 import { Uniform } from './Uniform'
 
 interface WTCGLUniformArray {
@@ -90,6 +89,11 @@ export class Program {
    * A join of the found attributes. Used for addressing vertex array objects on the geometry.
    */
   attributeOrder: string
+
+  /**
+   * The texture unit. Used for addressing texture units in-program.
+   */
+  textureUnit: number = -1
 
   /**
    * Create a Program
@@ -300,7 +304,7 @@ export class Program {
    * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
    */
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
-    let textureUnit = -1
+    this.textureUnit = -1
     const programActive = this.gl.renderer.currentProgram === this.id
 
     // Avoid gl call if program already in use
@@ -316,61 +320,11 @@ export class Program {
       // get supplied uniform
       let uniform = this.uniforms[name]
 
-      // For structs, get the specific property instead of the entire object
-      if (activeUniform.isStruct) {
-        uniform = uniform[activeUniform.structProperty]
-        name += `.${activeUniform.structProperty}`
-      }
-      if (activeUniform.isStructArray) {
-        uniform =
-          uniform[activeUniform.structIndex][activeUniform.structProperty]
-        name += `[${activeUniform.structIndex}].${activeUniform.structProperty}`
-      }
-
       if (!uniform) {
         return warn(`Active uniform ${name} has not been supplied`)
       }
 
-      if (uniform && uniform.value === undefined) {
-        return warn(`${name} uniform is missing a value parameter`)
-      }
-
-      if (uniform.kind === 'texture' && uniform.value instanceof Texture) {
-        textureUnit = textureUnit + 1
-
-        // Check if texture needs to be updated
-        uniform.value.update(textureUnit)
-        return uniform.setUniform(
-          this.gl,
-          activeUniform.type,
-          location,
-          textureUnit
-        )
-      }
-
-      // For texture arrays, set uniform as an array of texture units instead of just one
-      if (uniform.kind === 'texture_array') {
-        if (
-          uniform.value instanceof Array &&
-          uniform.value[0] instanceof Texture
-        ) {
-          const textureUnits = []
-          uniform.value.forEach((value) => {
-            textureUnit = textureUnit + 1
-            value.update(textureUnit)
-            textureUnits.push(textureUnit)
-          })
-
-          return uniform.setUniform(
-            this.gl,
-            activeUniform.type,
-            location,
-            textureUnits
-          )
-        }
-      }
-
-      uniform.setUniform(this.gl, activeUniform.type, location)
+      uniform.bind(this, location, activeUniform)
     })
 
     this.applyState()
