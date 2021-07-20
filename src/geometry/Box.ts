@@ -1,5 +1,5 @@
 import { WTCGLRenderingContext } from '../types'
-import { Geometry } from './Geometry.js'
+import { Geometry } from './Geometry'
 import { GeometryAttribute } from '../core/GeometryAttribute'
 import { Plane } from './Plane'
 

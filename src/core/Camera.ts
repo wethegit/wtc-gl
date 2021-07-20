@@ -1,6 +1,6 @@
 import { Obj } from './Object'
 import { Vec3, Mat4 } from 'wtc-math'
-import { Mesh } from './Mesh.js'
+import { Mesh } from './Mesh'
 import { Drawable } from './Drawable'
 
 /**

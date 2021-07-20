@@ -69,7 +69,7 @@ class Obj {
 
     this.position = new Vec3()
     this.quaternion = new Quat()
-    this.scale = new Vec3(1)
+    this.scale = new Vec3(1, 1, 1)
     this.rotation = new Vec3()
     this.up = new Vec3(0, 1, 0)
   }
@@ -201,6 +201,7 @@ class Obj {
     this.quaternion = this.matrix.rotation
     const rotMat = Mat4.fromQuat(this.quaternion)
     this.rotation = Vec3.fromRotationMatrix(rotMat) || new Vec3()
+    this.updateRotation()
   }
 }
 
