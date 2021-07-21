@@ -1,6 +1,6 @@
 import { WTCGLRenderingContext } from '../types'
 import { Geometry } from './Geometry'
-import { GeometryAttribute } from '../core/GeometryAttribute'
+import { GeometryAttribute } from './GeometryAttribute'
 
 class Triangle extends Geometry {
   constructor(gl: WTCGLRenderingContext, { attributes = {} } = {}) {

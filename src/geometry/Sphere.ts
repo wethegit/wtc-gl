@@ -1,5 +1,5 @@
 import { Geometry } from './Geometry'
-import { GeometryAttribute } from '../core/GeometryAttribute'
+import { GeometryAttribute } from './GeometryAttribute'
 import { Vec3 } from 'wtc-math'
 
 export class Sphere extends Geometry {

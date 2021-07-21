@@ -1,6 +1,6 @@
 import { WTCGLRenderingContext } from '../types'
 import { Geometry } from './Geometry'
-import { GeometryAttribute } from '../core/GeometryAttribute'
+import { GeometryAttribute } from './GeometryAttribute'
 import { Plane } from './Plane'
 
 export class Box extends Geometry {
