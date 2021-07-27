@@ -1,8 +1,8 @@
 {
   "name": "wtc-gl",
-  "version": "0.2.0",
+  "version": "1.0.0-beta.0",
   "description": "ES6 Web GL library for 2D(ish) work.",
-  "source": "src/wtc-gl.js",
+  "source": "src/index.js",
   "main": "dist/wtc-gl.umd.js",
   "module": "dist/wtc-gl.module.js",
   "umd:main": "dist/wtc-gl.umd.js",
@@ -14,18 +14,28 @@
     "build": "rm -rf dist; microbundle",
     "dev": "microbundle watch",
     "prepare": "husky install; npm run build",
-    "document": "npx jsdoc -c jsdoc.json && npx doxdox src/*.js  --layout markdown --output README.md"
+    "document": "npx typedoc src/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "wtc-math": "^1.0.9"
+  },
   "devDependencies": {
-    "doxdox": "^3.0.0",
     "husky": "^5.1.3",
-    "jsdoc": "^3.6.4",
-    "microbundle": "^0.12.0"
+    "microbundle": "^0.12.0",
+    "prettier": "2.3.2",
+    "typedoc": "^0.21.3",
+    "typescript": "^4.3.5"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wethegit/wtc-gl.git"
+  },
+  "prettier": {
+    "trailingComma": "none",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 80
   },
   "keywords": [],
   "homepage": "https://github.com/wethegit/wtc-gl#readme",

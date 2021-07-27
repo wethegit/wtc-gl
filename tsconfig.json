@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "rootDir": "src",
+    "moduleResolution": "node"
+  },
+  "typedocOptions": {
+    "out": "documentation",
+    "entryPoints": "src/index.ts",
+    "exclude": ["dist/*+.ts*"]
+  }
+}
