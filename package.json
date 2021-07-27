@@ -1,17 +1,17 @@
 {
   "name": "wtc-gl",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Typescript simple Web GL library.",
-  "source": "src/index.js",
-  "main": "dist/wtc-gl.umd.js",
-  "module": "dist/wtc-gl.module.js",
-  "umd:main": "dist/wtc-gl.umd.js",
-  "unpkg": "dist/wtc-gl.umd.js",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.module.js",
+  "umd:main": "dist/index.umd.js",
+  "unpkg": "dist/index.umd.js",
   "exports": {
-    ".": "./dist/wtc-gl.modern.js"
+    ".": "./dist/index.modern.js"
   },
   "scripts": {
-    "build": "rm -rf dist; microbundle",
+    "build": "rm -rf dist; npx microbundle",
     "dev": "microbundle watch",
     "prepare": "husky install; npm run build",
     "document": "npx typedoc src/index.ts"
@@ -37,6 +37,7 @@
     "singleQuote": true,
     "printWidth": 80
   },
+  "types": "dist/types.d.ts",
   "keywords": [],
   "homepage": "https://github.com/wethegit/wtc-gl#readme",
   "author": "Liam Egan <liam@wethecollective.com> (http://wethecollective.com)",
