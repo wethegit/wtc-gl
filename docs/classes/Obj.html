@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Drawable | wtc-gl</title>
+	<title>Obj | wtc-gl</title>
 	<meta name="description" content="Documentation for wtc-gl">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,10 @@
 					<a href="../modules.html">wtc-gl</a>
 				</li>
 				<li>
-					<a href="Drawable.html">Drawable</a>
+					<a href="Obj.html">Obj</a>
 				</li>
 			</ul>
-			<h1>Class Drawable</h1>
+			<h1>Class Obj</h1>
 		</div>
 	</div>
 </header>
@@ -68,7 +68,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Class representing A drawable object. A drawable object is one that is actually rendered to screen, this does not include cameras and groups.</p>
+						<p>Class representing an object. This provides basic transformations for sub-objects and shouldn&#39;t be instanciated directly.</p>
 					</div>
 				</div>
 			</section>
@@ -76,15 +76,13 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a>
+						<span class="target">Obj</span>
 						<ul class="tsd-hierarchy">
 							<li>
-								<span class="target">Drawable</span>
-								<ul class="tsd-hierarchy">
-									<li>
-										<a href="Mesh.html" class="tsd-signature-type" data-tsd-kind="Class">Mesh</a>
-									</li>
-								</ul>
+								<a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a>
+							</li>
+							<li>
+								<a href="Camera.html" class="tsd-signature-type" data-tsd-kind="Class">Camera</a>
 							</li>
 						</ul>
 					</li>
@@ -97,46 +95,39 @@
 						<section class="tsd-index-section ">
 							<h3>Constructors</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite"><a href="Drawable.html#constructor" class="tsd-kind-icon">constructor</a></li>
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="Obj.html#constructor" class="tsd-kind-icon">constructor</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#children" class="tsd-kind-icon">children</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#frustumCulled" class="tsd-kind-icon">frustum<wbr>Culled</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#gl" class="tsd-kind-icon">gl</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#id" class="tsd-kind-icon">id</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#matrix" class="tsd-kind-icon">matrix</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#matrixAutoUpdate" class="tsd-kind-icon">matrix<wbr>Auto<wbr>Update</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#parent" class="tsd-kind-icon">parent</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#position" class="tsd-kind-icon">position</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#program" class="tsd-kind-icon">program</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#quaternion" class="tsd-kind-icon">quaternion</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#renderOrder" class="tsd-kind-icon">render<wbr>Order</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#rotation" class="tsd-kind-icon">rotation</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#scale" class="tsd-kind-icon">scale</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#up" class="tsd-kind-icon">up</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#visible" class="tsd-kind-icon">visible</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#worldMatrix" class="tsd-kind-icon">world<wbr>Matrix</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#worldMatrixNeedsUpdate" class="tsd-kind-icon">world<wbr>Matrix<wbr>Needs<wbr>Update</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Drawable.html#zDepth" class="tsd-kind-icon">z<wbr>Depth</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#children" class="tsd-kind-icon">children</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#matrix" class="tsd-kind-icon">matrix</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#matrixAutoUpdate" class="tsd-kind-icon">matrix<wbr>Auto<wbr>Update</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#parent" class="tsd-kind-icon">parent</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#position" class="tsd-kind-icon">position</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#quaternion" class="tsd-kind-icon">quaternion</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#rotation" class="tsd-kind-icon">rotation</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#scale" class="tsd-kind-icon">scale</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#up" class="tsd-kind-icon">up</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#visible" class="tsd-kind-icon">visible</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#worldMatrix" class="tsd-kind-icon">world<wbr>Matrix</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="Obj.html#worldMatrixNeedsUpdate" class="tsd-kind-icon">world<wbr>Matrix<wbr>Needs<wbr>Update</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#addChild" class="tsd-kind-icon">add<wbr>Child</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#decompose" class="tsd-kind-icon">decompose</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Drawable.html#draw" class="tsd-kind-icon">draw</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#lookAt" class="tsd-kind-icon">look<wbr>At</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#removeChild" class="tsd-kind-icon">remove<wbr>Child</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#setParent" class="tsd-kind-icon">set<wbr>Parent</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#traverse" class="tsd-kind-icon">traverse</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#updateMatrix" class="tsd-kind-icon">update<wbr>Matrix</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#updateMatrixWorld" class="tsd-kind-icon">update<wbr>Matrix<wbr>World</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#updateQuaternion" class="tsd-kind-icon">update<wbr>Quaternion</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="Drawable.html#updateRotation" class="tsd-kind-icon">update<wbr>Rotation</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#addChild" class="tsd-kind-icon">add<wbr>Child</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#decompose" class="tsd-kind-icon">decompose</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#lookAt" class="tsd-kind-icon">look<wbr>At</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#removeChild" class="tsd-kind-icon">remove<wbr>Child</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#setParent" class="tsd-kind-icon">set<wbr>Parent</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#traverse" class="tsd-kind-icon">traverse</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#updateMatrix" class="tsd-kind-icon">update<wbr>Matrix</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#updateMatrixWorld" class="tsd-kind-icon">update<wbr>Matrix<wbr>World</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#updateQuaternion" class="tsd-kind-icon">update<wbr>Quaternion</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="Obj.html#updateRotation" class="tsd-kind-icon">update<wbr>Rotation</a></li>
 							</ul>
 						</section>
 					</div>
@@ -144,73 +135,38 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Constructors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
-					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Drawable<span class="tsd-signature-symbol">(</span>gl<span class="tsd-signature-symbol">: </span><a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a>, __namedParameters<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-symbol">{ </span>frustumCulled<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>renderOrder<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></li>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Obj<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Overrides <a href="Obj.html">Obj</a>.<a href="Obj.html#constructor">constructor</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L47">src/core/Drawable.ts:47</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L61">src/core/Object.ts:61</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Create a drawable object. This should never be instanciated directly</p>
+									<p>Create an object. Normally only called from an extending class.</p>
 								</div>
 							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>gl: <a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a></h5>
-									<div class="tsd-comment tsd-typography">
-										<div class="lead">
-											<p>The WTCGL Rendering context</p>
-										</div>
-									</div>
-								</li>
-								<li>
-									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>frustumCulled<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>renderOrder<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = {}</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<div class="lead">
-											<p>The parameters to be used for the camera</p>
-										</div>
-									</div>
-									<ul class="tsd-parameters">
-										<li class="tsd-parameter">
-											<h5><span class="tsd-flag ts-flagOptional">Optional</span> frustum<wbr>Culled<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
-											<div class="tsd-comment tsd-typography">
-												<p>Whether to apply culling to this object</p>
-											</div>
-										</li>
-										<li class="tsd-parameter">
-											<h5><span class="tsd-flag ts-flagOptional">Optional</span> render<wbr>Order<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span></h5>
-											<div class="tsd-comment tsd-typography">
-												<p>The explicit render order of the object. If this is zero, then it will be instead calculated at render time.</p>
-											</div>
-										</li>
-									</ul>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="Drawable.html" class="tsd-signature-type" data-tsd-kind="Class">Drawable</a></h4>
+							<h4 class="tsd-returns-title">Returns <a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a></h4>
 						</li>
 					</ul>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="children" class="tsd-anchor"></a>
 					<h3>children</h3>
 					<div class="tsd-signature tsd-kind-icon">children<span class="tsd-signature-symbol">:</span> <a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#children">children</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L14">src/core/Object.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L14">src/core/Object.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -220,63 +176,12 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="frustumCulled" class="tsd-anchor"></a>
-					<h3>frustum<wbr>Culled</h3>
-					<div class="tsd-signature tsd-kind-icon">frustum<wbr>Culled<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L28">src/core/Drawable.ts:28</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Whether to apply frustum culling to this object</p>
-						</div>
-						<dl class="tsd-comment-tags">
-							<dt>default</dt>
-							<dd><p>true</p>
-							</dd>
-						</dl>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="gl" class="tsd-anchor"></a>
-					<h3>gl</h3>
-					<div class="tsd-signature tsd-kind-icon">gl<span class="tsd-signature-symbol">:</span> <a href="../interfaces/WTCGLRenderingContext.html" class="tsd-signature-type" data-tsd-kind="Interface">WTCGLRenderingContext</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L19">src/core/Drawable.ts:19</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The WTCGL rendering context.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="id" class="tsd-anchor"></a>
-					<h3>id</h3>
-					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L15">src/core/Drawable.ts:15</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The unique ID of the Geometry.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
 					<a name="matrix" class="tsd-anchor"></a>
 					<h3>matrix</h3>
 					<div class="tsd-signature tsd-kind-icon">matrix<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Mat4</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#matrix">matrix</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L23">src/core/Object.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L23">src/core/Object.ts:23</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -285,14 +190,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="matrixAutoUpdate" class="tsd-anchor"></a>
 					<h3>matrix<wbr>Auto<wbr>Update</h3>
 					<div class="tsd-signature tsd-kind-icon">matrix<wbr>Auto<wbr>Update<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#matrixAutoUpdate">matrixAutoUpdate</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L31">src/core/Object.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L31">src/core/Object.ts:31</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -301,14 +205,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="parent" class="tsd-anchor"></a>
 					<h3>parent</h3>
 					<div class="tsd-signature tsd-kind-icon">parent<span class="tsd-signature-symbol">:</span> <a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#parent">parent</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L10">src/core/Object.ts:10</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L10">src/core/Object.ts:10</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -317,14 +220,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="position" class="tsd-anchor"></a>
 					<h3>position</h3>
 					<div class="tsd-signature tsd-kind-icon">position<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vec3</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#position">position</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L40">src/core/Object.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L40">src/core/Object.ts:40</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -334,28 +236,12 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="program" class="tsd-anchor"></a>
-					<h3>program</h3>
-					<div class="tsd-signature tsd-kind-icon">program<span class="tsd-signature-symbol">:</span> <a href="Program.html" class="tsd-signature-type" data-tsd-kind="Class">Program</a></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L23">src/core/Drawable.ts:23</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The program that is rendering this object</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
 					<a name="quaternion" class="tsd-anchor"></a>
 					<h3>quaternion</h3>
 					<div class="tsd-signature tsd-kind-icon">quaternion<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Quat</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#quaternion">quaternion</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L44">src/core/Object.ts:44</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L44">src/core/Object.ts:44</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -365,33 +251,12 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="renderOrder" class="tsd-anchor"></a>
-					<h3>render<wbr>Order</h3>
-					<div class="tsd-signature tsd-kind-icon">render<wbr>Order<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L33">src/core/Drawable.ts:33</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Apply a specific render order, overriding calculated z-depth</p>
-						</div>
-						<dl class="tsd-comment-tags">
-							<dt>default</dt>
-							<dd><p>0</p>
-							</dd>
-						</dl>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
 					<a name="rotation" class="tsd-anchor"></a>
 					<h3>rotation</h3>
 					<div class="tsd-signature tsd-kind-icon">rotation<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vec3</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#rotation">rotation</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L52">src/core/Object.ts:52</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L52">src/core/Object.ts:52</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -400,14 +265,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="scale" class="tsd-anchor"></a>
 					<h3>scale</h3>
 					<div class="tsd-signature tsd-kind-icon">scale<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vec3</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#scale">scale</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L48">src/core/Object.ts:48</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L48">src/core/Object.ts:48</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -416,14 +280,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="up" class="tsd-anchor"></a>
 					<h3>up</h3>
 					<div class="tsd-signature tsd-kind-icon">up<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Vec3</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#up">up</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L56">src/core/Object.ts:56</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L56">src/core/Object.ts:56</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -432,14 +295,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="visible" class="tsd-anchor"></a>
 					<h3>visible</h3>
 					<div class="tsd-signature tsd-kind-icon">visible<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Boolean</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#visible">visible</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L18">src/core/Object.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L18">src/core/Object.ts:18</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -448,14 +310,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="worldMatrix" class="tsd-anchor"></a>
 					<h3>world<wbr>Matrix</h3>
 					<div class="tsd-signature tsd-kind-icon">world<wbr>Matrix<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Mat4</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#worldMatrix">worldMatrix</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L27">src/core/Object.ts:27</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L27">src/core/Object.ts:27</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -464,14 +325,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="worldMatrixNeedsUpdate" class="tsd-anchor"></a>
 					<h3>world<wbr>Matrix<wbr>Needs<wbr>Update</h3>
 					<div class="tsd-signature tsd-kind-icon">world<wbr>Matrix<wbr>Needs<wbr>Update<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Boolean</span><span class="tsd-signature-symbol"> = false</span></div>
 					<aside class="tsd-sources">
-						<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#worldMatrixNeedsUpdate">worldMatrixNeedsUpdate</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L35">src/core/Object.ts:35</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L35">src/core/Object.ts:35</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -480,41 +340,20 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="zDepth" class="tsd-anchor"></a>
-					<h3>z<wbr>Depth</h3>
-					<div class="tsd-signature tsd-kind-icon">z<wbr>Depth<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L38">src/core/Drawable.ts:38</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The z-depth of the object, calculated at render time.</p>
-						</div>
-						<dl class="tsd-comment-tags">
-							<dt>default</dt>
-							<dd><p>0</p>
-							</dd>
-						</dl>
-					</div>
-				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="addChild" class="tsd-anchor"></a>
 					<h3>add<wbr>Child</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">add<wbr>Child<span class="tsd-signature-symbol">(</span>child<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a>, notifyChild<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#addChild">addChild</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L123">src/core/Object.ts:123</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L123">src/core/Object.ts:123</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -541,18 +380,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="decompose" class="tsd-anchor"></a>
 					<h3>decompose</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">decompose<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#decompose">decompose</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L185">src/core/Object.ts:185</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L185">src/core/Object.ts:185</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -565,53 +403,16 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="draw" class="tsd-anchor"></a>
-					<h3>draw</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">draw<span class="tsd-signature-symbol">(</span>__namedParameters<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Drawable.ts#L73">src/core/Drawable.ts:73</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Draw placeholder. The draw function is responsible for drawing the element. This function simply provides a signature for extension.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>__namedParameters: <span class="tsd-signature-symbol">{ </span>camera<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = {}</span></h5>
-									<ul class="tsd-parameters">
-										<li class="tsd-parameter">
-											<h5><span class="tsd-flag ts-flagOptional">Optional</span> camera<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span></h5>
-											<div class="tsd-comment tsd-typography">
-												<p>The camera to use to render</p>
-											</div>
-										</li>
-									</ul>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 					<a name="lookAt" class="tsd-anchor"></a>
 					<h3>look<wbr>At</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">look<wbr>At<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Vec3</span>, invert<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#lookAt">lookAt</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L198">src/core/Object.ts:198</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L198">src/core/Object.ts:198</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -638,18 +439,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="removeChild" class="tsd-anchor"></a>
 					<h3>remove<wbr>Child</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">remove<wbr>Child<span class="tsd-signature-symbol">(</span>child<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a>, notifyChild<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#removeChild">removeChild</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L133">src/core/Object.ts:133</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L133">src/core/Object.ts:133</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -676,18 +476,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="setParent" class="tsd-anchor"></a>
 					<h3>set<wbr>Parent</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">set<wbr>Parent<span class="tsd-signature-symbol">(</span>parent<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a>, notifyParent<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#setParent">setParent</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L111">src/core/Object.ts:111</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L111">src/core/Object.ts:111</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -714,18 +513,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="traverse" class="tsd-anchor"></a>
 					<h3>traverse</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">traverse<span class="tsd-signature-symbol">(</span>callback<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>node<span class="tsd-signature-symbol">: </span><a href="Obj.html" class="tsd-signature-type" data-tsd-kind="Class">Obj</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#traverse">traverse</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L174">src/core/Object.ts:174</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L174">src/core/Object.ts:174</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -765,18 +563,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="updateMatrix" class="tsd-anchor"></a>
 					<h3>update<wbr>Matrix</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">update<wbr>Matrix<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#updateMatrix">updateMatrix</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L160">src/core/Object.ts:160</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L160">src/core/Object.ts:160</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -788,18 +585,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="updateMatrixWorld" class="tsd-anchor"></a>
 					<h3>update<wbr>Matrix<wbr>World</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">update<wbr>Matrix<wbr>World<span class="tsd-signature-symbol">(</span>force<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#updateMatrixWorld">updateMatrixWorld</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L143">src/core/Object.ts:143</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L143">src/core/Object.ts:143</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -820,18 +616,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="updateQuaternion" class="tsd-anchor"></a>
 					<h3>update<wbr>Quaternion</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">update<wbr>Quaternion<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#updateQuaternion">updateQuaternion</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L101">src/core/Object.ts:101</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L101">src/core/Object.ts:101</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -849,18 +644,17 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="updateRotation" class="tsd-anchor"></a>
 					<h3>update<wbr>Rotation</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
 						<li class="tsd-signature tsd-kind-icon">update<wbr>Rotation<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="Obj.html">Obj</a>.<a href="Obj.html#updateRotation">updateRotation</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/core/Object.ts#L87">src/core/Object.ts:87</a></li>
+									<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/core/Object.ts#L87">src/core/Object.ts:87</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -896,105 +690,9 @@
 					<li class=" tsd-kind-class">
 						<a href="Camera.html" class="tsd-kind-icon">Camera</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-class">
+					<li class=" tsd-kind-class">
 						<a href="Drawable.html" class="tsd-kind-icon">Drawable</a>
-						<ul>
-							<li class=" tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-								<a href="Drawable.html#constructor" class="tsd-kind-icon">constructor</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#children" class="tsd-kind-icon">children</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#frustumCulled" class="tsd-kind-icon">frustum<wbr>Culled</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#gl" class="tsd-kind-icon">gl</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#id" class="tsd-kind-icon">id</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#matrix" class="tsd-kind-icon">matrix</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#matrixAutoUpdate" class="tsd-kind-icon">matrix<wbr>Auto<wbr>Update</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#parent" class="tsd-kind-icon">parent</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#position" class="tsd-kind-icon">position</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#program" class="tsd-kind-icon">program</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#quaternion" class="tsd-kind-icon">quaternion</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#renderOrder" class="tsd-kind-icon">render<wbr>Order</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#rotation" class="tsd-kind-icon">rotation</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#scale" class="tsd-kind-icon">scale</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#up" class="tsd-kind-icon">up</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#visible" class="tsd-kind-icon">visible</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#worldMatrix" class="tsd-kind-icon">world<wbr>Matrix</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#worldMatrixNeedsUpdate" class="tsd-kind-icon">world<wbr>Matrix<wbr>Needs<wbr>Update</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="Drawable.html#zDepth" class="tsd-kind-icon">z<wbr>Depth</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#addChild" class="tsd-kind-icon">add<wbr>Child</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#decompose" class="tsd-kind-icon">decompose</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="Drawable.html#draw" class="tsd-kind-icon">draw</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#lookAt" class="tsd-kind-icon">look<wbr>At</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#removeChild" class="tsd-kind-icon">remove<wbr>Child</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#setParent" class="tsd-kind-icon">set<wbr>Parent</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#traverse" class="tsd-kind-icon">traverse</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#updateMatrix" class="tsd-kind-icon">update<wbr>Matrix</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#updateMatrixWorld" class="tsd-kind-icon">update<wbr>Matrix<wbr>World</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#updateQuaternion" class="tsd-kind-icon">update<wbr>Quaternion</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
-								<a href="Drawable.html#updateRotation" class="tsd-kind-icon">update<wbr>Rotation</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-class">
 						<a href="FragmentShader.html" class="tsd-kind-icon">Fragment<wbr>Shader</a>
 					</li>
@@ -1007,9 +705,84 @@
 					<li class=" tsd-kind-class">
 						<a href="Mesh.html" class="tsd-kind-icon">Mesh</a>
 					</li>
-					<li class=" tsd-kind-class">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class">
 						<a href="Obj.html" class="tsd-kind-icon">Obj</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="Obj.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#children" class="tsd-kind-icon">children</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#matrix" class="tsd-kind-icon">matrix</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#matrixAutoUpdate" class="tsd-kind-icon">matrix<wbr>Auto<wbr>Update</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#parent" class="tsd-kind-icon">parent</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#position" class="tsd-kind-icon">position</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#quaternion" class="tsd-kind-icon">quaternion</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#rotation" class="tsd-kind-icon">rotation</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#scale" class="tsd-kind-icon">scale</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#up" class="tsd-kind-icon">up</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#visible" class="tsd-kind-icon">visible</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#worldMatrix" class="tsd-kind-icon">world<wbr>Matrix</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="Obj.html#worldMatrixNeedsUpdate" class="tsd-kind-icon">world<wbr>Matrix<wbr>Needs<wbr>Update</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#addChild" class="tsd-kind-icon">add<wbr>Child</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#decompose" class="tsd-kind-icon">decompose</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#lookAt" class="tsd-kind-icon">look<wbr>At</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#removeChild" class="tsd-kind-icon">remove<wbr>Child</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#setParent" class="tsd-kind-icon">set<wbr>Parent</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#traverse" class="tsd-kind-icon">traverse</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#updateMatrix" class="tsd-kind-icon">update<wbr>Matrix</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#updateMatrixWorld" class="tsd-kind-icon">update<wbr>Matrix<wbr>World</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#updateQuaternion" class="tsd-kind-icon">update<wbr>Quaternion</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="Obj.html#updateRotation" class="tsd-kind-icon">update<wbr>Rotation</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-class">
 						<a href="Plane.html" class="tsd-kind-icon">Plane</a>
 					</li>

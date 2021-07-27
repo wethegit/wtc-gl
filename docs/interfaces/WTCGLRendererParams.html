@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>WTCGLBlendEquation | wtc-gl</title>
+	<title>WTCGLRendererParams | wtc-gl</title>
 	<meta name="description" content="Documentation for wtc-gl">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,10 @@
 					<a href="../modules.html">wtc-gl</a>
 				</li>
 				<li>
-					<a href="WTCGLBlendEquation.html">WTCGLBlendEquation</a>
+					<a href="WTCGLRendererParams.html">WTCGLRendererParams</a>
 				</li>
 			</ul>
-			<h1>Interface WTCGLBlendEquation</h1>
+			<h1>Interface WTCGLRendererParams</h1>
 		</div>
 	</div>
 </header>
@@ -68,19 +68,15 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Represents a collection of modes used to make up a blend equation.</p>
+						<p>A list of hardware limit values.</p>
 					</div>
-					<dl class="tsd-comment-tags">
-						<dt>interface</dt>
-						<dd></dd>
-					</dl>
 				</div>
 			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">WTCGLBlendEquation</span>
+						<span class="target">WTCGLRendererParams</span>
 					</li>
 				</ul>
 			</section>
@@ -91,8 +87,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLBlendEquation.html#modeAlpha" class="tsd-kind-icon">mode<wbr>Alpha</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLBlendEquation.html#modeRGB" class="tsd-kind-icon">modeRGB</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLRendererParams.html#maxAnisotropy" class="tsd-kind-icon">max<wbr>Anisotropy</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLRendererParams.html#maxTextureUnits" class="tsd-kind-icon">max<wbr>Texture<wbr>Units</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,34 +97,24 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="modeAlpha" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> mode<wbr>Alpha</h3>
-					<div class="tsd-signature tsd-kind-icon">mode<wbr>Alpha<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="maxAnisotropy" class="tsd-anchor"></a>
+					<h3>max<wbr>Anisotropy</h3>
+					<div class="tsd-signature tsd-kind-icon">max<wbr>Anisotropy<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/types.ts#L40">src/types.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L334">src/types.ts:334</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The mode to blend when using RGBA</p>
-						</div>
-					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="modeRGB" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> modeRGB</h3>
-					<div class="tsd-signature tsd-kind-icon">modeRGB<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="maxTextureUnits" class="tsd-anchor"></a>
+					<h3>max<wbr>Texture<wbr>Units</h3>
+					<div class="tsd-signature tsd-kind-icon">max<wbr>Texture<wbr>Units<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/types.ts#L36">src/types.ts:36</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L333">src/types.ts:333</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The mode to blend when using RGB</p>
-						</div>
-					</div>
 				</section>
 			</section>
 		</div>
@@ -190,21 +176,9 @@
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLActiveInfo.html" class="tsd-kind-icon">WTCGLActive<wbr>Info</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface">
+					<li class=" tsd-kind-interface">
 						<a href="WTCGLBlendEquation.html" class="tsd-kind-icon">WTCGLBlend<wbr>Equation</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="WTCGLBlendEquation.html#modeAlpha" class="tsd-kind-icon">mode<wbr>Alpha</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="WTCGLBlendEquation.html#modeRGB" class="tsd-kind-icon">modeRGB</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLBlendFunction.html" class="tsd-kind-icon">WTCGLBlend<wbr>Function</a>
 					</li>
@@ -214,9 +188,21 @@
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLGeometryAttribute.html" class="tsd-kind-icon">WTCGLGeometry<wbr>Attribute</a>
 					</li>
-					<li class=" tsd-kind-interface">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface">
 						<a href="WTCGLRendererParams.html" class="tsd-kind-icon">WTCGLRenderer<wbr>Params</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLRendererParams.html#maxAnisotropy" class="tsd-kind-icon">max<wbr>Anisotropy</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLRendererParams.html#maxTextureUnits" class="tsd-kind-icon">max<wbr>Texture<wbr>Units</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLRendererState.html" class="tsd-kind-icon">WTCGLRenderer<wbr>State</a>
 					</li>

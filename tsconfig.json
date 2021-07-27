@@ -5,7 +5,7 @@
     "moduleResolution": "node"
   },
   "typedocOptions": {
-    "out": "documentation",
+    "out": "docs",
     "entryPoints": "src/index.ts",
     "exclude": ["dist/*+.ts*"]
   }

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>WTCGLRendererParams | wtc-gl</title>
+	<title>WTCGLActiveInfo | wtc-gl</title>
 	<meta name="description" content="Documentation for wtc-gl">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,10 @@
 					<a href="../modules.html">wtc-gl</a>
 				</li>
 				<li>
-					<a href="WTCGLRendererParams.html">WTCGLRendererParams</a>
+					<a href="WTCGLActiveInfo.html">WTCGLActiveInfo</a>
 				</li>
 			</ul>
-			<h1>Interface WTCGLRendererParams</h1>
+			<h1>Interface WTCGLActiveInfo</h1>
 		</div>
 	</div>
 </header>
@@ -68,15 +68,25 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>A list of hardware limit values.</p>
+						<p>Representes an extention of the standard Web GL active info for uniforms and attributes.
+						See <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLActiveInfo">MDN</a> for more information on WebGLActiveInfo.</p>
 					</div>
+					<dl class="tsd-comment-tags">
+						<dt>interface</dt>
+						<dd></dd>
+					</dl>
 				</div>
 			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">WTCGLRendererParams</span>
+						<span class="tsd-signature-type">WebGLActiveInfo</span>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">WTCGLActiveInfo</span>
+							</li>
+						</ul>
 					</li>
 				</ul>
 			</section>
@@ -87,8 +97,14 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLRendererParams.html#maxAnisotropy" class="tsd-kind-icon">max<wbr>Anisotropy</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLRendererParams.html#maxTextureUnits" class="tsd-kind-icon">max<wbr>Texture<wbr>Units</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLActiveInfo.html#isStruct" class="tsd-kind-icon">is<wbr>Struct</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLActiveInfo.html#isStructArray" class="tsd-kind-icon">is<wbr>Struct<wbr>Array</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="WTCGLActiveInfo.html#name" class="tsd-kind-icon">name</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="WTCGLActiveInfo.html#size" class="tsd-kind-icon">size</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLActiveInfo.html#structIndex" class="tsd-kind-icon">struct<wbr>Index</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLActiveInfo.html#structProperty" class="tsd-kind-icon">struct<wbr>Property</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external"><a href="WTCGLActiveInfo.html#type" class="tsd-kind-icon">type</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="WTCGLActiveInfo.html#uniformName" class="tsd-kind-icon">uniform<wbr>Name</a></li>
 							</ul>
 						</section>
 					</div>
@@ -97,24 +113,112 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="maxAnisotropy" class="tsd-anchor"></a>
-					<h3>max<wbr>Anisotropy</h3>
-					<div class="tsd-signature tsd-kind-icon">max<wbr>Anisotropy<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="isStruct" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> is<wbr>Struct</h3>
+					<div class="tsd-signature tsd-kind-icon">is<wbr>Struct<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/types.ts#L334">src/types.ts:334</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L61">src/types.ts:61</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If the uniform points to a structure.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="isStructArray" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> is<wbr>Struct<wbr>Array</h3>
+					<div class="tsd-signature tsd-kind-icon">is<wbr>Struct<wbr>Array<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L57">src/types.ts:57</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If a uniform location points to a structure array.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+					<a name="name" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> name</h3>
+					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from WebGLActiveInfo.name</p>
+						<ul>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:17115</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+					<a name="size" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> size</h3>
+					<div class="tsd-signature tsd-kind-icon">size<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from WebGLActiveInfo.size</p>
+						<ul>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:17116</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="maxTextureUnits" class="tsd-anchor"></a>
-					<h3>max<wbr>Texture<wbr>Units</h3>
-					<div class="tsd-signature tsd-kind-icon">max<wbr>Texture<wbr>Units<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="structIndex" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> struct<wbr>Index</h3>
+					<div class="tsd-signature tsd-kind-icon">struct<wbr>Index<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/9e3342c/src/types.ts#L333">src/types.ts:333</a></li>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L65">src/types.ts:65</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The index within the structure.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="structProperty" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> struct<wbr>Property</h3>
+					<div class="tsd-signature tsd-kind-icon">struct<wbr>Property<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L69">src/types.ts:69</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The property within the structure to target.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+					<a name="type" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagReadonly">Readonly</span> type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<p>Inherited from WebGLActiveInfo.type</p>
+						<ul>
+							<li>Defined in node_modules/typescript/lib/lib.dom.d.ts:17117</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="uniformName" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> uniform<wbr>Name</h3>
+					<div class="tsd-signature tsd-kind-icon">uniform<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/wethegit/wtc-gl/blob/8910905/src/types.ts#L53">src/types.ts:53</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The uniform name, used for associating active info with WTCGLUniform objects</p>
+						</div>
+					</div>
 				</section>
 			</section>
 		</div>
@@ -173,9 +277,39 @@
 					<li class=" tsd-kind-class">
 						<a href="../classes/Uniform.html" class="tsd-kind-icon">Uniform</a>
 					</li>
-					<li class=" tsd-kind-interface">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface">
 						<a href="WTCGLActiveInfo.html" class="tsd-kind-icon">WTCGLActive<wbr>Info</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLActiveInfo.html#isStruct" class="tsd-kind-icon">is<wbr>Struct</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLActiveInfo.html#isStructArray" class="tsd-kind-icon">is<wbr>Struct<wbr>Array</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+								<a href="WTCGLActiveInfo.html#name" class="tsd-kind-icon">name</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+								<a href="WTCGLActiveInfo.html#size" class="tsd-kind-icon">size</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLActiveInfo.html#structIndex" class="tsd-kind-icon">struct<wbr>Index</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLActiveInfo.html#structProperty" class="tsd-kind-icon">struct<wbr>Property</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-inherited tsd-is-external">
+								<a href="WTCGLActiveInfo.html#type" class="tsd-kind-icon">type</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="WTCGLActiveInfo.html#uniformName" class="tsd-kind-icon">uniform<wbr>Name</a>
+							</li>
+						</ul>
 					</li>
+				</ul>
+				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLBlendEquation.html" class="tsd-kind-icon">WTCGLBlend<wbr>Equation</a>
 					</li>
@@ -188,21 +322,9 @@
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLGeometryAttribute.html" class="tsd-kind-icon">WTCGLGeometry<wbr>Attribute</a>
 					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface">
+					<li class=" tsd-kind-interface">
 						<a href="WTCGLRendererParams.html" class="tsd-kind-icon">WTCGLRenderer<wbr>Params</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="WTCGLRendererParams.html#maxAnisotropy" class="tsd-kind-icon">max<wbr>Anisotropy</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="WTCGLRendererParams.html#maxTextureUnits" class="tsd-kind-icon">max<wbr>Texture<wbr>Units</a>
-							</li>
-						</ul>
 					</li>
-				</ul>
-				<ul class="after-current">
 					<li class=" tsd-kind-interface">
 						<a href="WTCGLRendererState.html" class="tsd-kind-icon">WTCGLRenderer<wbr>State</a>
 					</li>
