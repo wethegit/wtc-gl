@@ -1,11 +1,4 @@
-import {
-  WTCGLRenderingContext,
-  WTCGLBlendFunction,
-  WTCGLBlendEquation,
-  WTCGLUniformMap,
-  WTCGLAttributeMap,
-  WTCGLActiveInfo
-} from '../../types'
+import { WTCGLRenderingContext } from '../../types'
 import { Renderer } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
