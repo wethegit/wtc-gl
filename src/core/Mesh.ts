@@ -183,15 +183,15 @@ class Mesh extends Drawable {
       }
 
       // Set the matrix uniforms
-      this.program.uniforms.projectionMatrix.value =
+      this.program.uniforms.u_projectionMatrix.value =
         camera.projectionMatrix.array
-      this.program.uniforms.cameraPosition.value = camera.worldPosition.array
-      this.program.uniforms.viewMatrix.value = camera.viewMatrix.array
+      this.program.uniforms.u_cameraPosition.value = camera.worldPosition.array
+      this.program.uniforms.u_modelViewMatrix.value = camera.viewMatrix.array
       this.modelViewMatrix = camera.viewMatrix.multiplyNew(this.worldMatrix)
       this.normalMatrix = Mat3.fromMat4(this.modelViewMatrix)
-      this.program.uniforms.modelMatrix.value = this.worldMatrix.array
-      this.program.uniforms.modelViewMatrix.value = this.modelViewMatrix.array
-      this.program.uniforms.normalMatrix.value = this.normalMatrix.array
+      this.program.uniforms.u_modelMatrix.value = this.worldMatrix.array
+      this.program.uniforms.u_modelViewMatrix.value = this.modelViewMatrix.array
+      this.program.uniforms.u_normalMatrix.value = this.normalMatrix.array
     }
 
     // determine if faces need to be flipped - when mesh scaled negatively
