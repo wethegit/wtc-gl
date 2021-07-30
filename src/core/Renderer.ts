@@ -1,4 +1,4 @@
-import { Vec2, Vec3 } from 'wtc-math'
+import { Vec2 } from 'wtc-math'
 import {
   WTCGLRendererState,
   WTCGLRenderingContext,
@@ -10,7 +10,6 @@ import { RenderTarget } from './RenderTarget'
 import { Obj } from './Object'
 import { Drawable } from './Drawable'
 
-let ID = 1
 /**
  * Create a renderer. This is responsible for bringing together the whole state and, eventually, rendering to screen.
  */
@@ -105,6 +104,7 @@ class Renderer {
     offset: GLintptr,
     instanceCount: number
   ) => void
+
   /**
    * The WebGL2RenderingContext.createVertexArray() method of the WebGL 2 API creates and initializes a WebGLVertexArrayObject object that represents a vertex array object (VAO) pointing to vertex array data and which provides names for different sets of vertex data.
    */
@@ -606,7 +606,7 @@ class Renderer {
         if (node.renderOrder !== 0 || !node.program.depthTest || !camera) return
 
         // update z-depth
-        const translation = node.worldMatrix.translation()
+        const translation = node.worldMatrix.translation
         translation.transformByMat4(camera.projectionViewMatrix)
         node.zDepth = translation.z
       })
