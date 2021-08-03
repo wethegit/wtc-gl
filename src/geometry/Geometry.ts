@@ -8,8 +8,6 @@ import {
 import { Vec3 } from 'wtc-math'
 import { Program } from '../core/Program'
 
-const tempVec3 = new Vec3()
-
 let ID = 1
 
 // To stop inifinite warnings
@@ -361,10 +359,10 @@ export class Geometry {
 
     let maxRadiusSq = 0
     for (let i = offset, l = array.length; i < l; i += stride) {
-      originArrayToVec3(array, i)
+      const point = originArrayToVec3(array, i)
       maxRadiusSq = Math.max(
         maxRadiusSq,
-        this.bounds.center.subtractNew(tempVec3).lengthSquared
+        this.bounds.center.subtractNew(point).lengthSquared
       )
     }
 

@@ -254,19 +254,19 @@ class Camera extends Obj {
       m.a24 - m.a21,
       m.a34 - m.a31
     )
-    this.frustum.xNeg.constant = m.a44 + m.a41
+    this.frustum.xNeg.constant = m.a44 - m.a41
 
     this.frustum.xPos.pos = new Vec3(
-      m.a14 - m.a11,
-      m.a24 - m.a21,
-      m.a34 - m.a31
-    )
-    this.frustum.xPos.constant = m.a44 - m.a41
-
-    this.frustum.yPos.pos = new Vec3(
       m.a14 + m.a11,
       m.a24 + m.a21,
       m.a34 + m.a31
+    )
+    this.frustum.xPos.constant = m.a44 + m.a41
+
+    this.frustum.yPos.pos = new Vec3(
+      m.a14 + m.a12,
+      m.a24 + m.a22,
+      m.a34 + m.a32
     )
     this.frustum.yPos.constant = m.a44 + m.a42
 
