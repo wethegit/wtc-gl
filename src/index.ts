@@ -15,5 +15,3 @@ export { GeometryAttribute } from './geometry/GeometryAttribute'
 export { Triangle } from './geometry/Triangle'
 export { Plane } from './geometry/Plane'
 export { Box } from './geometry/Box'
-
-export { FragmentShader } from './recipes/FragmentShader/'
