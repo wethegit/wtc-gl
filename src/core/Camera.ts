@@ -151,7 +151,13 @@ class Camera extends Obj {
     aspect?: number
   } = {}): Camera {
     Object.assign(this, { near, far, fov, aspect })
-    this.projectionMatrix = Mat4.perspective(fov, aspect, near, far)
+    console.log(fov)
+    this.projectionMatrix = Mat4.perspective(
+      (fov * Math.PI) / 180,
+      aspect,
+      near,
+      far
+    )
     this.type = 'perspective'
     return this
   }
@@ -248,6 +254,7 @@ class Camera extends Obj {
     12  13  14  15
     */
 
+    //  this.frustum[0].set(m[3] - m[0], m[7] - m[4], m[11] - m[8]).constant = m[15] - m[12]; // -x
     const m = this.projectionViewMatrix
     this.frustum.xNeg.pos = new Vec3(
       m.a14 - m.a11,
@@ -256,6 +263,7 @@ class Camera extends Obj {
     )
     this.frustum.xNeg.constant = m.a44 - m.a41
 
+    //  this.frustum[1].set(m[3] + m[0], m[7] + m[4], m[11] + m[8]).constant = m[15] + m[12]; // +x
     this.frustum.xPos.pos = new Vec3(
       m.a14 + m.a11,
       m.a24 + m.a21,
@@ -263,6 +271,7 @@ class Camera extends Obj {
     )
     this.frustum.xPos.constant = m.a44 + m.a41
 
+    //  this.frustum[2].set(m[3] + m[1], m[7] + m[5], m[11] + m[9]).constant = m[15] + m[13]; // +y
     this.frustum.yPos.pos = new Vec3(
       m.a14 + m.a12,
       m.a24 + m.a22,
@@ -270,6 +279,7 @@ class Camera extends Obj {
     )
     this.frustum.yPos.constant = m.a44 + m.a42
 
+    //  this.frustum[3].set(m[3] - m[1], m[7] - m[5], m[11] - m[9]).constant = m[15] - m[13]; // -y
     this.frustum.yNeg.pos = new Vec3(
       m.a14 - m.a12,
       m.a24 - m.a22,
@@ -277,6 +287,7 @@ class Camera extends Obj {
     )
     this.frustum.yNeg.constant = m.a44 - m.a42
 
+    //  this.frustum[4].set(m[3] - m[2], m[7] - m[6], m[11] - m[10]).constant = m[15] - m[14]; // +z (far)
     this.frustum.zPos.pos = new Vec3(
       m.a14 - m.a13,
       m.a24 - m.a23,
@@ -284,6 +295,7 @@ class Camera extends Obj {
     )
     this.frustum.zPos.constant = m.a44 - m.a43
 
+    //  this.frustum[5].set(m[3] + m[2], m[7] + m[6], m[11] + m[10]).constant = m[15] + m[14]; // -z (near)
     this.frustum.zNeg.pos = new Vec3(
       m.a14 + m.a13,
       m.a24 + m.a23,
