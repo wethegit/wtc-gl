@@ -34,6 +34,8 @@ gl_FragColor = vec4(vec3(cos(length(v_uv+u_time))*.5+.5, sin(v_uv+u_time)*.5+.5)
 }
 `
 
+let lastTime = 0;
+
 interface WTCGLUniformArray {
   [index: string]: Uniform
 }
@@ -126,11 +128,16 @@ class FragmentShader {
   render(t) {
     this.onBeforeRender(t)
 
+    const diff = t - lastTime;
+    lastTime = t;
+
+
     if (this.playing) {
       requestAnimationFrame(this.render)
     }
 
-    this.u_time.value = t * 0.0001
+    const v:number = this.u_time.value as number;
+    this.u_time.value = v + diff * 0.00005
 
     this.renderer.render({ scene: this.mesh })
 
