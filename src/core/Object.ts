@@ -196,8 +196,8 @@ class Obj {
    * @param invert - Look away from, if true
    */
   lookAt(target: Vec3, invert: boolean = false): void {
-    if (invert) this.matrix = Mat4.lookAt(this.position, target, this.up)
-    else this.matrix = Mat4.lookAt(target, this.position, this.up)
+    if (invert) this.matrix = Mat4.targetTo(this.position, target, this.up)
+    else this.matrix = Mat4.targetTo(target, this.position, this.up)
     this.quaternion = this.matrix.rotation
     const rotMat = Mat4.fromQuat(this.quaternion)
     this.rotation = Vec3.fromRotationMatrix(rotMat) || new Vec3()
