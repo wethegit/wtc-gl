@@ -1,6 +1,6 @@
 {
   "name": "wtc-gl",
-  "version": "1.0.0-beta.10",
+  "version": "1.0.0-beta.11",
   "description": "Typescript simple Web GL library.",
   "source": "src/index.ts",
   "main": "dist/index.js",
@@ -17,7 +17,7 @@
     "document": "npx typedoc src/index.ts"
   },
   "dependencies": {
-    "wtc-math": "^1.0.9"
+    "wtc-math": "^1.0.10"
   },
   "devDependencies": {
     "husky": "^5.1.3",
