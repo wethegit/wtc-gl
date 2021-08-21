@@ -3,6 +3,18 @@ import { Vec3, Mat4 } from 'wtc-math'
 import { Mesh } from './Mesh'
 import { Drawable } from './Drawable'
 
+type CameraOptions = {
+  near?: number
+  far?: number
+  fov?: number
+  aspect?: number
+  left?: number
+  right?: number
+  top?: number
+  bottom?: number
+  zoom?: number
+}
+
 /**
  * Class representing some Geometry.
  * @extends Obj
@@ -97,17 +109,7 @@ class Camera extends Obj {
     top,
     bottom,
     zoom = 1
-  }: {
-    near?: number
-    far?: number
-    fov?: number
-    aspect?: number
-    left?: number
-    right?: number
-    top?: number
-    bottom?: number
-    zoom?: number
-  } = {}) {
+  }: CameraOptions = {}) {
     super()
 
     this.near = near
@@ -364,4 +366,4 @@ class Camera extends Obj {
   }
 }
 
-export { Camera }
+export { Camera, CameraOptions }

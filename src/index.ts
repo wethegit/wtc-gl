@@ -8,6 +8,7 @@ export { Program } from './core/Program'
 export { Uniform } from './core/Uniform'
 export { Texture } from './core/Texture'
 export { Camera } from './core/Camera'
+export { DollyCamera } from './core/DollyCamera'
 export { RenderTarget } from './core/RenderTarget'
 
 export { Geometry } from './geometry/Geometry'
