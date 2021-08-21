@@ -1,8 +1,3 @@
-// Based from ThreeJS' OrbitControls class, rewritten using es6 with some additions and subtractions.
-// TODO: abstract event handlers so can be fed from other sources
-// TODO: make scroll zoom more accurate than just >/< zero
-// TODO: be able to pass in new camera position
-
 import { Camera, CameraOptions } from './Camera'
 import { Vec2, Vec3 } from 'wtc-math'
 
