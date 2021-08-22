@@ -78,7 +78,7 @@ class DollyCamera extends Camera {
       ease = 0.25,
       inertia = 0.5,
       enableRotate = true,
-      rotateSpeed = 10.5,
+      rotateSpeed = .5,
       autoRotate = false,
       autoRotateSpeed = 1.0,
       enableZoom = true,
