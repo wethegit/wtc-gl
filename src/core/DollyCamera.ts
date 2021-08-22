@@ -127,16 +127,7 @@ class DollyCamera extends Camera {
     this.spherical = new Vec3(1, 0, 0)
     this.panDelta = new Vec3()
 
-    // Grab initial position values
-    this.offset = this.position.subtractNew(this.target)
-    this.spherical.radius = this.sphericalTarget.radius = this.offset.length
-    this.spherical.theta = this.sphericalTarget.theta = Math.atan2(
-      this.offset.x,
-      this.offset.z
-    )
-    this.spherical.phi = this.sphericalTarget.phi = Math.acos(
-      Math.min(Math.max(this.offset.y / this.sphericalTarget.radius, -1), 1)
-    )
+    this.setPosition(this.position.x, this.position.y, this.position.z)
 
     this.rotateStart = new Vec2()
     this.panStart = new Vec2()
@@ -145,16 +136,30 @@ class DollyCamera extends Camera {
     this.state = DollyCamera.STATE_NONE
     this.mouseButtons = { ORBIT: 0, ZOOM: 1, PAN: 2 }
 
-    this.onContextMenu.bind(this)
-    this.onMouseDown.bind(this)
-    this.onMouseWheel.bind(this)
-    this.onTouchStart.bind(this)
-    this.onTouchEnd.bind(this)
-    this.onTouchMove.bind(this)
-    this.onMouseMove.bind(this)
-    this.onMouseUp.bind(this)
+    this.onContextMenu = this.onContextMenu.bind(this)
+    this.onMouseDown = this.onMouseDown.bind(this)
+    this.onMouseWheel = this.onMouseWheel.bind(this)
+    this.onTouchStart = this.onTouchStart.bind(this)
+    this.onTouchEnd = this.onTouchEnd.bind(this)
+    this.onTouchMove = this.onTouchMove.bind(this)
+    this.onMouseMove = this.onMouseMove.bind(this)
+    this.onMouseUp = this.onMouseUp.bind(this)
 
     this.addHandlers()
+  }
+  
+  setPosition(x, y, z) {
+    this.position.reset(x, y, z)
+    this.offset = this.position.subtractNew(this.target)
+    
+    this.spherical.radius = this.sphericalTarget.radius = this.offset.length
+    this.spherical.theta = this.sphericalTarget.theta = Math.atan2(
+      this.offset.x,
+      this.offset.z
+    )
+    this.spherical.phi = this.sphericalTarget.phi = Math.acos(
+      Math.min(Math.max(this.offset.y / this.sphericalTarget.radius, -1), 1)
+    )
   }
 
   update() {
