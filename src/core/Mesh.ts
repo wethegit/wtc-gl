@@ -178,6 +178,11 @@ class Mesh extends Drawable {
             name: 'cameraPosition',
             value: null,
             kind: 'float_vec3'
+          }),
+          u_objectPosition: new Uniform({
+            name: 'objectPosition',
+            value: null,
+            kind: 'float_vec3'
           })
         })
       }
@@ -186,6 +191,7 @@ class Mesh extends Drawable {
       this.program.uniforms.u_projectionMatrix.value =
         camera.projectionMatrix.array
       this.program.uniforms.u_cameraPosition.value = camera.worldPosition.array
+      this.program.uniforms.u_objectPosition.value = this.position.array
       this.program.uniforms.u_modelViewMatrix.value = camera.viewMatrix.array
       this.modelViewMatrix = camera.viewMatrix.multiplyNew(this.worldMatrix)
       this.normalMatrix = Mat3.fromMat4(this.modelViewMatrix)
