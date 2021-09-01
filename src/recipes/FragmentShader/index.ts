@@ -139,9 +139,21 @@ class FragmentShader {
     const v:number = this.u_time.value as number;
     this.u_time.value = v + diff * 0.00005
 
-    this.renderer.render({ scene: this.mesh })
+    if(this.post) this.post.render({ scene: this.mesh })
+    else this.renderer.render({ scene: this.mesh })
 
     this.onAfterRender(t)
+  }
+
+  #post
+  set post(p) {
+    if(p.render) {
+      this.#post = p
+
+    }
+  }
+  get post() {
+    return this.#post || null;
   }
 
   #playing: boolean = false
