@@ -141,7 +141,7 @@ class FragmentShader {
 
     this.renderer.render({ scene: this.mesh })
 
-    this.onBeforeRender(t)
+    this.onAfterRender(t)
   }
 
   #playing: boolean = false
