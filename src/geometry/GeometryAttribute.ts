@@ -92,10 +92,10 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     this.type =
       type ||
       (this.data.constructor === Float32Array
-        ? window.WebGL2RenderingContext.FLOAT
+        ? window.WebGLRenderingContext.FLOAT
         : this.data.constructor === Uint16Array
-        ? window.WebGL2RenderingContext.UNSIGNED_SHORT
-        : window.WebGL2RenderingContext.UNSIGNED_INT)
+        ? window.WebGLRenderingContext.UNSIGNED_SHORT
+        : window.WebGLRenderingContext.UNSIGNED_INT)
     this.normalized = normalized
   }
   /**
