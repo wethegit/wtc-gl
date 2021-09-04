@@ -104,6 +104,7 @@ class FragmentShader {
       this.resize()
     } else {
       this.renderer.dimensions = dimensions
+      this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
     }
 
     const geometry = new Triangle(this.gl)
@@ -121,7 +122,7 @@ class FragmentShader {
 
   resize() {
     this.dimensions = new Vec2(window.innerWidth, window.innerHeight)
-    this.u_resolution.value = this.dimensions.array
+    this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
     this.renderer.dimensions = this.dimensions
   }
 
