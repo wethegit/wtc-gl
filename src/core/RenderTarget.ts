@@ -123,6 +123,13 @@ class RenderTarget {
     this.buffer = this.gl.createFramebuffer()
     this.target = target
     this.gl.bindFramebuffer(this.target, this.buffer)
+    
+    const e = gl.getExtension('OES_texture_half_float')
+    if (type === e?.HALF_FLOAT_OES || type === this.gl.HALF_FLOAT) {
+      if (gl.renderer.isWebgl2) {
+        internalFormat = this.gl.RGBA16F
+      }
+    }
 
     this.textures = []
     const drawBuffers = []

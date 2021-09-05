@@ -307,6 +307,9 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
    * The HTML canvas element. Supplied here because the in-built interface doesn't contain it.
    */
   canvas: HTMLCanvasElement
+
+  HALF_FLOAT: number
+  RGBA16F: number
 }
 
 /**
