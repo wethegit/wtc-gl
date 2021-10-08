@@ -639,7 +639,8 @@ class Renderer {
     update = true,
     sort = true,
     frustumCull = true,
-    clear
+    clear,
+    viewport = null
   }: {
     scene: Obj
     camera?: Camera
@@ -647,17 +648,22 @@ class Renderer {
     update?: boolean
     sort?: boolean
     frustumCull?: boolean
-    clear?: boolean
+    clear?: boolean,
+    viewport?: [Vec2, Vec2]
   }) {
     if (target === null) {
       // make sure no render target bound so draws to canvas
       this.bindFramebuffer()
-      this.setViewport(this.dimensions.scaleNew(this.dpr), new Vec2())
+      if (viewport === null)
+        viewport = [this.dimensions.scaleNew(this.dpr), new Vec2()];
+      this.setViewport(...viewport)
     } else {
       // bind supplied render target and update viewport
 
       this.bindFramebuffer(target)
-      this.setViewport(new Vec2(target.width, target.height), new Vec2())
+      if (viewport === null)
+        viewport = [new Vec2(target.width, target.height), new Vec2()];
+      this.setViewport(...viewport)
     }
 
     if (clear || (this.autoClear && clear !== false)) {
