@@ -81,8 +81,8 @@ class Framebuffer {
     this.#readFB = this.#writeFB
     this.#writeFB = temp
   }
-  render(renderer, { scene, camera, update = true, clear }) {
-    renderer.render({ scene, camera, target: this.#writeFB, update, clear })
+  render(renderer, { scene, camera, update = true, clear, viewport = null }) {
+    renderer.render({ scene, camera, target: this.#writeFB, update, clear, viewport })
     this.swap()
   }
 
