@@ -310,6 +310,7 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
 
   HALF_FLOAT: number
   RGBA16F: number
+  RGBA32F: number
 }
 
 /**

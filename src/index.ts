@@ -17,4 +17,6 @@ export { Triangle } from './geometry/Triangle'
 export { Plane } from './geometry/Plane'
 export { Box } from './geometry/Box'
 
+export { Framebuffer } from './ext/Framebuffer'
+
 export { FragmentShader } from './recipes/FragmentShader/'
