@@ -67,6 +67,7 @@ class Framebuffer {
     }
 
     const FB = new RenderTarget(this.gl, {
+      data: this.data,
       width: this.width * this.dpr,
       height: this.height * this.dpr,
       wrapS: this.wrap,

@@ -82,6 +82,7 @@ class RenderTarget {
   constructor(
     gl: WTCGLRenderingContext,
     {
+      data,
       width = gl.canvas.width,
       height = gl.canvas.height,
       target = gl.FRAMEBUFFER,
@@ -98,6 +99,7 @@ class RenderTarget {
       unpackAlignment = 4,
       premultiplyAlpha = false
     }: {
+      data?: Float32Array | null
       width?: number
       height?: number
       target?: GLenum
@@ -138,6 +140,7 @@ class RenderTarget {
     for (let i = 0; i < colour; i++) {
       this.textures.push(
         new Texture(gl, {
+          data,
           width,
           height,
           wrapS,
