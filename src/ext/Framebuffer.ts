@@ -48,6 +48,7 @@ class Framebuffer {
     this.dpr = dpr
     this.tiling = tiling
     this.texdepth = texdepth
+    this.data = data;
 
     this.resize(width, height)
   }
