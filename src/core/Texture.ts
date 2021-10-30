@@ -30,6 +30,8 @@ class Texture {
    * The image element representing the texture. Can be an HTML image, video, or canvas
    */
   image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  data: Float32Array | null
+
   /**
    * The WebGL texture object containing the data and state for WebGL
    */
@@ -117,7 +119,7 @@ class Texture {
    * The image store
    */
   store: {
-    image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | null
+    image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
   }
   /**
    * A local reference to the renderer state
@@ -158,6 +160,7 @@ class Texture {
     gl: WTCGLRenderingContext,
     {
       image,
+      data,
       target = gl.TEXTURE_2D,
       type = gl.UNSIGNED_BYTE,
       format = gl.RGBA,
@@ -176,6 +179,7 @@ class Texture {
       height = width
     }: {
       image?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+      data?: Float32Array | null
       target?: GLenum
       type?: GLenum
       format?: GLenum
@@ -198,6 +202,7 @@ class Texture {
     this.id = ID++
 
     this.image = image
+    this.data = data
     this.target = target
     this.type = type
     this.format = format
@@ -327,8 +332,8 @@ class Texture {
       this.state.anisotropy = this.anisotropy
     }
 
-    if (this.image) {
-      if (this.image.width) {
+    if (this.image || this.data) {
+      if (this.image && this.image.hasOwnProperty('width')) {
         this.width = this.image.width
         this.height = this.image.height
       }
@@ -345,8 +350,9 @@ class Texture {
             this.image[i]
           )
         }
-      } else if (ArrayBuffer.isView(this.image)) {
+      } else if (ArrayBuffer.isView(this.data)) {
         // Data texture
+        console.log(this.data)
         this.gl.texImage2D(
           this.target,
           this.level,
@@ -356,7 +362,7 @@ class Texture {
           0,
           this.format,
           this.type,
-          this.image
+          this.data
         )
       } else {
         // Regular texture
@@ -374,6 +380,7 @@ class Texture {
         // For WebGL1, if not a power of 2, turn off mips, set wrapping to clamp to edge and minFilter to linear
         if (
           !this.gl.renderer.isWebgl2 &&
+          this.image &&
           (!isPowerOf2(this.image.width) || !isPowerOf2(this.image.height))
         ) {
           this.generateMipmaps = false
