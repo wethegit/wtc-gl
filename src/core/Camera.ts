@@ -153,7 +153,6 @@ class Camera extends Obj {
     aspect?: number
   } = {}): Camera {
     Object.assign(this, { near, far, fov, aspect })
-    console.log(fov)
     this.projectionMatrix = Mat4.perspective(
       (fov * Math.PI) / 180,
       aspect,

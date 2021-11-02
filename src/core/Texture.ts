@@ -352,7 +352,6 @@ class Texture {
         }
       } else if (ArrayBuffer.isView(this.data)) {
         // Data texture
-        console.log(this.data)
         this.gl.texImage2D(
           this.target,
           this.level,
