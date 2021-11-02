@@ -30,6 +30,10 @@ class Framebuffer {
   #texdepth: number = Framebuffer.TEXTYPE_UNSIGNED_BYTE
   #data
 
+  minFilter
+  magFilter
+  premultiplyAlpha
+
   constructor(
     gl,
     {
@@ -39,6 +43,9 @@ class Framebuffer {
       dpr = Math.min(window.devicePixelRatio, 2),
       tiling = Framebuffer.IMAGETYPE_REGULAR,
       texdepth = Framebuffer.TEXTYPE_UNSIGNED_BYTE,
+      minFilter = gl.LINEAR,
+      magFilter = minFilter,
+      premultiplyAlpha = false,
       data = null
     } = {}
   ) {
@@ -48,7 +55,11 @@ class Framebuffer {
     this.dpr = dpr
     this.tiling = tiling
     this.texdepth = texdepth
-    this.data = data;
+    this.data = data
+
+    this.minFilter = minFilter
+    this.magFilter = magFilter
+    this.premultiplyAlpha = premultiplyAlpha
 
     this.resize(width, height)
   }
@@ -71,10 +82,13 @@ class Framebuffer {
       data: this.data,
       width: this.width * this.dpr,
       height: this.height * this.dpr,
+      minFilter: this.minFilter,
+      magFilter: this.magFilter,
       wrapS: this.wrap,
       wrapT: this.wrap,
       type: this.type,
-      internalFormat: internalFormat
+      internalFormat: internalFormat,
+      premultiplyAlpha: this.premultiplyAlpha
     })
     return FB
   }
@@ -84,7 +98,14 @@ class Framebuffer {
     this.#writeFB = temp
   }
   render(renderer, { scene, camera, update = true, clear, viewport = null }) {
-    renderer.render({ scene, camera, target: this.#writeFB, update, clear, viewport })
+    renderer.render({
+      scene,
+      camera,
+      target: this.#writeFB,
+      update,
+      clear,
+      viewport
+    })
     this.swap()
   }
 
