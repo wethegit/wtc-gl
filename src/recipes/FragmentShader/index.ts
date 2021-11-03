@@ -127,18 +127,18 @@ class FragmentShader {
   }
 
   render(t) {
-    this.onBeforeRender(t)
-
+    
     const diff = t - lastTime;
     lastTime = t;
-
-
+    
     if (this.playing) {
       requestAnimationFrame(this.render)
     }
-
+    
     const v:number = this.u_time.value as number;
     this.u_time.value = v + diff * 0.00005
+
+    this.onBeforeRender(t)
 
     if(this.post) this.post.render({ scene: this.mesh })
     else this.renderer.render({ scene: this.mesh })
