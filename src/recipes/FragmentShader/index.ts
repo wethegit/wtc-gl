@@ -163,6 +163,7 @@ class FragmentShader {
       requestAnimationFrame(this.render)
       this.#playing = true
     } else {
+      lastTime = 0;
       this.#playing = false
     }
   }
