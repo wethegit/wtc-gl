@@ -63,7 +63,8 @@ class FragmentShader {
     autoResize = true,
     uniforms = {},
     onBeforeRender = (t: number) => {},
-    onAfterRender = (t: number) => {}
+    onAfterRender = (t: number) => {},
+    rendererProps = null
   }: {
     vertex?: string
     fragment?: string
@@ -73,6 +74,7 @@ class FragmentShader {
     uniforms?: WTCGLUniformArray
     onBeforeRender?: (delta: number) => void
     onAfterRender?: (delta: number) => void
+    rendererProps?: any
   } = {}) {
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)
@@ -94,7 +96,7 @@ class FragmentShader {
       u_resolution: this.u_resolution
     })
 
-    this.renderer = new Renderer()
+    this.renderer = new Renderer(rendererProps)
     this.gl = this.renderer.gl
     container.appendChild(this.gl.canvas)
     this.gl.clearColor(1, 1, 1, 1)
@@ -104,7 +106,9 @@ class FragmentShader {
       this.resize()
     } else {
       this.renderer.dimensions = dimensions
-      this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
+      this.u_resolution.value = this.dimensions.scaleNew(
+        this.renderer.dpr
+      ).array
     }
 
     const geometry = new Triangle(this.gl)
@@ -127,20 +131,19 @@ class FragmentShader {
   }
 
   render(t) {
-    
-    const diff = t - lastTime;
-    lastTime = t;
-    
+    const diff = t - lastTime
+    lastTime = t
+
     if (this.playing) {
       requestAnimationFrame(this.render)
     }
-    
-    const v:number = this.u_time.value as number;
+
+    const v: number = this.u_time.value as number
     this.u_time.value = v + diff * 0.00005
 
     this.onBeforeRender(t)
 
-    if(this.post) this.post.render({ scene: this.mesh })
+    if (this.post) this.post.render({ scene: this.mesh })
     else this.renderer.render({ scene: this.mesh })
 
     this.onAfterRender(t)
@@ -148,13 +151,12 @@ class FragmentShader {
 
   #post
   set post(p) {
-    if(p.render) {
+    if (p.render) {
       this.#post = p
-
     }
   }
   get post() {
-    return this.#post || null;
+    return this.#post || null
   }
 
   #playing: boolean = false
@@ -163,7 +165,7 @@ class FragmentShader {
       requestAnimationFrame(this.render)
       this.#playing = true
     } else {
-      lastTime = 0;
+      lastTime = 0
       this.#playing = false
     }
   }

@@ -89,7 +89,8 @@ class ParticleSimulation {
     onAfterRender = (t) => {},
     textureSize = 128,
     simDimensions = 3,
-    createGeometry = null
+    createGeometry = null,
+    rendererProps = null
   } = {}) {
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)
@@ -111,7 +112,7 @@ class ParticleSimulation {
       u_resolution: this.u_resolution
     })
 
-    this.renderer = new Renderer()
+    this.renderer = new Renderer(rendererProps)
     this.gl = this.renderer.gl
     this.gl.clearColor(0, 0, 0, 1)
 
