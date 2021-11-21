@@ -80,18 +80,20 @@ class Uniform {
 
     const setValue = gl.renderer.state.uniformLocations.get(location)
 
-    // Avoid redundant uniform commands
-    if (value instanceof Array && setValue instanceof Array) {
-      if (setValue === undefined || setValue.length !== value.length) {
-        // clone array to store as cache
-        gl.renderer.state.uniformLocations.set(location, value.slice(0))
-      } else {
-        if (arraysEqual(setValue, value)) return
+    if (value instanceof Array) {
+        if (
+          setValue === undefined ||
+          (setValue instanceof Array && setValue.length !== value.length)
+        ) {
+          // clone array to store as cache
+          gl.renderer.state.uniformLocations.set(location, value.slice(0))
+        } else if (setValue instanceof Array) {
+          if (arraysEqual(setValue, value)) return
 
-        // Update cached array values
-        setArray(setValue, value)
-        gl.renderer.state.uniformLocations.set(location, setValue)
-      }
+          // Update cached array values
+          setArray(setValue, value)
+          gl.renderer.state.uniformLocations.set(location, setValue)
+        }
     } else {
       if (setValue === value) return
       gl.renderer.state.uniformLocations.set(location, value)
