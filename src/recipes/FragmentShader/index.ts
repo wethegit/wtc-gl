@@ -143,7 +143,7 @@ class FragmentShader {
 
     this.onBeforeRender(t)
 
-    if (this.post) this.post.render({ scene: this.mesh })
+    if (this.post) this.post.render(this.renderer, { scene: this.mesh })
     else this.renderer.render({ scene: this.mesh })
 
     this.onAfterRender(t)
