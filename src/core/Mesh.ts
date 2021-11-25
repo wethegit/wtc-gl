@@ -198,6 +198,19 @@ class Mesh extends Drawable {
       this.program.uniforms.u_modelMatrix.value = this.worldMatrix.array
       this.program.uniforms.u_modelViewMatrix.value = this.modelViewMatrix.array
       this.program.uniforms.u_normalMatrix.value = this.normalMatrix.array
+    } else {
+      // Add empty matrix uniforms to program if unset
+      if (!this.program.uniforms.modelMatrix) {
+        Object.assign(this.program.uniforms, {
+          u_objectPosition: new Uniform({
+            name: 'objectPosition',
+            value: null,
+            kind: 'float_vec3'
+          })
+        })
+      }
+      
+      this.program.uniforms.u_objectPosition.value = this.position.array
     }
 
     // determine if faces need to be flipped - when mesh scaled negatively
