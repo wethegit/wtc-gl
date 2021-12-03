@@ -194,7 +194,7 @@ class ParticleSimulation {
 
     this.onBeforeRender(t, this)
 
-    if (this.post) this.post.render({ scene: this.mesh })
+    if (this.post) this.post.render(this.renderer, { scene: this.mesh })
     else this.renderer.render({ scene: this.mesh })
 
     this.onAfterRender(t)
