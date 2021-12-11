@@ -91,7 +91,7 @@ class ParticleSimulation {
     textureSize = 128,
     simDimensions = 3,
     createGeometry = null,
-    rendererProps = null
+    rendererProps = {}
   } = {}) {
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)

@@ -64,7 +64,7 @@ class FragmentShader {
     uniforms = {},
     onBeforeRender = (t: number) => {},
     onAfterRender = (t: number) => {},
-    rendererProps = null
+    rendererProps = {}
   }: {
     vertex?: string
     fragment?: string
