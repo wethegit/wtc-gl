@@ -7,6 +7,7 @@ import { Uniform } from '../../core/Uniform'
 import { Vec2 } from 'wtc-math'
 import { PointCloud } from '../../geometry/PointCloud'
 import { GeometryAttribute } from '../../geometry/GeometryAttribute'
+import { Camera } from "../../core/Camera"
 
 const defaultShaderV = `
   attribute vec2 reference;
@@ -194,8 +195,25 @@ class ParticleSimulation {
 
     this.onBeforeRender(t, this)
 
-    if (this.post) this.post.render(this.renderer, { scene: this.mesh })
-    else this.renderer.render({ scene: this.mesh })
+    if (this.post) this.post.render(this.renderer, {
+      scene: this.mesh,
+      camera: this.camera,
+      update: this.update,
+      sort: this.sort,
+      frustumCull: this.frustumCull,
+      clear: this.clear,
+      viewport: this.viewport
+    })
+    else this.renderer.render({
+      scene: this.mesh,
+      camera: this.camera,
+      update: this.update,
+      sort: this.sort,
+      frustumCull: this.frustumCull,
+      clear: this.clear,
+      viewport: this.viewport
+    })
+
 
     this.onAfterRender(t)
   }
@@ -227,6 +245,59 @@ class ParticleSimulation {
   }
   get playing() {
     return this.#playing === true
+  }
+
+
+  // Getters and setters for renderer
+
+  #camera: null|Camera
+  set camera(v) {
+    if(v == null || v instanceof Camera) {
+      this.#camera = v;
+    }
+  }
+  get camera() {
+    return this.#camera;
+  }
+
+  #update: boolean = true
+  set update(v) {
+    this.#update = v === true;
+  }
+  get update() {
+    return this.#update
+  }
+
+  #sort: boolean = true
+  set sort(v) {
+    this.#sort = v === true;
+  }
+  get sort() {
+    return this.#sort
+  }
+
+  #frustumCull: boolean = true
+  set frustumCull(v) {
+    this.#frustumCull = v === true;
+  }
+  get frustumCull() {
+    return this.#frustumCull
+  }
+
+  #clear: boolean|null
+  set clear(v) {
+    this.#clear = v === true;
+  }
+  get clear() {
+    return this.#clear
+  }
+
+  #viewport: [Vec2, Vec2]|null
+  set viewport(v) {
+    if((v instanceof Array && v[0] instanceof Vec2 && v[1] instanceof Vec2) || v == null) this.#viewport = v;
+  }
+  get viewport() {
+    return this.#viewport
   }
 }
 
