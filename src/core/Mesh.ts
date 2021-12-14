@@ -192,7 +192,7 @@ class Mesh extends Drawable {
         camera.projectionMatrix.array
       this.program.uniforms.u_cameraPosition.value = camera.worldPosition.array
       this.program.uniforms.u_objectPosition.value = this.position.array
-      this.program.uniforms.u_modelViewMatrix.value = camera.viewMatrix.array
+      this.program.uniforms.u_viewMatrix.value = camera.viewMatrix.array
       this.modelViewMatrix = camera.viewMatrix.multiplyNew(this.worldMatrix)
       this.normalMatrix = Mat3.fromMat4(this.modelViewMatrix)
       this.program.uniforms.u_modelMatrix.value = this.worldMatrix.array
