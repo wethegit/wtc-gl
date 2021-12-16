@@ -147,6 +147,7 @@ class Uniform {
         // FLOAT_MAT3
         return gl.uniformMatrix3fv(location, false, val)
       case 35676:
+        if(val === null) return;
         // FLOAT_MAT4
         return gl.uniformMatrix4fv(location, false, val)
     }
