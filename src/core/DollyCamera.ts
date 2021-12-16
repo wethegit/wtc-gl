@@ -251,8 +251,14 @@ class DollyCamera extends Camera {
     const tempPos = this.position.subtractNew(this.target)
     let targetDistance = tempPos.length
     targetDistance *= Math.tan((((this.fov || 45) / 2) * Math.PI) / 180.0)
-    this.panLeft((2 * deltaX * targetDistance) / el.clientHeight, this.matrix)
-    this.panUp((2 * deltaY * targetDistance) / el.clientHeight, this.matrix)
+    this.panLeft(
+      (2 * deltaX * targetDistance) / el.clientHeight, 
+      this.matrix.array
+    )
+    this.panUp(
+      (2 * deltaY * targetDistance) / el.clientHeight,
+      this.matrix.array
+    )
   }
 
   dolly(dollyScale) {
@@ -452,6 +458,7 @@ class DollyCamera extends Camera {
   }
 
   onContextMenu(e) {
+    if (!this.enablePan) return
     if (!this.enabled) return
     e.preventDefault()
   }
