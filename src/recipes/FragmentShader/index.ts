@@ -62,6 +62,7 @@ class FragmentShader {
     container = document.body,
     autoResize = true,
     uniforms = {},
+    onInit = (renderer: null) => {},
     onBeforeRender = (t: number) => {},
     onAfterRender = (t: number) => {},
     rendererProps = {}
@@ -72,6 +73,7 @@ class FragmentShader {
     container?: HTMLElement
     autoResize?: boolean
     uniforms?: WTCGLUniformArray
+    onInit?: (renderer: any) => void
     onBeforeRender?: (delta: number) => void
     onAfterRender?: (delta: number) => void
     rendererProps?: any
@@ -97,6 +99,7 @@ class FragmentShader {
     })
 
     this.renderer = new Renderer(rendererProps)
+    onInit(this.renderer)
     this.gl = this.renderer.gl
     container.appendChild(this.gl.canvas)
     this.gl.clearColor(1, 1, 1, 1)
