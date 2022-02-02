@@ -133,6 +133,10 @@ class FragmentShader {
     this.renderer.dimensions = this.dimensions
   }
 
+  resetTime() {
+    lastTime = 0;
+  }
+
   render(t) {
     const diff = t - lastTime
     lastTime = t
