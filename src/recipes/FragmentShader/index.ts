@@ -34,8 +34,6 @@ gl_FragColor = vec4(vec3(cos(length(v_uv+u_time))*.5+.5, sin(v_uv+u_time)*.5+.5)
 }
 `
 
-let lastTime = 0;
-
 interface WTCGLUniformArray {
   [index: string]: Uniform
 }
@@ -54,6 +52,8 @@ class FragmentShader {
   renderer: Renderer
   program: Program
   mesh: Mesh
+
+  lastTime: number = 0
 
   constructor({
     vertex = defaultShaderV,
@@ -134,12 +134,12 @@ class FragmentShader {
   }
 
   resetTime() {
-    lastTime = 0;
+    this.lastTime = 0;
   }
 
   render(t) {
-    const diff = t - lastTime
-    lastTime = t
+    const diff = t - this.lastTime
+    this.lastTime = t
 
     if (this.playing) {
       requestAnimationFrame(this.render)
@@ -172,7 +172,7 @@ class FragmentShader {
       requestAnimationFrame(this.render)
       this.#playing = true
     } else {
-      lastTime = 0
+      this.lastTime = 0
       this.#playing = false
     }
   }
