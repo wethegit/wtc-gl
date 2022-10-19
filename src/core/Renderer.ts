@@ -228,6 +228,7 @@ class Renderer {
     if (this.isWebgl2) {
       this.getExtension('EXT_color_buffer_float')
       this.getExtension('OES_texture_float_linear')
+      this.getExtension('OES_standard_derivatives')
     } else {
       this.getExtension('OES_texture_float')
       this.getExtension('OES_texture_float_linear')
