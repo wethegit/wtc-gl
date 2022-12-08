@@ -1,12 +1,13 @@
 {
   "name": "wtc-gl",
-  "version": "1.0.0-beta.44",
+  "version": "1.0.0-beta.45",
   "description": "Typescript simple Web GL library.",
   "source": "src/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "umd:main": "dist/index.umd.js",
   "unpkg": "dist/index.umd.js",
+  "type": "module",
   "exports": {
     ".": "./dist/index.modern.js"
   },
