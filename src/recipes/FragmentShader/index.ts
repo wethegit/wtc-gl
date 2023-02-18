@@ -171,7 +171,7 @@ class FragmentShader {
     if (this.#playing !== true && v === true) {
       requestAnimationFrame(this.render)
       this.#playing = true
-    } else if(v === false) {
+    } else if(v == false) {
       this.lastTime = 0
       this.#playing = false
     }

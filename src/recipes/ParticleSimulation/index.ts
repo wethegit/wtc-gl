@@ -239,7 +239,7 @@ class ParticleSimulation {
     if (this.#playing !== true && v === true) {
       requestAnimationFrame(this.render)
       this.#playing = true
-    } else {
+    } else if(v == false) {
       this.#playing = false
     }
   }
