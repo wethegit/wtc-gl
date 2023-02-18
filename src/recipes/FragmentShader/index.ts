@@ -38,6 +38,8 @@ interface WTCGLUniformArray {
   [index: string]: Uniform
 }
 
+const hasWindow = window instanceof Window;
+
 class FragmentShader {
   uniforms: WTCGLUniformArray
   dimensions: Vec2
@@ -58,7 +60,7 @@ class FragmentShader {
   constructor({
     vertex = defaultShaderV,
     fragment = defaultShaderF,
-    dimensions = new Vec2(window.innerWidth, window.innerHeight),
+    dimensions = hasWindow ? new Vec2(window.innerWidth, window.innerHeight) : new Vec2(500,500),
     container = document.body,
     autoResize = true,
     uniforms = {},
@@ -104,7 +106,7 @@ class FragmentShader {
     container.appendChild(this.gl.canvas)
     this.gl.clearColor(1, 1, 1, 1)
 
-    if (this.autoResize) {
+    if (this.autoResize && hasWindow) {
       window.addEventListener('resize', this.resize, false)
       this.resize()
     } else {
@@ -128,7 +130,7 @@ class FragmentShader {
   }
 
   resize() {
-    this.dimensions = new Vec2(window.innerWidth, window.innerHeight)
+    this.dimensions = hasWindow ? new Vec2(window.innerWidth, window.innerHeight) : new Vec2(500,500)
     this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
     this.renderer.dimensions = this.dimensions
   }
