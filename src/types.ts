@@ -313,6 +313,7 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
   RGBA32F: number
   TRANSFORM_FEEDBACK: GLenum
   TRANSFORM_FEEDBACK_BUFFER: GLenum
+  SEPARATE_ATTRIBS: GLenum
 
   createVertexArray
   createTransformFeedback

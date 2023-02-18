@@ -189,14 +189,23 @@ export class Program {
     this.program = gl.createProgram()
     gl.attachShader(this.program, vertexShader)
     gl.attachShader(this.program, fragmentShader)
+
+    // If we have transformFeedbackVaryings, bind them
+    // TO DO: allow for INTERLEAVED_ATTRIBS as well
+    console.log(transformFeedbackVaryings)
+    if (transformFeedbackVaryings)
+      gl.transformFeedbackVaryings(
+        this.program,
+        transformFeedbackVaryings,
+        gl.SEPARATE_ATTRIBS
+      )
+    
+    // Finally, link the program and record any errors
     gl.linkProgram(this.program)
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       console.warn(gl.getProgramInfoLog(this.program))
       return this
     }
-
-    // If we have transformFeedbackVaryings, bind them
-    if(transformFeedbackVaryings) gl.transformFeedbackVaryings(transformFeedbackVaryings)
 
     // Remove shader once linked
     gl.deleteShader(vertexShader)

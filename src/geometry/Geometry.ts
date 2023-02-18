@@ -90,6 +90,8 @@ export class Geometry {
 
     this.VAOs = {}
 
+    console.log(this.transformFeedbacks)
+
     this.transformFeedbacks = transformFeedbacks
 
     // Unbind existing VAOs
@@ -250,6 +252,9 @@ export class Geometry {
     this.gl.bindVertexArray(source)
     this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, feedbk)
 
+    // @ts-ignore
+    window.feedbk = feedbk
+
     for (let i in buffer) {
       const b = buffer[i]
       this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, b.i, b.buffer)
@@ -280,15 +285,18 @@ export class Geometry {
       this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
     }
 
+    // @ts-ignore
+    window.transformFeedbacks = this.transformFeedbacks
     if (this.transformFeedbacks) {
       this.bindTransformFeedbacks();
       this.gl.beginTransformFeedback(mode)
     }
 
     // Check if any attributes need updating
+    // @ts-ignore
     program.attributeLocations.forEach((location, { name }) => {
       const attr = this.attributes[name]
-      if (attr.needsUpdate) attr.updateAttribute(this.gl)
+      if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
     })
 
     if (this.isInstanced) {
