@@ -38,7 +38,8 @@ interface WTCGLUniformArray {
   [index: string]: Uniform
 }
 
-const hasWindow = window instanceof Window;
+// @ts-ignore
+let hasWindow = typeof window !== 'undefined' || !(window instanceof Window);
 
 class FragmentShader {
   uniforms: WTCGLUniformArray
@@ -60,7 +61,9 @@ class FragmentShader {
   constructor({
     vertex = defaultShaderV,
     fragment = defaultShaderF,
-    dimensions = hasWindow ? new Vec2(window.innerWidth, window.innerHeight) : new Vec2(500,500),
+    dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500),
     container = document.body,
     autoResize = true,
     uniforms = {},
@@ -130,13 +133,15 @@ class FragmentShader {
   }
 
   resize() {
-    this.dimensions = hasWindow ? new Vec2(window.innerWidth, window.innerHeight) : new Vec2(500,500)
+    this.dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500)
     this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
     this.renderer.dimensions = this.dimensions
   }
 
   resetTime() {
-    this.lastTime = 0;
+    this.lastTime = 0
   }
 
   render(t) {
@@ -173,7 +178,7 @@ class FragmentShader {
     if (this.#playing !== true && v === true) {
       requestAnimationFrame(this.render)
       this.#playing = true
-    } else if(v == false) {
+    } else if (v == false) {
       this.lastTime = 0
       this.#playing = false
     }
