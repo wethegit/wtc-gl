@@ -1,1 +1,1 @@
-import { Renderer } from "./dist/index.module.js";
+import { Renderer } from "./dist/index.js";
