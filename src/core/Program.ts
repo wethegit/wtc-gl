@@ -121,7 +121,8 @@ export class Program {
       frontFace = gl.CCW,
       depthTest = true,
       depthWrite = true,
-      depthFunc = gl.LESS
+      depthFunc = gl.LESS,
+      transformFeedbackVaryings
     }: {
       vertex?: string
       fragment?: string
@@ -132,6 +133,7 @@ export class Program {
       depthTest?: boolean
       depthWrite?: boolean
       depthFunc?: GLenum
+      transformFeedbackVaryings?: string[]
     } = {}
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Program')
@@ -192,6 +194,9 @@ export class Program {
       console.warn(gl.getProgramInfoLog(this.program))
       return this
     }
+
+    // If we have transformFeedbackVaryings, bind them
+    if(transformFeedbackVaryings) gl.transformFeedbackVaryings(transformFeedbackVaryings)
 
     // Remove shader once linked
     gl.deleteShader(vertexShader)

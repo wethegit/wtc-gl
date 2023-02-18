@@ -1,6 +1,7 @@
 import { WTCGLRenderingContext } from '../types'
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
+import { TransformFeedback } from '../core/TransformFeedback'
 
 export class PointCloud extends Geometry {
   constructor(
@@ -15,12 +16,14 @@ export class PointCloud extends Geometry {
           }
         }
       },
-      attributes = {}
+      attributes = {},
+      transformFeedbacks
     }: {
       particles?: number
       dimensions?: number
       fillFunction?: any
       attributes?: {}
+      transformFeedbacks?: TransformFeedback
     } = {}
   ) {
     const points = new Float32Array(particles * dimensions).fill(0) // The point position
@@ -31,6 +34,6 @@ export class PointCloud extends Geometry {
       position: new GeometryAttribute({ size: dimensions, data: points })
     })
 
-    super(gl, attributes)
+    super(gl, attributes, transformFeedbacks)
   }
 }

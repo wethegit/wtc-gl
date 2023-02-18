@@ -10,6 +10,7 @@ export { Texture } from './core/Texture'
 export { Camera } from './core/Camera'
 export { DollyCamera } from './core/DollyCamera'
 export { RenderTarget } from './core/RenderTarget'
+export { TransformFeedback } from './core/TransformFeedback'
 
 export { Geometry } from './geometry/Geometry'
 export { GeometryAttribute } from './geometry/GeometryAttribute'

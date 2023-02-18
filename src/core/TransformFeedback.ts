@@ -19,45 +19,50 @@ const createBuffer = (
   return buffer
 }
 
+/**
+ * To-Do
+ * Update this class to take care of its own internal state (like render targets) rather than relying on geo to control state
+ */
+
 class TransformFeedback {
   VAOs: [WebGLVertexArrayObject, WebGLVertexArrayObject]
   TFBs: [WebGLTransformFeedback, WebGLTransformFeedback]
-  BufferRefs: { [key: string]: { WebGLVertexArrayObject } }
+  BufferRefs: { [key: string]: { i: number; buffer: WebGLBuffer } }[]
 
   constructor(
     gl: WTCGLRenderingContext,
-    { 
-      program, 
+    {
+      program,
       transformFeedbacks
-    }: { 
-      program?: Program,
+    }: {
+      program?: Program
       transformFeedbacks?: {
         [key: string]: {
-          size: number,
-          type?: GLenum,
-          normalize?: boolean,
-          stride?: number,
-          offset?: number,
-          buffer?: WebGLBuffer,
-          data: Float32Array,
-          varying: string,
-          usage?: GLenum,
+          size: number
+          type?: GLenum
+          normalize?: boolean
+          stride?: number
+          offset?: number
+          buffer?: WebGLBuffer
+          data: Float32Array
+          varying: string
+          usage?: GLenum
           buffertype?: GLenum
         }
-      } } = {}
+      }
+    } = {}
   ) {
     this.VAOs = [gl.createVertexArray(), gl.createVertexArray()]
     this.TFBs = [gl.createTransformFeedback(), gl.createTransformFeedback()]
-    this.BufferRefs = {};
-    const tfbBuffers = []
+    this.BufferRefs = []
     const names = Object.keys(transformFeedbacks)
-    
-    this.VAOs.forEach((vao:WebGLVertexArrayObject, i:number) => {
-      gl.bindVertexArray(vao);
-      
+
+    this.VAOs.forEach((vao: WebGLVertexArrayObject, i: number) => {
+      gl.bindVertexArray(vao)
+
       const buffers = []
       const bufferRef = {}
-      
+
       for (let i = 0; i < names.length; i++) {
         let {
           size = 1,
@@ -68,33 +73,33 @@ class TransformFeedback {
           buffer,
           data,
           usage = gl.STATIC_DRAW,
-          buffertype = gl.ARRAY_BUFFER,
-        } = transformFeedbacks[names[i]];
+          buffertype = gl.ARRAY_BUFFER
+        } = transformFeedbacks[names[i]]
 
-        if (data && !buffer) buffer = createBuffer(gl, data, usage, buffertype);
+        if (data && !buffer) buffer = createBuffer(gl, data, usage, buffertype)
 
-        bufferRef[names[i]] = { i, buffer };
+        bufferRef[names[i]] = { i, buffer }
 
-        gl.bindAttribLocation(program, i, names[i]);
-        gl.enableVertexAttribArray(i);
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.vertexAttribPointer(i, size, type, normalize, stride, offset);
+        gl.bindAttribLocation(program, i, names[i])
+        gl.enableVertexAttribArray(i)
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+        gl.vertexAttribPointer(i, size, type, normalize, stride, offset)
 
-        buffers.push(buffer);
+        buffers.push(buffer)
       }
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null)
 
       // TO DO Try putting these inside the loop
-      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TFBs[i]);
+      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TFBs[i])
       buffers.forEach((b, i) => {
-        gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, i, b);
-      });
+        gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, i, b)
+      })
 
-      gl.bindVertexArray(null);
+      gl.bindVertexArray(null)
 
-      tfbBuffers.push(bufferRef);
-    });
+      this.BufferRefs.push(bufferRef)
+    })
   }
 }
 

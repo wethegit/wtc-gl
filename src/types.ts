@@ -319,6 +319,9 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
   bindVertexArray
   bindTransformFeedback
   bindBufferBase
+  beginTransformFeedback
+  endTransformFeedback
+  transformFeedbackVaryings
 }
 
 /**
