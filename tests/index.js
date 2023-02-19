@@ -45,13 +45,18 @@ float simplex_noise(vec3 p) {
 
 void main() {
   v_position = a_position + a_velocity;
-  float a = simplex_noise(vec3(v_position, u_time*.1)) * 3.141596 * 2.;
-  v_velocity = a_velocity + vec2(cos(a), sin(a)) * .000001;
+  float a = simplex_noise(vec3(v_position*.01, u_time*.1)) * 3.141596 * 2.;
 
-  v_position = fract(v_position);
+  v_velocity = a_velocity * .98 + vec2(cos(a), sin(a)) * .1;
+  v_position = v_position;
+
+  if(v_position.x > u_resolution.x + 10.) v_position.x = -5.;
+  if(v_position.x < -10.) v_position.x = u_resolution.x + 5.;
+  if(v_position.y > u_resolution.y + 10.) v_position.y = -5.;
+  if(v_position.y < -10.) v_position.y = u_resolution.y + 5.;
   
-  gl_PointSize = 2.;
-  gl_Position = vec4(v_position * 2. - 1., 0., 1.);
+  gl_PointSize = 10.;
+  gl_Position = vec4(v_position / u_resolution * 2. - 1., 0., 1.);
 }`
 const defaultShaderF = `#version 300 es
 precision highp float;
@@ -67,8 +72,8 @@ void main() {
   float opacity = clamp(smoothstep(.5, 0., length(uv)), 0., 1.);
   
   // if(opacity < .01) discard;
-  color = vec4(1,1,1, opacity);
-  // color = vec4(1,1,1,1);
+  // color = vec4(1)*opacity;
+  color = vec4(1,1,1,opacity);
 }`
 
 class ParticleSimulation {
@@ -116,22 +121,26 @@ class ParticleSimulation {
     this.resize = this.resize.bind(this)
     this.autoResize = autoResize
 
-    this.dimensions = dimensions;
-    this.simDimensions = simDimensions;
+    this.dpr = Math.min(window.devicePixelRatio, 2);
+
+    this.dimensions = dimensions.scaleNew(this.dpr);
+    this.simDimensions = simDimensions
 
     this.numParticles = numParticles
-    
+
     this.position = new Float32Array(numParticles * this.simDimensions)
     this.velocity = new Float32Array(numParticles * this.simDimensions)
-    for (let i = 0; i < numParticles * this.simDimensions; i += this.simDimensions) {
-      this.position[i] = Math.random()
-      this.position[i + 1] = Math.random()
+    for (
+      let i = 0;
+      i < numParticles * this.simDimensions;
+      i += this.simDimensions
+    ) {
+      this.position[i] = Math.random() * this.dimensions.x
+      this.position[i + 1] = Math.random() * this.dimensions.y
 
       this.velocity[i] = 0
       this.velocity[i + 1] = 0
     }
-
-    console.log(this.position, numParticles, this.simDimensions)
 
     this.u_time = new Uniform({ name: 'time', value: 0, kind: 'float' })
     this.u_resolution = new Uniform({
@@ -145,9 +154,16 @@ class ParticleSimulation {
       u_resolution: this.u_resolution
     })
 
-    this.renderer = new Renderer({...rendererProps})
-    this.gl = this.renderer.gl
-    this.gl.clearColor(0, 0, 0, 1)
+    this.renderer = new Renderer({ ...rendererProps, dpr: this.dpr })
+    const gl = (this.gl = this.renderer.gl)
+    gl.clearColor(0, 0, 0, 1)
+    // gl.colorMask(false, false, false, true)
+    gl.disable(gl.DEPTH_TEST)
+    gl.enable(gl.BLEND)
+    // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    // gl.blendFunc(gl.ONE, gl.ONE)
 
     if (this.autoResize) {
       window.addEventListener('resize', this.resize, false)
@@ -164,7 +180,7 @@ class ParticleSimulation {
       uniforms: this.uniforms,
       transformFeedbackVaryings: ['v_position', 'v_velocity']
     })
-    
+
     this.transformFeedbacks = new TransformFeedback(this.gl, {
       program: this.program.program,
       transformFeedbacks: {
@@ -230,6 +246,16 @@ class ParticleSimulation {
 
     this.onBeforeRender(t, this)
     window.mesh = this.mesh
+
+    let gl =this.gl;
+
+    // gl.colorMask(false, false, false, true)
+    gl.disable(gl.DEPTH_TEST)
+    gl.enable(gl.BLEND)
+    // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    // gl.blendFunc(gl.ONE, gl.ONE)
 
     if (this.post)
       this.post.render(this.renderer, {
@@ -342,6 +368,12 @@ class ParticleSimulation {
 }
 
 const s = new ParticleSimulation({
-  textureSize: 512,
-  simDimensions: 2
+  numParticles: 256*256,
+  simDimensions: 2,
+  rendererProps: {
+    preserveDrawingBuffer: true,
+    depth: false,
+    alpha: false,
+    premultipliedAlpha: false
+  }
 })
