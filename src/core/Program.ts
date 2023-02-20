@@ -192,7 +192,6 @@ export class Program {
 
     // If we have transformFeedbackVaryings, bind them
     // TO DO: allow for INTERLEAVED_ATTRIBS as well
-    console.log(transformFeedbackVaryings)
     if (transformFeedbackVaryings)
       gl.transformFeedbackVaryings(
         this.program,

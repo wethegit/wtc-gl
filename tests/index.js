@@ -1,87 +1,19 @@
-import { TransformFeedback, Renderer, Program, Mesh, Triangle, Uniform, PointCloud, GeometryAttribute, Camera } from './dist/index.modern.js';
+import { Obj, TransformFeedback, Renderer, Program, Mesh, Triangle, Uniform, PointCloud, GeometryAttribute, Camera, Plane, Texture } from './dist/index.modern.js';
 import { Vec2 } from 'https://cdn.skypack.dev/wtc-math@1.0.17'
+import { particleCloudV, particleCloudF } from "./particleShaders.js"
+import { logoV, logoF} from "./logoShaders.js"
+import { bgV, bgF } from "./bgShaders.js";
 
-const defaultShaderV = `#version 300 es
-
-in vec2 position;
-
-layout(location=0) in vec2 a_position;
-layout(location=1) in vec2 a_velocity;
-
-out vec2 v_position;
-out vec2 v_velocity;
-
-uniform vec2 u_resolution;
-uniform float u_time;
-
-// Grab from https://www.shadertoy.com/view/4djSRW
-#define MOD3 vec3(.1031,.11369,.13787)
-vec3 hash33(vec3 p3) {
-	p3 = fract(p3 * MOD3);
-    p3 += dot(p3, p3.yxz+19.19);
-    return -1.0 + 2.0 * fract(vec3((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y, (p3.y+p3.z)*p3.x));
+function repl(frag, repl) {
+  for (let i in repl) {
+    frag = frag.replaceAll(`%%${i}%%`, repl[i])
+  }
+  return frag
 }
-float simplex_noise(vec3 p) {
-    const float K1 = 0.333333333;
-    const float K2 = 0.166666667;
-    
-    vec3 i = floor(p + (p.x + p.y + p.z) * K1);
-    vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
-    
-    // thx nikita: https://www.shadertoy.com/view/XsX3zB
-    vec3 e = step(vec3(0.0), d0 - d0.yzx);
-	vec3 i1 = e * (1.0 - e.zxy);
-	vec3 i2 = 1.0 - e.zxy * (1.0 - e);
-    
-    vec3 d1 = d0 - (i1 - 1.0 * K2);
-    vec3 d2 = d0 - (i2 - 2.0 * K2);
-    vec3 d3 = d0 - (1.0 - 3.0 * K2);
-    
-    vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);
-    vec4 n = h * h * h * h * vec4(dot(d0, hash33(i)), dot(d1, hash33(i + i1)), dot(d2, hash33(i + i2)), dot(d3, hash33(i + 1.0)));
-    
-    return dot(vec4(31.316), n);
-}
-
-void main() {
-  v_position = a_position + a_velocity;
-  float a = simplex_noise(vec3(v_position*.01, u_time*.1)) * 3.141596 * 2.;
-
-  v_velocity = a_velocity * .98 + vec2(cos(a), sin(a)) * .1;
-  v_position = v_position;
-
-  if(v_position.x > u_resolution.x + 10.) v_position.x = -5.;
-  if(v_position.x < -10.) v_position.x = u_resolution.x + 5.;
-  if(v_position.y > u_resolution.y + 10.) v_position.y = -5.;
-  if(v_position.y < -10.) v_position.y = u_resolution.y + 5.;
-  
-  gl_PointSize = 10.;
-  gl_Position = vec4(v_position / u_resolution * 2. - 1., 0., 1.);
-}`
-const defaultShaderF = `#version 300 es
-precision highp float;
-
-out vec4 color;
-
-uniform vec2 u_resolution;
-uniform float u_time;
-
-void main() {
-  vec2 uv = gl_PointCoord.xy - .5;
-  
-  float opacity = clamp(smoothstep(.5, 0., length(uv)), 0., 1.);
-  
-  // if(opacity < .01) discard;
-  // color = vec4(1)*opacity;
-  color = vec4(1,1,1,opacity);
-}`
-
 class ParticleSimulation {
   uniforms
   dimensions
   autoResize = true
-  onBeforeRender
-  onAfterRender
 
   u_time
   u_resolution
@@ -102,45 +34,23 @@ class ParticleSimulation {
   lastTime = 0
 
   constructor({
-    vertex = defaultShaderV,
-    fragment = defaultShaderF,
     dimensions = new Vec2(window.innerWidth, window.innerHeight),
     container = document.body,
     autoResize = true,
     uniforms = {},
-    onBeforeRender = (t) => {},
-    onAfterRender = (t) => {},
     numParticles = 128 * 128,
     simDimensions = 3,
-    createGeometry = null,
     rendererProps = {}
   } = {}) {
-    this.onBeforeRender = onBeforeRender.bind(this)
-    this.onAfterRender = onAfterRender.bind(this)
     this.render = this.render.bind(this)
     this.resize = this.resize.bind(this)
     this.autoResize = autoResize
 
-    this.dpr = Math.min(window.devicePixelRatio, 2);
+    this.dpr = 2
 
-    this.dimensions = dimensions.scaleNew(this.dpr);
+    this.dimensions = dimensions
     this.simDimensions = simDimensions
-
     this.numParticles = numParticles
-
-    this.position = new Float32Array(numParticles * this.simDimensions)
-    this.velocity = new Float32Array(numParticles * this.simDimensions)
-    for (
-      let i = 0;
-      i < numParticles * this.simDimensions;
-      i += this.simDimensions
-    ) {
-      this.position[i] = Math.random() * this.dimensions.x
-      this.position[i + 1] = Math.random() * this.dimensions.y
-
-      this.velocity[i] = 0
-      this.velocity[i + 1] = 0
-    }
 
     this.u_time = new Uniform({ name: 'time', value: 0, kind: 'float' })
     this.u_resolution = new Uniform({
@@ -172,17 +82,121 @@ class ParticleSimulation {
       this.renderer.dimensions = dimensions
     }
 
-    this.simDimensions = simDimensions
+    this.scene = new Obj();
 
-    this.program = new Program(this.gl, {
+    this.createBackground();
+    this.createLogo();
+    this.createPointCloud();
+
+    this.playing = false
+
+    container.appendChild(this.gl.canvas)
+  }
+
+  createBackground() {
+    const vertex = bgV
+    const fragment = bgF
+    
+    const sprite = new Plane(this.gl, {
+      width: this.dimensions.x * this.dpr,
+      height: this.dimensions.y * this.dpr
+    })
+
+    const program = new Program(this.gl, {
+      vertex,
+      fragment,
+      uniforms: {
+        u_time: this.u_time,
+        u_resolution: this.u_resolution
+      }
+    })
+
+    this.bgMesh = new Mesh(this.gl, {
+      geometry: sprite,
+      program: program
+    })
+  }
+
+  createLogo() {
+    const vertex = logoV
+    const fragment = repl(logoF, { seed: Math.random() * 100 - 50 });
+
+    const img = new Image();
+    const texture = new Texture(this.gl, { generateMipmaps: false})
+    const logoUniform = new Uniform({
+      name: 'u_logo',
+      value: texture,
+      kind: 'sampler'
+    })
+    img.addEventListener('load', () => {
+      texture.image = img
+      texture.update();
+      
+    const sprite = new Plane(this.gl, { width: 587 * 3, height: 504 * 3 })
+
+    const program = new Program(this.gl, {
+      vertex,
+      fragment,
+      uniforms: {
+        u_logo: logoUniform,
+        u_time: this.u_time,
+        u_resolution: this.u_resolution
+      }
+    })
+
+    const mesh = new Mesh(this.gl, {
+      geometry: sprite,
+      program: program
+    })
+    // mesh.setParent(this.scene)
+    this.logoMesh = mesh
+    this.playing = true
+    });
+    img.src = "./logo-shadow-2x.png";
+
+  }
+
+  createPointCloud() {
+    const vertex = particleCloudV
+    const fragment = particleCloudF
+
+    this.position = new Float32Array(this.numParticles * this.simDimensions)
+    this.velocity = new Float32Array(this.numParticles * this.simDimensions)
+    this.properties = new Float32Array(this.numParticles * 4)
+    for (
+      let i = 0;
+      i < this.numParticles * this.simDimensions;
+      i += this.simDimensions
+    ) {
+      this.position[i] = Math.random() * this.dimensions.x * this.dpr
+      this.position[i + 1] = Math.random() * this.dimensions.y * this.dpr
+
+      this.velocity[i] = Math.random() * 10 - 5
+      this.velocity[i + 1] = Math.random() * 5
+    }
+    
+    for (
+      let i = 0;
+      i < this.numParticles * 4;
+      i += 4
+    ) {
+      
+
+      this.properties[i] = .5 + .5 * Math.random();     // density
+      this.properties[i + 1] = .8 + Math.random() * .2; // drift
+      this.properties[i + 2] = this.position[i / 2 + 1] * .17;                      // age
+      this.properties[i + 3] = Math.random()
+    }
+
+    const particleProgram = new Program(this.gl, {
       vertex,
       fragment,
       uniforms: this.uniforms,
-      transformFeedbackVaryings: ['v_position', 'v_velocity']
+      transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_properties']
     })
 
     this.transformFeedbacks = new TransformFeedback(this.gl, {
-      program: this.program.program,
+      program: particleProgram.program,
       transformFeedbacks: {
         a_position: {
           data: this.position,
@@ -195,33 +209,21 @@ class ParticleSimulation {
           size: this.simDimensions,
           usage: this.gl.STREAM_COPY,
           varying: 'v_velocity'
+        },
+        a_properties: {
+          data: this.properties,
+          size: 4,
+          usage: this.gl.STREAM_COPY,
+          varying: 'v_properties'
         }
       }
     })
 
-    if (createGeometry && typeof createGeometry == 'function') {
-      createGeometry.bind(this)()
-    } else {
-      this.createGeometry()
-    }
-
-    this.mesh = new Mesh(this.gl, {
-      mode: this.gl.POINTS,
-      geometry: this.cloud,
-      program: this.program
-    })
-
-    this.playing = true
-
-    container.appendChild(this.gl.canvas)
-  }
-
-  createGeometry() {
-    let positions = this.position;
-    this.cloud = new PointCloud(this.gl, {
+    let positions = this.position
+    const cloud = new PointCloud(this.gl, {
       fillFunction: (points, dimensions) => {
-        for(let i = 0; i < points.length; i++) {
-          points[i] = positions[i];
+        for (let i = 0; i < points.length; i++) {
+          points[i] = positions[i]
         }
       },
       particles: this.numParticles,
@@ -231,6 +233,15 @@ class ParticleSimulation {
       },
       transformFeedbacks: this.transformFeedbacks
     })
+
+    window.particleProgram = particleProgram;
+
+    this.particleMesh = new Mesh(this.gl, {
+      mode: this.gl.POINTS,
+      geometry: cloud,
+      program: particleProgram
+    })
+    // this.particleMesh.setParent(this.scene)
   }
 
   render(t) {
@@ -244,41 +255,51 @@ class ParticleSimulation {
     const v = this.u_time.value
     this.u_time.value = v + diff * 0.00005
 
-    this.onBeforeRender(t, this)
     window.mesh = this.mesh
 
-    let gl =this.gl;
+    let gl = this.gl
 
     // gl.colorMask(false, false, false, true)
     gl.disable(gl.DEPTH_TEST)
     gl.enable(gl.BLEND)
     // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+    gl.blendEquation(gl.FUNC_ADD)
     // gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
     // gl.blendFunc(gl.ONE, gl.ONE)
 
-    if (this.post)
-      this.post.render(this.renderer, {
-        scene: this.mesh,
-        camera: this.camera,
-        update: this.update,
-        sort: this.sort,
-        frustumCull: this.frustumCull,
-        clear: this.clear,
-        viewport: this.viewport
-      })
-    else
-      this.renderer.render({
-        scene: this.mesh,
-        camera: this.camera,
-        update: this.update,
-        sort: this.sort,
-        frustumCull: this.frustumCull,
-        clear: this.clear,
-        viewport: this.viewport
-      })
+    this.renderer.render({
+      scene: this.bgMesh,
+      camera: this.camera,
+      update: this.update,
+      sort: this.sort,
+      frustumCull: this.frustumCull,
+      clear: this.clear,
+      viewport: this.viewport
+    });
+    this.renderer.render({
+      scene: this.particleMesh,
+      camera: this.camera,
+      update: this.update,
+      sort: this.sort,
+      frustumCull: this.frustumCull,
+      clear: false,
+      viewport: this.viewport
+    })
+    if(this.logoMesh) {
+      
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    this.onAfterRender(t)
+      this.renderer.render({
+        scene: this.logoMesh,
+        camera: this.camera,
+        update: this.update,
+        sort: this.sort,
+        frustumCull: this.frustumCull,
+        viewport: this.viewport,
+        clear: false
+      })
+    }
   }
 
   resize() {
@@ -368,12 +389,12 @@ class ParticleSimulation {
 }
 
 const s = new ParticleSimulation({
-  numParticles: 256*256,
+  numParticles: 3000,
   simDimensions: 2,
   rendererProps: {
     preserveDrawingBuffer: true,
     depth: false,
     alpha: false,
-    premultipliedAlpha: false
+    premultipliedAlpha: true
   }
 })

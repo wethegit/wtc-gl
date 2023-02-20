@@ -76,8 +76,6 @@ class TransformFeedback {
           buffertype = gl.ARRAY_BUFFER
         } = transformFeedbacks[names[i]]
 
-        console.log(data)
-
         if (data && !buffer) buffer = createBuffer(gl, data, usage, buffertype)
 
         bufferRef[names[i]] = { i, buffer }

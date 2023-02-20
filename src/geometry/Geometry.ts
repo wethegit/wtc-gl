@@ -90,8 +90,6 @@ export class Geometry {
 
     this.VAOs = {}
 
-    console.log(this.transformFeedbacks)
-
     this.transformFeedbacks = transformFeedbacks
 
     // Unbind existing VAOs
