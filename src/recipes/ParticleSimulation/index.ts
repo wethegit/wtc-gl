@@ -52,6 +52,9 @@ const defaultShaderF = `#extension GL_OES_standard_derivatives : enable
     gl_FragColor = vec4(v_colour, 1.);
   }`
 
+// @ts-ignore
+let hasWindow = typeof window !== 'undefined' || !(window instanceof Window);
+
 class ParticleSimulation {
   uniforms
   dimensions
@@ -82,7 +85,9 @@ class ParticleSimulation {
   constructor({
     vertex = defaultShaderV,
     fragment = defaultShaderF,
-    dimensions = new Vec2(window.innerWidth, window.innerHeight),
+    dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500),
     container = document.body,
     autoResize = true,
     uniforms = {},
@@ -117,7 +122,7 @@ class ParticleSimulation {
     this.gl = this.renderer.gl
     this.gl.clearColor(0, 0, 0, 1)
 
-    if (this.autoResize) {
+    if (this.autoResize && hasWindow) {
       window.addEventListener('resize', this.resize, false)
       this.resize()
     } else {
@@ -195,31 +200,34 @@ class ParticleSimulation {
 
     this.onBeforeRender(t, this)
 
-    if (this.post) this.post.render(this.renderer, {
-      scene: this.mesh,
-      camera: this.camera,
-      update: this.update,
-      sort: this.sort,
-      frustumCull: this.frustumCull,
-      clear: this.clear,
-      viewport: this.viewport
-    })
-    else this.renderer.render({
-      scene: this.mesh,
-      camera: this.camera,
-      update: this.update,
-      sort: this.sort,
-      frustumCull: this.frustumCull,
-      clear: this.clear,
-      viewport: this.viewport
-    })
-
+    if (this.post)
+      this.post.render(this.renderer, {
+        scene: this.mesh,
+        camera: this.camera,
+        update: this.update,
+        sort: this.sort,
+        frustumCull: this.frustumCull,
+        clear: this.clear,
+        viewport: this.viewport
+      })
+    else
+      this.renderer.render({
+        scene: this.mesh,
+        camera: this.camera,
+        update: this.update,
+        sort: this.sort,
+        frustumCull: this.frustumCull,
+        clear: this.clear,
+        viewport: this.viewport
+      })
 
     this.onAfterRender(t)
   }
 
   resize() {
-    this.dimensions = new Vec2(window.innerWidth, window.innerHeight)
+    this.dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500)
     this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
     this.renderer.dimensions = this.dimensions
   }
@@ -239,7 +247,7 @@ class ParticleSimulation {
     if (this.#playing !== true && v === true) {
       requestAnimationFrame(this.render)
       this.#playing = true
-    } else {
+    } else if (v == false) {
       this.#playing = false
     }
   }
@@ -247,22 +255,21 @@ class ParticleSimulation {
     return this.#playing === true
   }
 
-
   // Getters and setters for renderer
 
-  #camera: null|Camera
+  #camera: null | Camera
   set camera(v) {
-    if(v == null || v instanceof Camera) {
-      this.#camera = v;
+    if (v == null || v instanceof Camera) {
+      this.#camera = v
     }
   }
   get camera() {
-    return this.#camera;
+    return this.#camera
   }
 
   #update: boolean = true
   set update(v) {
-    this.#update = v === true;
+    this.#update = v === true
   }
   get update() {
     return this.#update
@@ -270,7 +277,7 @@ class ParticleSimulation {
 
   #sort: boolean = true
   set sort(v) {
-    this.#sort = v === true;
+    this.#sort = v === true
   }
   get sort() {
     return this.#sort
@@ -278,23 +285,27 @@ class ParticleSimulation {
 
   #frustumCull: boolean = true
   set frustumCull(v) {
-    this.#frustumCull = v === true;
+    this.#frustumCull = v === true
   }
   get frustumCull() {
     return this.#frustumCull
   }
 
-  #clear: boolean|null
+  #clear: boolean | null
   set clear(v) {
-    this.#clear = v === true;
+    this.#clear = v === true
   }
   get clear() {
     return this.#clear
   }
 
-  #viewport: [Vec2, Vec2]|null
+  #viewport: [Vec2, Vec2] | null
   set viewport(v) {
-    if((v instanceof Array && v[0] instanceof Vec2 && v[1] instanceof Vec2) || v == null) this.#viewport = v;
+    if (
+      (v instanceof Array && v[0] instanceof Vec2 && v[1] instanceof Vec2) ||
+      v == null
+    )
+      this.#viewport = v
   }
   get viewport() {
     return this.#viewport
