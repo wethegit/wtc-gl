@@ -2,7 +2,8 @@
 . "$(dirname "$0")/_/husky.sh"
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [[ "$BRANCH" != "master" ]]; then
+echo $BRANCH
+if [ "$BRANCH" == "master" ]; then
   npm run document
   git add ./
 fi
