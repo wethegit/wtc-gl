@@ -311,6 +311,18 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
   HALF_FLOAT: number
   RGBA16F: number
   RGBA32F: number
+  TRANSFORM_FEEDBACK: GLenum
+  TRANSFORM_FEEDBACK_BUFFER: GLenum
+  SEPARATE_ATTRIBS: GLenum
+
+  createVertexArray
+  createTransformFeedback
+  bindVertexArray
+  bindTransformFeedback
+  bindBufferBase
+  beginTransformFeedback
+  endTransformFeedback
+  transformFeedbackVaryings
 }
 
 /**

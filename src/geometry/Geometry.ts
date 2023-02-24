@@ -7,6 +7,7 @@ import {
 } from '../types'
 import { Vec3 } from 'wtc-math'
 import { Program } from '../core/Program'
+import { TransformFeedback } from '../core/TransformFeedback'
 
 let ID = 1
 
@@ -42,6 +43,13 @@ export class Geometry {
    * An array of vertex array objects that represent the different attributes.
    */
   VAOs: { [key: string]: WebGLVertexArrayObject }
+
+  /**
+   * Any supplied transform feedback objects
+   */
+  transformFeedbacks: TransformFeedback
+  transformFeedbackIndex: number = 0
+
   /**
    * The range of supplied elements to draw.
    */
@@ -72,7 +80,8 @@ export class Geometry {
    */
   constructor(
     gl: WTCGLRenderingContext,
-    attributes: WTCGLGeometryAttributeCollection = {}
+    attributes: WTCGLGeometryAttributeCollection = {},
+    transformFeedbacks?: TransformFeedback
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Geometry')
     this.gl = gl
@@ -80,6 +89,8 @@ export class Geometry {
     this.id = ID++
 
     this.VAOs = {}
+
+    this.transformFeedbacks = transformFeedbacks
 
     // Unbind existing VAOs
     this.gl.renderer.bindVertexArray(null)
@@ -226,6 +237,30 @@ export class Geometry {
       )
   }
 
+  bindTransformFeedbacks(): void {
+    const i = (this.transformFeedbackIndex + 1) % 2
+    const source = this.transformFeedbacks.VAOs[this.transformFeedbackIndex]
+    const dest = this.transformFeedbacks.VAOs[i]
+    const feedbk = this.transformFeedbacks.TFBs[i]
+    const buffer = this.transformFeedbacks.BufferRefs[i]
+
+    // this.readTFB = source
+    // this.writeTFB = dest
+
+    this.gl.bindVertexArray(source)
+    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, feedbk)
+
+    // @ts-ignore
+    window.feedbk = feedbk
+
+    for (let i in buffer) {
+      const b = buffer[i]
+      this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, b.i, b.buffer)
+    }
+
+    this.transformFeedbackIndex = i
+  }
+
   /**
    * Draw the geometry
    * @param {Object} __namedParameters - The parameters to be used for the draw command
@@ -248,10 +283,18 @@ export class Geometry {
       this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
     }
 
+    // @ts-ignore
+    window.transformFeedbacks = this.transformFeedbacks
+    if (this.transformFeedbacks) {
+      this.bindTransformFeedbacks();
+      this.gl.beginTransformFeedback(mode)
+    }
+
     // Check if any attributes need updating
+    // @ts-ignore
     program.attributeLocations.forEach((location, { name }) => {
       const attr = this.attributes[name]
-      if (attr.needsUpdate) attr.updateAttribute(this.gl)
+      if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
     })
 
     if (this.isInstanced) {
@@ -282,6 +325,10 @@ export class Geometry {
       } else {
         this.gl.drawArrays(mode, this.drawRange.start, this.drawRange.count)
       }
+    }
+    
+    if (this.transformFeedbacks) {
+      this.gl.endTransformFeedback()
     }
   }
 

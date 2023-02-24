@@ -121,7 +121,8 @@ export class Program {
       frontFace = gl.CCW,
       depthTest = true,
       depthWrite = true,
-      depthFunc = gl.LESS
+      depthFunc = gl.LESS,
+      transformFeedbackVaryings
     }: {
       vertex?: string
       fragment?: string
@@ -132,6 +133,7 @@ export class Program {
       depthTest?: boolean
       depthWrite?: boolean
       depthFunc?: GLenum
+      transformFeedbackVaryings?: string[]
     } = {}
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Program')
@@ -187,6 +189,17 @@ export class Program {
     this.program = gl.createProgram()
     gl.attachShader(this.program, vertexShader)
     gl.attachShader(this.program, fragmentShader)
+
+    // If we have transformFeedbackVaryings, bind them
+    // TO DO: allow for INTERLEAVED_ATTRIBS as well
+    if (transformFeedbackVaryings)
+      gl.transformFeedbackVaryings(
+        this.program,
+        transformFeedbackVaryings,
+        gl.SEPARATE_ATTRIBS
+      )
+    
+    // Finally, link the program and record any errors
     gl.linkProgram(this.program)
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       console.warn(gl.getProgramInfoLog(this.program))

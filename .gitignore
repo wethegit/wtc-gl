@@ -23,3 +23,5 @@ pub
 deploy
 lib/
 dist/
+
+tests/
