@@ -3,7 +3,7 @@
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo $BRANCH
-if [ "$BRANCH" == "master" ]
+if [ "$BRANCH" = "master" ]
 then
   npm run document
   git add ./
