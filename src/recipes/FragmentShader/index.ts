@@ -39,7 +39,7 @@ interface WTCGLUniformArray {
 }
 
 // @ts-ignore
-let hasWindow = typeof window !== 'undefined' || !(window instanceof Window);
+let hasWindow = typeof window !== 'undefined';
 
 class FragmentShader {
   uniforms: WTCGLUniformArray

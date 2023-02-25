@@ -53,7 +53,7 @@ const defaultShaderF = `#extension GL_OES_standard_derivatives : enable
   }`
 
 // @ts-ignore
-let hasWindow = typeof window !== 'undefined' || !(window instanceof Window);
+let hasWindow = typeof window !== 'undefined';
 
 class ParticleSimulation {
   uniforms
