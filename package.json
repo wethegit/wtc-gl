@@ -17,8 +17,7 @@
     "prepare": "husky install; npm run build",
     "document": "npx typedoc src/index.ts"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "wtc-math": "^1.0.13",
     "husky": "^5.1.3",
