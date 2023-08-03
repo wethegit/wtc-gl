@@ -72,6 +72,7 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     stride = 0,
     offset = 0,
     instanced = 0,
+    count = null,
     type,
     normalized = false,
     data
@@ -79,6 +80,7 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     size?: number
     stride?: number
     offset?: number
+    count?: number
     instanced?: number
     type?: GLenum
     normalized?: boolean
@@ -97,6 +99,9 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
         ? window.WebGLRenderingContext.UNSIGNED_SHORT
         : window.WebGLRenderingContext.UNSIGNED_INT)
     this.normalized = normalized
+
+    this.count = count || stride ? data.byteLength / stride : data.length / size;
+    this.divisor = instanced || 0;
   }
   /**
    * Udpate an attribute for rendering
