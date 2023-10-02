@@ -170,56 +170,18 @@ class RenderTarget {
     // For multi-render targets shader access
     if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
 
-    // Render buffers
-    if (depth && !stencil) {
-      this.depthBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.DEPTH_COMPONENT16,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.DEPTH_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.depthBuffer
-      )
-    }
-
-    if (stencil && !depth) {
-      this.stencilBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.stencilBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.STENCIL_INDEX8,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.STENCIL_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.stencilBuffer
-      )
-    }
-
-    if (depth && stencil) {
-      this.depthStencilBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthStencilBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.DEPTH_STENCIL,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.DEPTH_STENCIL_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.depthStencilBuffer
-      )
+    if (depth && (this.gl.renderer.isWebgl2 || this.gl.renderer.getExtension('WEBGL_depth_texture'))) {
+      this.depthTexture = new Texture(gl, {
+          width,
+          height,
+          minFilter: this.gl.NEAREST,
+          magFilter: this.gl.NEAREST,
+          format: this.gl.DEPTH_COMPONENT,
+          internalFormat: gl.renderer.isWebgl2 ? this.gl.DEPTH_COMPONENT16 : this.gl.DEPTH_COMPONENT,
+          type: this.gl.UNSIGNED_INT,
+      });
+      this.depthTexture.update();
+      this.gl.framebufferTexture2D(this.target, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthTexture.texture, 0 /* level */);
     }
 
     this.gl.bindFramebuffer(this.target, null)
