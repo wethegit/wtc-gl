@@ -170,58 +170,6 @@ class RenderTarget {
     // For multi-render targets shader access
     if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
 
-    // Render buffers
-    if (depth && !stencil) {
-      this.depthBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.DEPTH_COMPONENT16,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.DEPTH_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.depthBuffer
-      )
-    }
-
-    if (stencil && !depth) {
-      this.stencilBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.stencilBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.STENCIL_INDEX8,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.STENCIL_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.stencilBuffer
-      )
-    }
-
-    if (depth && stencil) {
-      this.depthStencilBuffer = this.gl.createRenderbuffer()
-      this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthStencilBuffer)
-      this.gl.renderbufferStorage(
-        this.gl.RENDERBUFFER,
-        this.gl.DEPTH_STENCIL,
-        width,
-        height
-      )
-      this.gl.framebufferRenderbuffer(
-        this.target,
-        this.gl.DEPTH_STENCIL_ATTACHMENT,
-        this.gl.RENDERBUFFER,
-        this.depthStencilBuffer
-      )
-    }
-
     this.gl.bindFramebuffer(this.target, null)
   }
 
