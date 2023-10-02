@@ -170,6 +170,20 @@ class RenderTarget {
     // For multi-render targets shader access
     if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
 
+    if (depth && (this.gl.renderer.isWebgl2 || this.gl.renderer.getExtension('WEBGL_depth_texture'))) {
+      this.depthTexture = new Texture(gl, {
+          width,
+          height,
+          minFilter: this.gl.NEAREST,
+          magFilter: this.gl.NEAREST,
+          format: this.gl.DEPTH_COMPONENT,
+          internalFormat: gl.renderer.isWebgl2 ? this.gl.DEPTH_COMPONENT16 : this.gl.DEPTH_COMPONENT,
+          type: this.gl.UNSIGNED_INT,
+      });
+      this.depthTexture.update();
+      this.gl.framebufferTexture2D(this.target, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depthTexture.texture, 0 /* level */);
+    }
+
     this.gl.bindFramebuffer(this.target, null)
   }
 
