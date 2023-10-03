@@ -21,6 +21,8 @@ class Framebuffer {
 
   name: string
 
+  depth: boolean
+
   #readFB
   #writeFB
   #width: number
@@ -46,7 +48,8 @@ class Framebuffer {
       minFilter = gl.LINEAR,
       magFilter = minFilter,
       premultiplyAlpha = false,
-      data = null
+      data = null,
+      depth = true
     } = {}
   ) {
     this.gl = gl
@@ -56,6 +59,7 @@ class Framebuffer {
     this.tiling = tiling
     this.texdepth = texdepth
     this.data = data
+    this.depth = depth
 
     this.minFilter = minFilter
     this.magFilter = magFilter
@@ -88,7 +92,8 @@ class Framebuffer {
       wrapT: this.wrap,
       type: this.type,
       internalFormat: internalFormat,
-      premultiplyAlpha: this.premultiplyAlpha
+      premultiplyAlpha: this.premultiplyAlpha,
+      depth: this.depth
     })
     return FB
   }
