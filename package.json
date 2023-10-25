@@ -53,8 +53,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,jsx}": "eslint --fix",
-    "*.{css,scss}": "stylelint --fix",
-    "*": "prettier -w -u"
+    "src/**/*.{ts,js}": "eslint --fix",
+    "src/**/*": "prettier -w -u"
   }
 }
