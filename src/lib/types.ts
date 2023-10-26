@@ -160,7 +160,7 @@ export interface WTCGLRendererState {
   /**
    * The store of all texture units currently in memory and use.
    */
-  textureUnits: unknown // TO DO Update with better type
+  textureUnits: number[]
   /**
    * The active texture unit being written to - used when initialising textures
    */
@@ -299,19 +299,16 @@ export interface WTCGLGeometryAttribute {
   updateAttribute(gl: WTCGLRenderingContext): void
 }
 
-type ContextOverflow =
+/**
+ * A simple extension of [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext) that supplies a couple of convenient variables.
+ * @interface
+ */
+export type WTCGLRenderingContext = Omit<
+  WebGL2RenderingContext,
   | 'createVertexArray'
   | 'bindVertexArray'
   | 'transformFeedbackVaryings'
   | 'createTransformFeedback'
-/**
- * A simple extension of [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext) that supplies a couple of convenient variables.
- * @interface
- * @extends WebGLRenderingContext
- */
-export type WTCGLRenderingContext = Omit<
-  WebGLRenderingContext | WebGL2RenderingContext,
-  ContextOverflow
 > & {
   /**
    * The WTCGL Renderer object

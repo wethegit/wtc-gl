@@ -29,7 +29,7 @@ export interface TransformFeedbackAttribute {
 }
 
 export interface TransformFeedbackOptions {
-  program?: Program
+  program: Program
   transformFeedbacks: {
     [key: string]: TransformFeedbackAttribute
   }
@@ -56,8 +56,11 @@ export class TransformFeedback {
     this.VAOs.forEach((vao: WebGLVertexArrayObject, i: number) => {
       gl.bindVertexArray(vao)
 
-      const buffers = []
-      const bufferRef = {}
+      const buffers: (WebGLBuffer | null)[] = []
+      const bufferRef: Record<
+        string,
+        { i: number; buffer: WebGLBuffer | null }
+      > = {}
 
       for (let i = 0; i < names.length; i++) {
         const tf = transformFeedbacks[names[i]]
@@ -71,7 +74,7 @@ export class TransformFeedback {
           data,
           usage = gl.STATIC_DRAW,
           buffertype = gl.ARRAY_BUFFER,
-          buffer: defaultBuffer
+          buffer: defaultBuffer = null
         } = tf
 
         const buffer =
@@ -93,6 +96,7 @@ export class TransformFeedback {
 
       // TO DO Try putting these inside the loop
       gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TFBs[i])
+
       buffers.forEach((b, i) => {
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, i, b)
       })
