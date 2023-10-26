@@ -15,6 +15,7 @@ export default defineConfig({
     })
   ],
   build: {
+    copyPublicDir: false,
     lib: {
       // Could also be a dictionary or array of multiple entry points
       entry: resolvePath('src/lib/index.ts'),
