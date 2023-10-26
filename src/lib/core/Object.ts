@@ -3,11 +3,11 @@ import { Vec3, Quat, Mat4 } from 'wtc-math'
 /**
  * Class representing an object. This provides basic transformations for sub-objects and shouldn't be instanciated directly.
  **/
-class Obj {
+export class Obj {
   /**
    * The parent of this object.
    */
-  parent: Obj | null
+  parent?: Obj | null
   /**
    * The children of this object
    */
@@ -108,7 +108,7 @@ class Obj {
    * @param parent - The parent object to use
    * @param notifyParent - Whether to set the full parent-child relationsjip
    */
-  setParent(parent: Obj, notifyParent: boolean = true): void {
+  setParent(parent: Obj | null, notifyParent: boolean = true): void {
     if (this.parent && parent !== this.parent)
       this.parent.removeChild(this, false)
     this.parent = parent
@@ -143,7 +143,8 @@ class Obj {
   updateMatrixWorld(force?: boolean): void {
     if (this.matrixAutoUpdate) this.updateMatrix()
     if (this.worldMatrixNeedsUpdate || force) {
-      if (this.parent === null) this.worldMatrix = this.matrix.clone()
+      if (this.parent === null || this.parent === undefined)
+        this.worldMatrix = this.matrix.clone()
       else this.worldMatrix = this.parent.worldMatrix.multiplyNew(this.matrix)
       this.worldMatrixNeedsUpdate = false
       force = true
@@ -204,5 +205,3 @@ class Obj {
     this.updateRotation()
   }
 }
-
-export { Obj }

@@ -1,3 +1,5 @@
+import { Vec3 } from 'wtc-math'
+
 import {
   WTCGLRendererState,
   WTCGLRenderingContext,
@@ -5,7 +7,6 @@ import {
   WTCGLGeometryAttribute,
   WTCGLBounds
 } from '../types'
-import { Vec3 } from 'wtc-math'
 import { Program } from '../core/Program'
 import { TransformFeedback } from '../core/TransformFeedback'
 

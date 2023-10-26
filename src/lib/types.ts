@@ -2,6 +2,11 @@ import { Vec3 } from 'wtc-math'
 
 import { Renderer } from './core/Renderer'
 import { Texture } from './core/Texture'
+import { Uniform } from './core/Uniform'
+
+export interface WTCGLUniformArray {
+  [index: string]: Uniform
+}
 
 /**
  * Represents a collection of all of the properties that make up a complete blending function.
@@ -11,11 +16,11 @@ export interface WTCGLBlendFunction {
   /**
    * The source blend function
    */
-  src?: GLenum
+  src: GLenum
   /**
    * The destination blend function
    */
-  dst?: GLenum
+  dst: GLenum
   /**
    * The source blend function for alpha blending
    */
@@ -34,11 +39,11 @@ export interface WTCGLBlendEquation {
   /**
    * The mode to blend when using RGB
    */
-  modeRGB?: GLenum
+  modeRGB: GLenum
   /**
    * The mode to blend when using RGBA
    */
-  modeAlpha?: GLenum
+  modeAlpha: GLenum
 }
 
 /**
@@ -303,7 +308,7 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
   /**
    * The WTCGL Renderer object
    */
-  renderer?: Renderer
+  renderer: Renderer
   /**
    * The HTML canvas element. Supplied here because the in-built interface doesn't contain it.
    */
@@ -318,7 +323,7 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
 
   createVertexArray: () => WebGLVertexArrayObject
   bindVertexArray: (vertexArray: WebGLVertexArrayObject) => void
-  transformFeedbackVaryings?: string[]
+  transformFeedbackVaryings?: (...args: unknown[]) => void
 }
 
 /**

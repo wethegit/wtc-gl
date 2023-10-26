@@ -4,23 +4,40 @@ import { Obj } from './Object'
 import { Mesh } from './Mesh'
 import { Drawable } from './Drawable'
 
-interface CameraOptions {
+export interface CameraOptions {
   near?: number
   far?: number
   fov?: number
   aspect?: number
-  left?: number
-  right?: number
-  top?: number
-  bottom?: number
   zoom?: number
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+export interface OrtographicOptions {
+  near: number
+  far: number
+  left: number
+  right: number
+  bottom: number
+  top: number
+  zoom: number
+}
+
+export interface PerspectiveOptions {
+  near: number
+  far: number
+  fov: number
+  aspect: number
 }
 
 /**
  * Class representing some Geometry.
  * @extends Obj
  **/
-class Camera extends Obj {
+export class Camera extends Obj {
   /**
    * The near point of the perspective matrix
    * @default .1
@@ -110,7 +127,7 @@ class Camera extends Obj {
     top,
     bottom,
     zoom = 1
-  }: CameraOptions = {}) {
+  }: CameraOptions) {
     super()
 
     this.near = near
@@ -148,20 +165,18 @@ class Camera extends Obj {
     far = this.far,
     fov = this.fov,
     aspect = this.aspect
-  }: {
-    near?: number
-    far?: number
-    fov?: number
-    aspect?: number
-  } = {}): Camera {
+  }: Partial<PerspectiveOptions> = {}): Camera {
     Object.assign(this, { near, far, fov, aspect })
+
     this.projectionMatrix = Mat4.perspective(
       (fov * Math.PI) / 180,
       aspect,
       near,
       far
     )
+
     this.type = 'perspective'
+
     return this
   }
 
@@ -184,22 +199,18 @@ class Camera extends Obj {
     bottom = this.bottom,
     top = this.top,
     zoom = this.zoom
-  }: {
-    near?: number
-    far?: number
-    left?: number
-    right?: number
-    bottom?: number
-    top?: number
-    zoom?: number
-  } = {}): Camera {
+  }: Partial<OrtographicOptions> = {}): Camera {
     Object.assign(this, { near, far, left, right, bottom, top, zoom })
+
     left /= zoom
     right /= zoom
     bottom /= zoom
     top /= zoom
+
     this.projectionMatrix = Mat4.ortho(left, right, bottom, top, near, far)
+
     this.type = 'orthographic'
+
     return this
   }
 
@@ -366,5 +377,3 @@ class Camera extends Obj {
     return true
   }
 }
-
-export { Camera, CameraOptions }
