@@ -1,6 +1,6 @@
 import { Vec2 } from 'wtc-math'
 
-import { WTCGLRenderingContext } from '../../types'
+import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
 import { Renderer } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
@@ -10,50 +10,25 @@ import { GeometryAttribute } from '../../geometry/GeometryAttribute'
 import { Camera } from '../../core/Camera'
 import { Framebuffer } from '../../ext/Framebuffer'
 
-const defaultShaderV = `
-  attribute vec2 reference;
-  attribute vec2 position;
-  attribute float property;
-
-  uniform vec2 u_resolution;
-  uniform vec2 u_screen;
-
-  uniform sampler2D b_velocity;
-  uniform sampler2D b_position;
-
-  varying vec3 v_colour;
-  varying float v_fogDepth;
-
-  void main() {
-    vec2 position = texture2D(b_position, reference).xy;
-    gl_PointSize = 2.;
-    vec2 p = position/u_resolution;
-    v_colour = property == 1. ? vec3(1,0,0) : vec3(1,1,1);
-    vec4 pos = vec4(position / u_resolution * 2. - 1., 0., 1.);
-    gl_Position = vec4(pos.xy, 0., 1.);
-  }`
-const defaultShaderF = `#extension GL_OES_standard_derivatives : enable
-  precision highp float;
-
-  uniform vec2 u_resolution;
-  uniform vec2 u_mouse;
-  uniform float u_time;
-
-  varying vec3 v_colour;
-
-  void main() {
-    vec2 uv = gl_PointCoord.xy - .5;
-
-    gl_FragColor = vec4(0, 0, 0, 1);
-
-    float l = length(uv);
-    float c = smoothstep(.5, 0., l);
-    float opacity = c;
-
-    gl_FragColor = vec4(v_colour, 1.);
-  }`
+import defaultShaderF from './default-shader-frag.frag'
+import defaultShaderV from './default-shader-vert.vert'
 
 const hasWindow = typeof window !== 'undefined'
+
+export interface ParticleSimulationOptions {
+  vertex: string
+  fragment: string
+  dimensions: Vec2
+  container: HTMLElement
+  autoResize: boolean
+  uniforms: WTCGLUniformArray
+  onBeforeRender: (delta: number) => void
+  onAfterRender: (delta: number) => void
+  textureSize: number
+  simDimensions: number
+  createGeometry: () => void
+  rendererProps: object
+}
 
 class ParticleSimulation {
   uniforms
@@ -94,9 +69,9 @@ class ParticleSimulation {
     onAfterRender = () => {},
     textureSize = 128,
     simDimensions = 3,
-    createGeometry = null,
+    createGeometry,
     rendererProps = {}
-  } = {}) {
+  }: Partial<ParticleSimulationOptions> = {}) {
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)
     this.render = this.render.bind(this)
@@ -135,7 +110,7 @@ class ParticleSimulation {
 
     this.references = new Float32Array(this.particles * 2).fill(0) // The references - used for texture lookups
 
-    if (createGeometry && typeof createGeometry == 'function') {
+    if (createGeometry && typeof createGeometry === 'function') {
       createGeometry.bind(this)()
     } else {
       this.createGeometry()
@@ -194,7 +169,7 @@ class ParticleSimulation {
       requestAnimationFrame(this.render)
     }
 
-    const v = this.u_time.value
+    const v = this.u_time.value as number
     this.u_time.value = v + diff * 0.00005
 
     this.onBeforeRender(t, this)

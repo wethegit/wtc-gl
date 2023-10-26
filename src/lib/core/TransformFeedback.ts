@@ -7,9 +7,11 @@ const createBuffer = (
   usage: GLenum = gl.STATIC_DRAW,
   type: GLenum = gl.ARRAY_BUFFER
 ): WebGLBuffer => {
-  const buffer: WebGLBuffer = gl.createBuffer()
+  const buffer: WebGLBuffer = gl.createBuffer()!
+
   gl.bindBuffer(type, buffer)
   gl.bufferData(type, data, usage)
+
   return buffer
 }
 

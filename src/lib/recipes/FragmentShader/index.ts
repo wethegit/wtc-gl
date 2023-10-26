@@ -1,51 +1,37 @@
+import { Vec2 } from 'wtc-math'
+
 import { WTCGLRenderingContext } from '../../types'
 import { Renderer } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
 import { Triangle } from '../../geometry/Triangle'
 import { Uniform } from '../../core/Uniform'
-import { Vec2 } from 'wtc-math'
+import type { WTCGLUniformArray } from '../../types'
 
-const defaultShaderV = `
-attribute vec3 position;
-attribute vec2 uv;
+import defaultShaderF from './default-shader-frag.frag'
+import defaultShaderV from './default-shader-vert.vert'
 
-varying vec2 v_uv;
-
-void main() {
-gl_Position = vec4(position, 1.0);
-v_uv = uv;
-}
-`
-const defaultShaderF = `
-precision highp float;
-
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform vec2 u_mouse;
-uniform sampler2D s_noise;
-
-uniform sampler2D b_noise;
-
-varying vec2 v_uv;
-
-void main() {
-gl_FragColor = vec4(vec3(cos(length(v_uv+u_time))*.5+.5, sin(v_uv+u_time)*.5+.5),1);
-}
-`
-
-interface WTCGLUniformArray {
-  [index: string]: Uniform
+export interface FragmentShaderOptions {
+  vertex: string
+  fragment: string
+  dimensions: Vec2
+  container: HTMLElement
+  autoResize: boolean
+  uniforms: WTCGLUniformArray
+  onInit: (renderer: Renderer) => void
+  onBeforeRender: (delta: number) => void
+  onAfterRender: (delta: number) => void
+  rendererProps: object
 }
 
 const hasWindow = typeof window !== 'undefined'
 
-class FragmentShader {
+export class FragmentShader {
   uniforms: WTCGLUniformArray
   dimensions: Vec2
   autoResize: boolean = true
-  onBeforeRender: (t: number) => object
-  onAfterRender: (t: number) => object
+  onBeforeRender: (t: number) => void
+  onAfterRender: (t: number) => void
 
   u_time: Uniform
   u_resolution: Uniform
@@ -70,18 +56,7 @@ class FragmentShader {
     onBeforeRender = () => {},
     onAfterRender = () => {},
     rendererProps = {}
-  }: {
-    vertex?: string
-    fragment?: string
-    dimensions?: Vec2
-    container?: HTMLElement
-    autoResize?: boolean
-    uniforms?: WTCGLUniformArray
-    onInit?: (renderer: Renderer) => void
-    onBeforeRender?: (delta: number) => void
-    onAfterRender?: (delta: number) => void
-    rendererProps?: object
-  } = {}) {
+  }: Partial<FragmentShaderOptions> = {}) {
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)
     this.render = this.render.bind(this)
@@ -143,7 +118,7 @@ class FragmentShader {
     this.lastTime = 0
   }
 
-  render(t) {
+  render(t: number) {
     const diff = t - this.lastTime
     this.lastTime = t
 
@@ -186,5 +161,3 @@ class FragmentShader {
     return this.#playing === true
   }
 }
-
-export { FragmentShader }

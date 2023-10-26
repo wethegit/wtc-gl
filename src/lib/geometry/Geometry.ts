@@ -91,11 +91,10 @@ export class Geometry {
 
     this.VAOs = {}
 
-    this.transformFeedbacks = transformFeedbacks
+    if (transformFeedbacks) this.transformFeedbacks = transformFeedbacks
 
     // Unbind existing VAOs
     this.gl.renderer.bindVertexArray(null)
-    this.gl.renderer.currentGeometry = null
 
     // Initialise the draw range and instance count with default values
     this.drawRange = { start: 0, count: 0 }
