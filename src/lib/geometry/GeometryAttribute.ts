@@ -1,9 +1,20 @@
 import { WTCGLRenderingContext, WTCGLGeometryAttribute } from '../types'
 
+export interface GeometryAttributeOptions {
+  size: number
+  stride: number
+  offset: number
+  count: number
+  instanced: number
+  type: GLenum
+  normalized: boolean
+  data: Float32Array | Float64Array | Uint16Array | Uint32Array
+}
+
 /**
  * Class representing a geometry attribute. A discrete piece of data used to render some geometry.
  **/
-class GeometryAttribute implements WTCGLGeometryAttribute {
+export class GeometryAttribute implements WTCGLGeometryAttribute {
   /**
    * The size of each element in the attribute. For example if you're describing 3D vectors, this would be 3.
    * */
@@ -72,20 +83,11 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     stride = 0,
     offset = 0,
     instanced = 0,
-    count = null,
+    count,
     type,
     normalized = false,
     data
-  }: {
-    size?: number
-    stride?: number
-    offset?: number
-    count?: number
-    instanced?: number
-    type?: GLenum
-    normalized?: boolean
-    data?: Float32Array | Float64Array | Uint16Array | Uint32Array
-  } = {}) {
+  }: Partial<GeometryAttributeOptions> = {}) {
     this.size = size
     this.stride = stride
     this.offset = offset
@@ -116,5 +118,3 @@ class GeometryAttribute implements WTCGLGeometryAttribute {
     this.needsUpdate = false
   }
 }
-
-export { GeometryAttribute }

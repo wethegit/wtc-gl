@@ -15,38 +15,38 @@ const createBuffer = (
   return buffer
 }
 
+export interface TransformFeedbackAttribute {
+  size: number
+  type?: GLenum
+  normalize?: boolean
+  stride?: number
+  offset?: number
+  buffer?: WebGLBuffer
+  data: Float32Array
+  varying: string
+  usage?: GLenum
+  buffertype?: GLenum
+}
+
+export interface TransformFeedbackOptions {
+  program?: Program
+  transformFeedbacks: {
+    [key: string]: TransformFeedbackAttribute
+  }
+}
+
 /**
  * To-Do
  * Update this class to take care of its own internal state (like render targets) rather than relying on geo to control state
  */
-
-class TransformFeedback {
+export class TransformFeedback {
   VAOs: [WebGLVertexArrayObject, WebGLVertexArrayObject]
   TFBs: [WebGLTransformFeedback, WebGLTransformFeedback]
   BufferRefs: { [key: string]: { i: number; buffer: WebGLBuffer } }[]
 
   constructor(
     gl: WTCGLRenderingContext,
-    {
-      program,
-      transformFeedbacks
-    }: {
-      program?: Program
-      transformFeedbacks: {
-        [key: string]: {
-          size: number
-          type?: GLenum
-          normalize?: boolean
-          stride?: number
-          offset?: number
-          buffer?: WebGLBuffer
-          data: Float32Array
-          varying: string
-          usage?: GLenum
-          buffertype?: GLenum
-        }
-      }
-    }
+    { program, transformFeedbacks }: TransformFeedbackOptions
   ) {
     this.VAOs = [gl.createVertexArray(), gl.createVertexArray()]
     this.TFBs = [gl.createTransformFeedback(), gl.createTransformFeedback()]
@@ -103,5 +103,3 @@ class TransformFeedback {
     })
   }
 }
-
-export { TransformFeedback }

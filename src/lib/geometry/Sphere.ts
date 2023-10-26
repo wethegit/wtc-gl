@@ -1,10 +1,24 @@
+import { Vec3 } from 'wtc-math'
+
+import type { WTCGLRenderingContext } from '../types'
+
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
-import { Vec3 } from 'wtc-math'
+
+export interface SphereOptions {
+  radius: number
+  widthSegments: number
+  heightSegments: number
+  phiStart: number
+  phiLength: number
+  thetaStart: number
+  thetaLength: number
+  attributes: object
+}
 
 export class Sphere extends Geometry {
   constructor(
-    gl,
+    gl: WTCGLRenderingContext,
     {
       radius = 0.5,
       widthSegments = 16,
@@ -14,7 +28,7 @@ export class Sphere extends Geometry {
       thetaStart = 0,
       thetaLength = Math.PI,
       attributes = {}
-    } = {}
+    }: Partial<SphereOptions> = {}
   ) {
     const wSegs = widthSegments
     const hSegs = heightSegments

@@ -1,7 +1,29 @@
 import { WTCGLRenderingContext } from '../types'
 import { RenderTarget } from '../core/RenderTarget'
 
-class Framebuffer {
+export interface FramebufferOptions {
+  name: string
+  width: number
+  height: number
+  dpr: number
+  tiling: number
+  texdepth: number
+  minFilter: GLenum
+  magFilter: GLenum
+  premultiplyAlpha: boolean
+  data: Float32Array | null
+}
+
+// TODO: ask @liamegan about these
+export interface RenderOptions {
+  scene: unknown
+  camera: unknown
+  update: boolean
+  clear: boolean
+  viewport: null
+}
+
+export class Framebuffer {
   static TEXTYPE_FLOAT = 0
   static TEXTYPE_UNSIGNED_BYTE = 1
   static TEXTYPE_HALF_FLOAT_OES = 2
@@ -39,18 +61,7 @@ class Framebuffer {
       magFilter = minFilter,
       premultiplyAlpha = false,
       data = null
-    }: {
-      name?: string
-      width?: number
-      height?: number
-      dpr?: number
-      tiling?: number
-      texdepth?: number
-      minFilter?: GLenum
-      magFilter?: GLenum
-      premultiplyAlpha?: boolean
-      data?: Float32Array | null
-    } = {}
+    }: Partial<FramebufferOptions> = {}
   ) {
     this.gl = gl
 
@@ -75,11 +86,7 @@ class Framebuffer {
   createFrameBuffer() {
     const t = this.type
 
-    let internalFormat = this.gl.RGBA
-
-    if (t === this.gl.FLOAT) {
-      internalFormat = this.gl.RGBA32F
-    }
+    const internalFormat = t === this.gl.FLOAT ? this.gl.RGBA32F : this.gl.RGBA
 
     const FB = new RenderTarget(this.gl, {
       data: this.data,
@@ -95,12 +102,23 @@ class Framebuffer {
     })
     return FB
   }
+
   swap() {
     const temp = this.#readFB
     this.#readFB = this.#writeFB
     this.#writeFB = temp
   }
-  render(renderer, { scene, camera, update = true, clear, viewport = null }) {
+
+  render(
+    renderer: unknown,
+    {
+      scene,
+      camera,
+      update = true,
+      clear,
+      viewport = null
+    }: Partial<RenderOptions> = {}
+  ) {
     renderer.render({
       scene,
       camera,
@@ -109,6 +127,7 @@ class Framebuffer {
       clear,
       viewport
     })
+
     this.swap()
   }
 
@@ -122,6 +141,7 @@ class Framebuffer {
         return this.gl.REPEAT
     }
   }
+
   get type() {
     switch (this.#texdepth) {
       case Framebuffer.TEXTYPE_FLOAT:
@@ -140,6 +160,7 @@ class Framebuffer {
   get read() {
     return this.#readFB
   }
+
   get write() {
     return this.#writeFB
   }
@@ -150,30 +171,35 @@ class Framebuffer {
   get data() {
     return this.#data || null
   }
+
   set width(value) {
     if (value > 0) this.#width = value
   }
   get width() {
     return this.#width || 1
   }
+
   set height(value) {
     if (value > 0) this.#height = value
   }
   get height() {
     return this.#height || 1
   }
+
   set pxRatio(value) {
     if (value > 0) this.#pxRatio = value
   }
   get pxRatio() {
     return this.#pxRatio || 1
   }
+
   set dpr(value) {
     if (value > 0) this.#pxRatio = value
   }
   get dpr() {
     return this.#pxRatio || 1
   }
+
   set tiling(value) {
     if (
       [
@@ -187,6 +213,7 @@ class Framebuffer {
   get tiling() {
     return this.#tiling
   }
+
   set texdepth(value) {
     if (
       [
@@ -201,5 +228,3 @@ class Framebuffer {
     return this.#texdepth
   }
 }
-
-export { Framebuffer }

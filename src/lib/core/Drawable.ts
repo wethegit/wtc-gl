@@ -68,6 +68,7 @@ export class Drawable extends Obj {
 
     this.renderOrder = renderOrder
   }
+
   /**
    * Draw placeholder. The draw function is responsible for drawing the element. This function simply provides a signature for extension.
    **/

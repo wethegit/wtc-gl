@@ -228,6 +228,7 @@ export class Camera extends Obj {
     this.projectionViewMatrix = this.projectionMatrix.multiplyNew(
       this.viewMatrix
     )
+
     return this
   }
 
@@ -239,6 +240,7 @@ export class Camera extends Obj {
    */
   lookAt(target: Vec3): Camera {
     super.lookAt(target, true)
+
     return this
   }
 
@@ -347,6 +349,7 @@ export class Camera extends Obj {
 
       return this.frustumIntersectsSphere(center, radius)
     }
+
     return false
   }
 
@@ -359,6 +362,7 @@ export class Camera extends Obj {
     const x = m.a11 * m.a11 + m.a12 * m.a12 + m.a13 * m.a13
     const y = m.a21 * m.a21 + m.a22 * m.a22 + m.a23 * m.a23
     const z = m.a31 * m.a31 + m.a32 * m.a32 + m.a33 * m.a33
+
     return Math.sqrt(Math.max(x, y, z))
   }
 
@@ -374,6 +378,7 @@ export class Camera extends Obj {
       const dist = plane.pos.clone().dot(center) + plane.constant
       if (dist < -radius) return false
     }
+
     return true
   }
 }

@@ -36,7 +36,7 @@ export interface TextureOptions {
 /**
  * A texture class contains image data for use in a shader. Along with the image data, the texture contains state variable that determine how secondary conditions, like wrapping and interpolation work.
  */
-class Texture {
+export class Texture {
   /**
    * A unique ID for the texture object, allows us to determine whether a texture has already been bound or not.
    */
@@ -232,7 +232,7 @@ class Texture {
     this.texture = this.gl.createTexture()!
 
     this.store = {
-      image: null
+      image: undefined
     }
 
     // State store to avoid redundant calls for per-texture state
@@ -443,5 +443,3 @@ class Texture {
     this.store.image = this.image
   }
 }
-
-export { Texture }

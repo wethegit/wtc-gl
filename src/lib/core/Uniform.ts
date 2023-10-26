@@ -3,6 +3,7 @@ import {
   WTCGLUniformValue,
   WTCGLActiveInfo
 } from '../types'
+
 import { Texture } from './Texture'
 import { Program } from './Program'
 
@@ -22,13 +23,19 @@ type Kind =
   | 'mat3'
   | 'mat4'
 
+export interface UniformOptions {
+  name: string
+  value: WTCGLUniformValue
+  kind: Kind
+}
+
 // cache of typed arrays used to flatten uniform arrays
 const arrayCacheF32 = {}
 
 /**
  * A uniform is just a basic container for simple uniform information.
  */
-class Uniform {
+export class Uniform {
   /**
    * The uniform name. Currently unused, but for future use in auto-parsing name
    */
@@ -52,11 +59,7 @@ class Uniform {
     name = 'uniform',
     value = [1, 1],
     kind = 'float_vec2'
-  }: {
-    name?: string
-    value?: WTCGLUniformValue
-    kind?: Kind
-  } = {}) {
+  }: Partial<UniformOptions> = {}) {
     this.name = name
     this.value = value
     this.kind = kind
@@ -103,14 +106,16 @@ class Uniform {
     const val = value
 
     switch (type) {
-      case 5126:
+      case 5126: {
         // FLOAT
         if (val instanceof Array) {
           return gl.uniform1fv(location, val)
         } else if (typeof val === 'number') {
           gl.uniform1f(location, val)
         }
+
         return null
+      }
       case 35664:
         // FLOAT_VEC2
         return gl.uniform2fv(location, val)
@@ -236,5 +241,3 @@ function setArray(a: Texture[] | number[], b: Texture[] | number[]): void {
     a[i] = b[i]
   }
 }
-
-export { Uniform }

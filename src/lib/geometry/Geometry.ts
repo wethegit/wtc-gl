@@ -289,7 +289,7 @@ export class Geometry {
     }
 
     // Check if any attributes need updating
-    program?.attributeLocations.forEach((location, { name }) => {
+    program?.attributeLocations.forEach((_, { name }) => {
       const attr = this.attributes[name]
       if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
     })
@@ -333,7 +333,7 @@ export class Geometry {
    * Returns the position atribute array
    * @returns {WTCGLGeometryAttribute}
    */
-  getPosition(): WTCGLGeometryAttribute {
+  getPosition(): WTCGLGeometryAttribute | undefined {
     const attr = this.attributes.position
     if (attr.data) return attr
     if (isBoundsWarned) return

@@ -1,9 +1,20 @@
-import { WTCGLRenderingContext } from '../types'
+import {
+  WTCGLGeometryAttributeCollection,
+  WTCGLRenderingContext
+} from '../types'
+
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
-class Triangle extends Geometry {
-  constructor(gl: WTCGLRenderingContext, { attributes = {} } = {}) {
+export interface TriangleOptions {
+  attributes: WTCGLGeometryAttributeCollection
+}
+
+export class Triangle extends Geometry {
+  constructor(
+    gl: WTCGLRenderingContext,
+    { attributes = {} }: Partial<TriangleOptions> = {}
+  ) {
     Object.assign(attributes, {
       position: new GeometryAttribute({
         size: 2,
@@ -18,5 +29,3 @@ class Triangle extends Geometry {
     super(gl, attributes)
   }
 }
-
-export { Triangle }

@@ -2,10 +2,30 @@ import { WTCGLRenderingContext } from '../types'
 
 import { Texture } from './Texture'
 
+export interface RenderTargetOptions {
+  data: Float32Array | null
+  width: number
+  height: number
+  target: GLenum
+  colour: number
+  depth: boolean
+  stencil: boolean
+  depthTexture: Texture | null | boolean
+  wrapS: GLenum
+  wrapT: GLenum
+  minFilter: GLenum
+  magFilter: GLenum
+  type: GLenum
+  format: GLenum
+  internalFormat: GLenum
+  unpackAlignment: 1 | 2 | 4 | 8
+  premultiplyAlpha: boolean
+}
+
 /**
  * Create a render target. A render target allows you to render a scene to a texture, instead of to screen. And can be used to either render a different view for composition to a scene, or to create advanced post processing effects.
  */
-class RenderTarget {
+export class RenderTarget {
   /**
    * The WTCGL rendering context.
    */
@@ -97,25 +117,7 @@ class RenderTarget {
       internalFormat = format,
       unpackAlignment = 4,
       premultiplyAlpha = false
-    }: {
-      data?: Float32Array | null
-      width?: number
-      height?: number
-      target?: GLenum
-      colour?: number
-      depth?: boolean
-      stencil?: boolean
-      depthTexture?: Texture | null | boolean
-      wrapS?: GLenum
-      wrapT?: GLenum
-      minFilter?: GLenum
-      magFilter?: GLenum
-      type?: GLenum
-      format?: GLenum
-      internalFormat?: GLenum
-      unpackAlignment?: 1 | 2 | 4 | 8
-      premultiplyAlpha?: boolean
-    } = {}
+    }: Partial<RenderTargetOptions> = {}
   ) {
     this.gl = gl
     this.width = width
@@ -205,5 +207,3 @@ class RenderTarget {
     return this.textures[0]
   }
 }
-
-export { RenderTarget }

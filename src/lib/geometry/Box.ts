@@ -1,7 +1,18 @@
 import { WTCGLRenderingContext } from '../types'
+
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 import { Plane } from './Plane'
+
+export interface BoxOptions {
+  width: number
+  height: number
+  depth: number
+  widthSegments: number
+  heightSegments: number
+  depthSegments: number
+  attributes: object
+}
 
 export class Box extends Geometry {
   constructor(
@@ -14,15 +25,7 @@ export class Box extends Geometry {
       heightSegments = 1,
       depthSegments = 1,
       attributes = {}
-    }: {
-      width?: number
-      height?: number
-      depth?: number
-      widthSegments?: number
-      heightSegments?: number
-      depthSegments?: number
-      attributes?: object
-    } = {}
+    }: Partial<BoxOptions> = {}
   ) {
     const wSegs = widthSegments
     const hSegs = heightSegments

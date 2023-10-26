@@ -1,6 +1,15 @@
 import { WTCGLRenderingContext } from '../types'
+
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
+
+export interface PlaneOptions {
+  width: number
+  height: number
+  widthSegments: number
+  heightSegments: number
+  attributes: object
+}
 
 export class Plane extends Geometry {
   constructor(
@@ -11,13 +20,7 @@ export class Plane extends Geometry {
       widthSegments = 1,
       heightSegments = 1,
       attributes = {}
-    }: {
-      width?: number
-      height?: number
-      widthSegments?: number
-      heightSegments?: number
-      attributes?: object
-    } = {}
+    }: Partial<PlaneOptions> = {}
   ) {
     const wSegs = widthSegments
     const hSegs = heightSegments
