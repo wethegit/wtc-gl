@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext } from '../types'
+import type { WTCGLRenderingContext } from '../types'
 
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'

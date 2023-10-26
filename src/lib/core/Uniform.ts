@@ -1,4 +1,4 @@
-import {
+import type {
   WTCGLRenderingContext,
   WTCGLUniformValue,
   WTCGLActiveInfo
@@ -30,7 +30,7 @@ export interface UniformOptions {
 }
 
 // cache of typed arrays used to flatten uniform arrays
-const arrayCacheF32 = {}
+const arrayCacheF32: Record<string, Float32Array> = {}
 
 /**
  * A uniform is just a basic container for simple uniform information.
@@ -114,7 +114,7 @@ export class Uniform {
           gl.uniform1f(location, val)
         }
 
-        return null
+        return
       }
       case 35664:
         // FLOAT_VEC2
@@ -190,11 +190,11 @@ export class Uniform {
     // For texture arrays, set uniform as an array of texture units instead of just one
     if (this.kind === 'texture_array') {
       if (this.value instanceof Array && this.value[0] instanceof Texture) {
-        const textureUnits = []
+        const textureUnits: Array<Texture | number> = []
 
         this.value.forEach((value) => {
           const textureUnit = ++program.textureUnit
-          value.update(textureUnit)
+          if (value instanceof Texture) value.update(textureUnit)
           textureUnits.push(textureUnit)
         })
 
@@ -202,7 +202,7 @@ export class Uniform {
           program.gl,
           activeUniform.type,
           location,
-          textureUnits
+          textureUnits as WTCGLUniformValue
         )
       }
     }
@@ -213,16 +213,26 @@ export class Uniform {
 
 function flatten(a: Texture[] | number[]): Float32Array | number[] | Texture[] {
   const arrayLen = a.length
+
   if (a[0] instanceof Array) {
     const valueLen = a[0].length
     const length = arrayLen * valueLen
+
     let value = arrayCacheF32[length]
-    if (!value) arrayCacheF32[length] = value = new Float32Array(length)
-    for (let i = 0; i < arrayLen; i++) value.set(a[i], i * valueLen)
+
+    if (!value) {
+      value = new Float32Array(length)
+      arrayCacheF32[length] = value
+    }
+
+    for (let i = 0; i < arrayLen; i++) {
+      value.set(a[i], i * valueLen)
+    }
+
     return value
-  } else {
-    return a
   }
+
+  return a
 }
 
 function arraysEqual(

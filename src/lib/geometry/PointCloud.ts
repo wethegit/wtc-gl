@@ -1,4 +1,4 @@
-import { WTCGLRenderingContext } from '../types'
+import type { WTCGLRenderingContext } from '../types'
 import { TransformFeedback } from '../core/TransformFeedback'
 
 import { Geometry } from './Geometry'

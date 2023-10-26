@@ -305,10 +305,7 @@ export interface WTCGLGeometryAttribute {
  */
 export type WTCGLRenderingContext = Omit<
   WebGL2RenderingContext,
-  | 'createVertexArray'
-  | 'bindVertexArray'
-  | 'transformFeedbackVaryings'
-  | 'createTransformFeedback'
+  'createVertexArray' | 'bindVertexArray'
 > & {
   /**
    * The WTCGL Renderer object
@@ -327,13 +324,7 @@ export type WTCGLRenderingContext = Omit<
   SEPARATE_ATTRIBS: GLenum
 
   createVertexArray(): WebGLVertexArrayObject
-  bindVertexArray(vertexArray: WebGLVertexArrayObject): void
-  transformFeedbackVaryings(
-    program: WebGLProgram,
-    varyings: string[],
-    bufferMode: GLenum
-  ): void
-  createTransformFeedback(): WebGLTransformFeedback
+  bindVertexArray(vertexArray?: WebGLVertexArrayObject | null): void
 }
 
 /**

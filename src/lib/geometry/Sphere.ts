@@ -1,6 +1,9 @@
 import { Vec3 } from 'wtc-math'
 
-import type { WTCGLRenderingContext } from '../types'
+import type {
+  WTCGLGeometryAttributeCollection,
+  WTCGLRenderingContext
+} from '../types'
 
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
@@ -13,7 +16,7 @@ export interface SphereOptions {
   phiLength: number
   thetaStart: number
   thetaLength: number
-  attributes: object
+  attributes: WTCGLGeometryAttributeCollection
 }
 
 export class Sphere extends Geometry {

@@ -1,12 +1,11 @@
 import { Vec2 } from 'wtc-math'
 
-import { WTCGLRenderingContext } from '../../types'
+import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
 import { Renderer } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
 import { Triangle } from '../../geometry/Triangle'
 import { Uniform } from '../../core/Uniform'
-import type { WTCGLUniformArray } from '../../types'
 
 import defaultShaderF from './default-shader-frag.frag'
 import defaultShaderV from './default-shader-vert.vert'

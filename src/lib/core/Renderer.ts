@@ -1,6 +1,6 @@
 import { Vec2 } from 'wtc-math'
 
-import {
+import type {
   WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLExtensions,
@@ -141,7 +141,7 @@ export class Renderer {
   /**
    * The WebGL2RenderingContext.bindVertexArray() method of the WebGL 2 API binds a passed WebGLVertexArrayObject object to the buffer.
    */
-  bindVertexArray: (vertexArray: WebGLVertexArrayObject) => void
+  bindVertexArray: (vertexArray: WebGLVertexArrayObject | null) => void
   /**
    * The WebGL2RenderingContext.deleteVertexArray() method of the WebGL 2 API deletes a given WebGLVertexArrayObject object.
    */

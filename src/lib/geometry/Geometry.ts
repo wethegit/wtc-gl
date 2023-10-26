@@ -1,6 +1,6 @@
 import { Vec3 } from 'wtc-math'
 
-import {
+import type {
   WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLGeometryAttributeCollection,
@@ -125,7 +125,7 @@ export class Geometry {
     attr.needsUpdate = false
 
     if (!attr.buffer) {
-      attr.buffer = this.gl.createBuffer()
+      attr.buffer = this.gl.createBuffer()!
 
       // Push data to the buffer
       attr.updateAttribute(this.gl)
@@ -250,10 +250,12 @@ export class Geometry {
     this.gl.bindVertexArray(source)
     this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, feedbk)
 
-    window.feedbk = feedbk
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(<any>window).feedbk = feedbk
 
     for (const i in buffer) {
       const b = buffer[i]
+
       this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, b.i, b.buffer)
     }
 
@@ -270,7 +272,7 @@ export class Geometry {
     program,
     mode = this.gl.TRIANGLES
   }: {
-    program?: Program
+    program: Program
     mode: GLenum
   }): void {
     if (
@@ -282,7 +284,9 @@ export class Geometry {
       this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
     }
 
-    window.transformFeedbacks = this.transformFeedbacks
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(<any>window).transformFeedbacks = this.transformFeedbacks
+
     if (this.transformFeedbacks) {
       this.bindTransformFeedbacks()
       this.gl.beginTransformFeedback(mode)
@@ -346,8 +350,8 @@ export class Geometry {
    * Computes the bounding box of the geometry. If no attribute is provided to compue with, try to use the position attribute array by default.
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
-  computeBoundingBox(attr: WTCGLGeometryAttribute | null): void {
-    if (!attr) attr = this.getPosition()
+  computeBoundingBox(attr?: WTCGLGeometryAttribute): void {
+    if (!attr) attr = this.getPosition()!
     const array = attr.data
     const offset = attr.offset || 0
     const stride = attr.stride || attr.size
@@ -394,7 +398,7 @@ export class Geometry {
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
   computeBoundingSphere(attr?: WTCGLGeometryAttribute | null): void {
-    if (!attr) attr = this.getPosition()
+    if (!attr) attr = this.getPosition()!
     const array = attr.data
     const offset = attr.offset || 0
     const stride = attr.stride || attr.size

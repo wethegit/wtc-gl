@@ -1,6 +1,6 @@
 import { Mat3, Mat4 } from 'wtc-math'
 
-import { WTCGLRenderingContext } from '../types'
+import type { WTCGLRenderingContext } from '../types'
 import { Geometry } from '../geometry/Geometry'
 
 import { Drawable } from './Drawable'

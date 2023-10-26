@@ -1,4 +1,5 @@
-import { WTCGLRenderingContext } from '../types'
+import type { WTCGLRenderingContext } from '../types'
+
 import { Program } from './Program'
 
 const createBuffer = (
@@ -35,6 +36,10 @@ export interface TransformFeedbackOptions {
   }
 }
 
+export type BufferRef = { i: number; buffer: WebGLBuffer | null }
+
+export type BufferRecord = Record<string, BufferRef>
+
 /**
  * To-Do
  * Update this class to take care of its own internal state (like render targets) rather than relying on geo to control state
@@ -42,14 +47,14 @@ export interface TransformFeedbackOptions {
 export class TransformFeedback {
   VAOs: [WebGLVertexArrayObject, WebGLVertexArrayObject]
   TFBs: [WebGLTransformFeedback, WebGLTransformFeedback]
-  BufferRefs: { [key: string]: { i: number; buffer: WebGLBuffer } }[]
+  BufferRefs: BufferRecord[]
 
   constructor(
     gl: WTCGLRenderingContext,
     { program, transformFeedbacks }: TransformFeedbackOptions
   ) {
     this.VAOs = [gl.createVertexArray(), gl.createVertexArray()]
-    this.TFBs = [gl.createTransformFeedback(), gl.createTransformFeedback()]
+    this.TFBs = [gl.createTransformFeedback()!, gl.createTransformFeedback()!]
     this.BufferRefs = []
     const names = Object.keys(transformFeedbacks)
 
@@ -57,10 +62,7 @@ export class TransformFeedback {
       gl.bindVertexArray(vao)
 
       const buffers: (WebGLBuffer | null)[] = []
-      const bufferRef: Record<
-        string,
-        { i: number; buffer: WebGLBuffer | null }
-      > = {}
+      const bufferRef: BufferRecord = {}
 
       for (let i = 0; i < names.length; i++) {
         const tf = transformFeedbacks[names[i]]

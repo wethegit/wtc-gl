@@ -1,13 +1,13 @@
-import { WTCGLRenderingContext, WTCGLGeometryAttribute } from '../types'
+import type { WTCGLRenderingContext, WTCGLGeometryAttribute } from '../types'
 
 export interface GeometryAttributeOptions {
-  size: number
-  stride: number
-  offset: number
-  count: number
-  instanced: number
-  type: GLenum
-  normalized: boolean
+  size?: number
+  stride?: number
+  offset?: number
+  count?: number
+  instanced?: number
+  type?: GLenum
+  normalized?: boolean
   data: Float32Array | Float64Array | Uint16Array | Uint32Array
 }
 
@@ -87,7 +87,7 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
     type,
     normalized = false,
     data
-  }: Partial<GeometryAttributeOptions> = {}) {
+  }: GeometryAttributeOptions) {
     this.size = size
     this.stride = stride
     this.offset = offset
@@ -114,7 +114,9 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
       gl.bindBuffer(this.target, this.buffer)
       gl.renderer.state.boundBuffer = this.buffer
     }
+
     gl.bufferData(this.target, this.data, gl.STATIC_DRAW)
+
     this.needsUpdate = false
   }
 }

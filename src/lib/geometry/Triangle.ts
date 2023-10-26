@@ -1,4 +1,4 @@
-import {
+import type {
   WTCGLGeometryAttributeCollection,
   WTCGLRenderingContext
 } from '../types'

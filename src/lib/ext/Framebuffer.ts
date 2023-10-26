@@ -1,4 +1,5 @@
-import { WTCGLRenderingContext } from '../types'
+import type { WTCGLRenderingContext } from '../types'
+import type { Renderer, RenderOptions } from '../core/Renderer'
 import { RenderTarget } from '../core/RenderTarget'
 
 export interface FramebufferOptions {
@@ -12,15 +13,6 @@ export interface FramebufferOptions {
   magFilter: GLenum
   premultiplyAlpha: boolean
   data: Float32Array | null
-}
-
-// TODO: ask @liamegan about these
-export interface RenderOptions {
-  scene: unknown
-  camera: unknown
-  update: boolean
-  clear: boolean
-  viewport: null
 }
 
 export class Framebuffer {
@@ -110,14 +102,8 @@ export class Framebuffer {
   }
 
   render(
-    renderer: unknown,
-    {
-      scene,
-      camera,
-      update = true,
-      clear,
-      viewport = null
-    }: Partial<RenderOptions> = {}
+    renderer: Renderer,
+    { scene, camera, update = true, clear, viewport }: RenderOptions
   ) {
     renderer.render({
       scene,
