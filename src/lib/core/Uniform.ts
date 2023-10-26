@@ -29,9 +29,6 @@ export interface UniformOptions {
   kind: Kind
 }
 
-// cache of typed arrays used to flatten uniform arrays
-const arrayCacheF32: Record<string, Float32Array> = {}
-
 /**
  * A uniform is just a basic container for simple uniform information.
  */
@@ -77,10 +74,6 @@ export class Uniform {
     location: WebGLUniformLocation,
     value: WTCGLUniformValue = this.value
   ): void {
-    if (value instanceof Array) {
-      value = flatten(value)
-    }
-
     const setValue = gl.renderer.state.uniformLocations.get(location)
 
     if (value instanceof Array) {
@@ -209,30 +202,6 @@ export class Uniform {
 
     this.setUniform(program.gl, activeUniform.type, location)
   }
-}
-
-function flatten(a: Texture[] | number[]): Float32Array | number[] | Texture[] {
-  const arrayLen = a.length
-
-  if (a[0] instanceof Array) {
-    const valueLen = a[0].length
-    const length = arrayLen * valueLen
-
-    let value = arrayCacheF32[length]
-
-    if (!value) {
-      value = new Float32Array(length)
-      arrayCacheF32[length] = value
-    }
-
-    for (let i = 0; i < arrayLen; i++) {
-      value.set(a[i], i * valueLen)
-    }
-
-    return value
-  }
-
-  return a
 }
 
 function arraysEqual(
