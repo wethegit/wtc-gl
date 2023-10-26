@@ -30,7 +30,7 @@ export interface ParticleSimulationOptions {
   rendererProps: object
 }
 
-class ParticleSimulation {
+export class ParticleSimulation {
   uniforms
   dimensions
   autoResize = true
@@ -285,5 +285,3 @@ class ParticleSimulation {
     return this.#viewport
   }
 }
-
-export { ParticleSimulation }
