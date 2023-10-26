@@ -13,6 +13,7 @@ export interface FramebufferOptions {
   magFilter: GLenum
   premultiplyAlpha: boolean
   data: Float32Array | null
+  depth: boolean
 }
 
 export class Framebuffer {
@@ -26,6 +27,8 @@ export class Framebuffer {
   gl: WTCGLRenderingContext
 
   name: string
+
+  depth: boolean
 
   #readFB: RenderTarget
   #writeFB: RenderTarget
@@ -52,7 +55,8 @@ export class Framebuffer {
       minFilter = gl.LINEAR,
       magFilter = minFilter,
       premultiplyAlpha = false,
-      data = null
+      data = null,
+      depth = true
     }: Partial<FramebufferOptions> = {}
   ) {
     this.gl = gl
@@ -62,6 +66,7 @@ export class Framebuffer {
     this.tiling = tiling
     this.texdepth = texdepth
     this.data = data
+    this.depth = depth
 
     this.minFilter = minFilter
     this.magFilter = magFilter
@@ -90,7 +95,8 @@ export class Framebuffer {
       wrapT: this.wrap,
       type: this.type,
       internalFormat: internalFormat,
-      premultiplyAlpha: this.premultiplyAlpha
+      premultiplyAlpha: this.premultiplyAlpha,
+      depth: this.depth
     })
     return FB
   }
