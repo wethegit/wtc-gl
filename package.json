@@ -1,6 +1,6 @@
 {
   "name": "wtc-gl",
-  "version": "1.0.0-beta.51",
+  "version": "1.0.0-beta.52",
   "description": "Typescript simple Web GL library.",
   "type": "module",
   "files": [
