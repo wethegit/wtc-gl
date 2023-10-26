@@ -151,7 +151,7 @@ export class Program {
     this.depthFunc = depthFunc
 
     // set default blendFunc if transparent flagged
-    if (this.transparent && !this.blendFunc.src) {
+    if (this.transparent && !this.blendFunc?.src) {
       if (this.gl?.renderer?.premultipliedAlpha)
         this.setBlendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA)
       else this.setBlendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
@@ -299,14 +299,14 @@ export class Program {
     if (this.cullFace) this.gl.renderer?.enable(this.gl.CULL_FACE)
     else this.gl.renderer?.disable(this.gl.CULL_FACE)
 
-    if (this.blendFunc.src) this.gl.renderer?.enable(this.gl.BLEND)
+    if (this.blendFunc?.src) this.gl.renderer?.enable(this.gl.BLEND)
     else this.gl.renderer?.disable(this.gl.BLEND)
 
     if (this.cullFace) this.gl.renderer.cullFace = this.cullFace
     this.gl.renderer.frontFace = this.frontFace
     this.gl.renderer.depthMask = this.depthWrite
     this.gl.renderer.depthFunc = this.depthFunc
-    if (this.blendFunc.src)
+    if (this.blendFunc?.src)
       this.gl.renderer.setBlendFunc(
         this.blendFunc.src,
         this.blendFunc.dst,
@@ -314,8 +314,8 @@ export class Program {
         this.blendFunc.dstAlpha
       )
     this.gl.renderer.setBlendEquation(
-      this.blendEquation.modeRGB,
-      this.blendEquation.modeAlpha
+      this.blendEquation?.modeRGB,
+      this.blendEquation?.modeAlpha
     )
   }
 

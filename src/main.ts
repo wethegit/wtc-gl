@@ -5,30 +5,34 @@ import './style.css'
 import fragment from './main.frag'
 import vertex from './main.vert'
 
-console.clear()
+async function init() {
+  // Create the fragment shader wrapper
+  const { gl, uniforms } = new FragmentShader({
+    fragment: fragment,
+    vertex
+  })
 
-// Create the fragment shader wrapper
-const FSWrapper = new FragmentShader({
-  fragment: fragment,
-  vertex
-})
+  // Load the image into the uniform
+  const image: HTMLImageElement = await new Promise((resolve, reject) => {
+    const img = new Image()
 
-const { gl, uniforms } = FSWrapper
+    img.src = '/noise.png'
+    img.onload = () => resolve(img)
+    img.onerror = reject
+  })
 
-// Create the texture
-const texture = new Texture(gl, {
-  wrapS: gl.REPEAT,
-  wrapT: gl.REPEAT
-})
+  // Create the texture
+  const texture = new Texture(gl, {
+    wrapS: gl.REPEAT,
+    wrapT: gl.REPEAT,
+    image: image
+  })
 
-// Load the image into the uniform
-const img = new Image()
-img.crossOrigin = 'anonymous'
-img.src = 'https://assets.codepen.io/982762/noise.png'
-img.onload = () => (texture.image = img)
+  uniforms.s_noise = new Uniform({
+    name: 'noise',
+    value: texture,
+    kind: 'texture'
+  })
+}
 
-uniforms.s_noise = new Uniform({
-  name: 'noise',
-  value: texture,
-  kind: 'texture'
-})
+init()
