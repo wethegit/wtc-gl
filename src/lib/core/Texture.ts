@@ -12,10 +12,10 @@ function isPowerOf2(value: number) {
 
 let ID = 1
 
-type imageTypes = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+type ImageTypes = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
 
 export interface TextureOptions {
-  image: imageTypes | imageTypes[]
+  image: ImageTypes | ImageTypes[]
   data: Float32Array | null
   target: GLenum
   type: GLenum
@@ -52,7 +52,7 @@ export class Texture {
   /**
    * The image element representing the texture. Can be an HTML image, video, or canvas
    */
-  image: imageTypes | imageTypes[]
+  image: ImageTypes | ImageTypes[]
   data: Float32Array | null
 
   /**
@@ -142,7 +142,7 @@ export class Texture {
    * The image store
    */
   store: {
-    image?: imageTypes | imageTypes[]
+    image?: ImageTypes | ImageTypes[]
   }
   /**
    * A local reference to the renderer state
@@ -347,7 +347,10 @@ export class Texture {
         this.height = this.image.height
       }
 
-      if (this.target === this.gl.TEXTURE_CUBE_MAP) {
+      if (
+        this.target === this.gl.TEXTURE_CUBE_MAP &&
+        Array.isArray(this.image)
+      ) {
         // For cube maps
         for (let i = 0; i < 6; i++) {
           this.gl.texImage2D(
@@ -356,7 +359,7 @@ export class Texture {
             this.internalFormat,
             this.format,
             this.type,
-            (<imageTypes[]>this.image)[i]
+            this.image[i]
           )
         }
       } else if (ArrayBuffer.isView(this.data)) {
@@ -372,7 +375,7 @@ export class Texture {
           this.type,
           this.data
         )
-      } else {
+      } else if (!Array.isArray(this.image)) {
         // Regular texture
         this.gl.texImage2D(
           this.target,
@@ -380,7 +383,7 @@ export class Texture {
           this.internalFormat,
           this.format,
           this.type,
-          <imageTypes>this.image
+          this.image
         )
       }
 
@@ -389,8 +392,8 @@ export class Texture {
         if (
           !this.gl.renderer.isWebgl2 &&
           this.image &&
-          (!isPowerOf2((<imageTypes>this.image).width) ||
-            !isPowerOf2((<imageTypes>this.image).height))
+          !Array.isArray(this.image) &&
+          (!isPowerOf2(this.image.width) || !isPowerOf2(this.image.height))
         ) {
           this.generateMipmaps = false
           this.wrapS = this.wrapT = this.gl.CLAMP_TO_EDGE
