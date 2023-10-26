@@ -12,8 +12,10 @@ function isPowerOf2(value: number) {
 
 let ID = 1
 
+type imageTypes = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+
 export interface TextureOptions {
-  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  image: imageTypes | imageTypes[]
   data: Float32Array | null
   target: GLenum
   type: GLenum
@@ -50,7 +52,7 @@ export class Texture {
   /**
    * The image element representing the texture. Can be an HTML image, video, or canvas
    */
-  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  image: imageTypes | imageTypes[]
   data: Float32Array | null
 
   /**
@@ -140,7 +142,7 @@ export class Texture {
    * The image store
    */
   store: {
-    image?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+    image?: imageTypes | imageTypes[]
   }
   /**
    * A local reference to the renderer state
@@ -354,7 +356,7 @@ export class Texture {
             this.internalFormat,
             this.format,
             this.type,
-            this.image[i]
+            (<imageTypes[]>this.image)[i]
           )
         }
       } else if (ArrayBuffer.isView(this.data)) {
@@ -378,7 +380,7 @@ export class Texture {
           this.internalFormat,
           this.format,
           this.type,
-          this.image
+          <imageTypes>this.image
         )
       }
 
@@ -387,7 +389,8 @@ export class Texture {
         if (
           !this.gl.renderer.isWebgl2 &&
           this.image &&
-          (!isPowerOf2(this.image.width) || !isPowerOf2(this.image.height))
+          (!isPowerOf2((<imageTypes>this.image).width) ||
+            !isPowerOf2((<imageTypes>this.image).height))
         ) {
           this.generateMipmaps = false
           this.wrapS = this.wrapT = this.gl.CLAMP_TO_EDGE
