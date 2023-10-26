@@ -5,11 +5,16 @@ import { Program } from './Program'
 
 let ID = 0
 
+export interface DrawableOptions {
+  frustumCulled: boolean
+  renderOrder: number
+}
+
 /**
  * Class representing A drawable object. A drawable object is one that is actually rendered to screen, this does not include cameras and groups.
  * @extends Obj
  **/
-class Drawable extends Obj {
+export class Drawable extends Obj {
   /**
    * The unique ID of the Geometry.
    */
@@ -47,19 +52,15 @@ class Drawable extends Obj {
    */
   constructor(
     gl: WTCGLRenderingContext,
-    {
-      frustumCulled = true,
-      renderOrder = 0
-    }: {
-      frustumCulled?: boolean
-      renderOrder?: number
-    } = {}
+    { frustumCulled = true, renderOrder = 0 }: Partial<DrawableOptions> = {}
   ) {
     super()
+
     if (!gl.canvas)
       console.error(
         'WTCGLRenderingContext should be passed as the first argument to Object'
       )
+
     this.gl = gl
     this.id = ID++
 
@@ -70,7 +71,6 @@ class Drawable extends Obj {
   /**
    * Draw placeholder. The draw function is responsible for drawing the element. This function simply provides a signature for extension.
    **/
-  draw(): void {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  draw(..._args: any[]): void {}
 }
-
-export { Drawable }

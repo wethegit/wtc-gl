@@ -1,31 +1,32 @@
-import { Camera, CameraOptions } from './Camera'
 import { Vec2, Vec3 } from 'wtc-math'
 
-interface DollyCameraOptions {
-  element?: HTMLElement | Document
-  enabled?: boolean
-  target?: Vec3
-  ease?: number
-  inertia?: number
-  enableRotate?: boolean
-  rotateSpeed?: number
-  autoRotate?: boolean
-  autoRotateSpeed?: number
-  enableZoom?: boolean
-  zoomSpeed?: number
-  zoomStyle?: string
-  enablePan?: boolean
-  panSpeed?: number
-  minPolarAngle?: number
-  maxPolarAngle?: number
-  minAzimuthAngle?: number
-  maxAzimuthAngle?: number
-  minDistance?: number
-  maxDistance?: number
+import { Camera, CameraOptions } from './Camera'
+
+export interface DollyCameraOptions {
+  element: HTMLElement
+  enabled: boolean
+  target: Vec3
+  ease: number
+  inertia: number
+  enableRotate: boolean
+  rotateSpeed: number
+  autoRotate: boolean
+  autoRotateSpeed: number
+  enableZoom: boolean
+  zoomSpeed: number
+  zoomStyle: string
+  enablePan: boolean
+  panSpeed: number
+  minPolarAngle: number
+  maxPolarAngle: number
+  minAzimuthAngle: number
+  maxAzimuthAngle: number
+  minDistance: number
+  maxDistance: number
 }
 
-class DollyCamera extends Camera {
-  element: HTMLElement | Document
+export class DollyCamera extends Camera {
+  element: HTMLElement
 
   enabled: boolean
   target: Vec3
@@ -72,7 +73,7 @@ class DollyCamera extends Camera {
 
   constructor(
     {
-      element = document,
+      element = document.body,
       enabled = true,
       target = new Vec3(0, 0, 0),
       ease = 0.25,
@@ -92,8 +93,8 @@ class DollyCamera extends Camera {
       maxAzimuthAngle = Infinity,
       minDistance = 0,
       maxDistance = Infinity
-    }: DollyCameraOptions = {},
-    cameraOptions: CameraOptions = {}
+    }: Partial<DollyCameraOptions> = {},
+    cameraOptions: CameraOptions
   ) {
     super(cameraOptions)
 
@@ -148,7 +149,7 @@ class DollyCamera extends Camera {
     this.addHandlers()
   }
 
-  setPosition(x, y, z) {
+  setPosition(x: number, y: number, z: number) {
     this.position.reset(x, y, z)
     this.offset = this.position.subtractNew(this.target)
 
@@ -234,34 +235,36 @@ class DollyCamera extends Camera {
     return Math.pow(0.95, this.zoomSpeed)
   }
 
-  panLeft(distance, m) {
+  panLeft(distance: number, m: number[]) {
     const pan = new Vec3(m[0], m[1], m[2])
     pan.scale(-distance)
     this.panDelta.add(pan)
   }
 
-  panUp(distance, m) {
+  panUp(distance: number, m: number[]) {
     const pan = new Vec3(m[4], m[5], m[6])
     pan.scale(distance)
     this.panDelta.add(pan)
   }
 
-  pan(deltaX, deltaY) {
-    const el = this.element === document ? document.body : this.element
+  pan(deltaX: number, deltaY: number) {
+    const el = this.element
     const tempPos = this.position.subtractNew(this.target)
     let targetDistance = tempPos.length
     targetDistance *= Math.tan((((this.fov || 45) / 2) * Math.PI) / 180.0)
+
     this.panLeft(
       (2 * deltaX * targetDistance) / el.clientHeight,
       this.matrix.array
     )
+
     this.panUp(
       (2 * deltaY * targetDistance) / el.clientHeight,
       this.matrix.array
     )
   }
 
-  dolly(dollyScale) {
+  dolly(dollyScale: number) {
     if (this.zoomStyle === 'dolly') this.sphericalDelta.radius /= dollyScale
     else {
       this.fov /= dollyScale
@@ -275,18 +278,19 @@ class DollyCamera extends Camera {
     this.sphericalDelta.theta -= angle
   }
 
-  handleMoveRotate(x, y) {
+  handleMoveRotate(x: number, y: number) {
     const movement = new Vec2(x, y)
     const moveRot = movement
       .subtractNew(this.rotateStart)
       .scale(this.rotateSpeed)
-    const el = this.element === document ? document.body : this.element
+    const el = this.element
+
     this.sphericalDelta.theta -= (2 * Math.PI * moveRot.x) / el.clientHeight
     this.sphericalDelta.phi -= (2 * Math.PI * moveRot.y) / el.clientHeight
     this.rotateStart.resetToVector(movement)
   }
 
-  handleMouseMoveDolly(e) {
+  handleMouseMoveDolly(e: MouseEvent) {
     const movement = new Vec2(e.clientX, e.clientY)
     const dolly = movement.subtractNew(this.dollyStart)
     if (dolly.y > 0) {
@@ -297,14 +301,14 @@ class DollyCamera extends Camera {
     this.dollyStart.resetToVector(movement)
   }
 
-  handleMovePan(x, y) {
+  handleMovePan(x: number, y: number) {
     const movement = new Vec2(x, y)
     const panm = movement.subtractNew(this.panStart).scale(this.panSpeed)
     this.pan(panm.x, panm.y)
     this.panStart.resetToVector(movement)
   }
 
-  handleTouchStartDollyPan(e) {
+  handleTouchStartDollyPan(e: TouchEvent) {
     if (this.enableZoom) {
       const distance = new Vec2(
         e.touches[0].pageX - e.touches[1].pageX,
@@ -321,7 +325,7 @@ class DollyCamera extends Camera {
     }
   }
 
-  handleTouchMoveDollyPan(e) {
+  handleTouchMoveDollyPan(e: TouchEvent) {
     if (this.enableZoom) {
       const touchzoom = new Vec2(
         e.touches[0].pageX - e.touches[1].pageX,
@@ -343,7 +347,7 @@ class DollyCamera extends Camera {
     }
   }
 
-  onMouseDown(e) {
+  onMouseDown(e: MouseEvent) {
     if (!this.enabled) return
 
     switch (e.button) {
@@ -370,7 +374,7 @@ class DollyCamera extends Camera {
     }
   }
 
-  onMouseMove(e) {
+  onMouseMove(e: MouseEvent) {
     if (!this.enabled) return
 
     switch (this.state) {
@@ -395,7 +399,7 @@ class DollyCamera extends Camera {
     this.state = DollyCamera.STATE_NONE
   }
 
-  onMouseWheel(e) {
+  onMouseWheel(e: WheelEvent) {
     if (
       !this.enabled ||
       !this.enableZoom ||
@@ -413,7 +417,7 @@ class DollyCamera extends Camera {
     }
   }
 
-  onTouchStart(e) {
+  onTouchStart(e: TouchEvent) {
     if (!this.enabled) return
     e.preventDefault()
 
@@ -433,7 +437,7 @@ class DollyCamera extends Camera {
     }
   }
 
-  onTouchMove(e) {
+  onTouchMove(e: TouchEvent) {
     if (!this.enabled) return
     e.preventDefault()
     e.stopPropagation()
@@ -489,5 +493,3 @@ class DollyCamera extends Camera {
     window.removeEventListener('mouseup', this.onMouseUp)
   }
 }
-
-export { DollyCamera }

@@ -4,15 +4,24 @@ import {
   WTCGLBlendEquation,
   WTCGLUniformMap,
   WTCGLAttributeMap,
-  WTCGLActiveInfo
+  WTCGLActiveInfo,
+  WTCGLUniformArray
 } from '../types'
-import { Uniform } from './Uniform'
-
-interface WTCGLUniformArray {
-  [index: string]: Uniform
-}
 
 let ID = 1
+
+export interface ProgramOptions {
+  vertex: string
+  fragment: string
+  uniforms?: WTCGLUniformArray
+  transparent?: boolean
+  cullFace?: GLenum
+  frontFace?: GLenum
+  depthTest?: boolean
+  depthWrite?: boolean
+  depthFunc?: GLenum
+  transformFeedbackVaryings?: string[]
+}
 
 /**
  * The program class prvides the rendering setup, internal logic, and state for rendering an object.
@@ -123,18 +132,7 @@ export class Program {
       depthWrite = true,
       depthFunc = gl.LESS,
       transformFeedbackVaryings
-    }: {
-      vertex?: string
-      fragment?: string
-      uniforms?: WTCGLUniformArray
-      transparent?: boolean
-      cullFace?: GLenum
-      frontFace?: GLenum
-      depthTest?: boolean
-      depthWrite?: boolean
-      depthFunc?: GLenum
-      transformFeedbackVaryings?: string[]
-    } = {}
+    }: ProgramOptions
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Program')
     this.gl = gl
@@ -151,49 +149,52 @@ export class Program {
     this.depthTest = depthTest
     this.depthWrite = depthWrite
     this.depthFunc = depthFunc
-    this.blendFunc = {}
-    this.blendEquation = {}
 
     // set default blendFunc if transparent flagged
     if (this.transparent && !this.blendFunc.src) {
-      if (this.gl.renderer.premultipliedAlpha)
+      if (this.gl?.renderer?.premultipliedAlpha)
         this.setBlendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA)
       else this.setBlendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
     }
 
     // compile vertex shader and log errors
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)
-    gl.shaderSource(vertexShader, vertex)
-    gl.compileShader(vertexShader)
-    if (gl.getShaderInfoLog(vertexShader) !== '') {
-      console.warn(
-        `${gl.getShaderInfoLog(vertexShader)}\nVertex Shader\n${addLineNumbers(
-          vertex
-        )}`
-      )
+
+    if (vertexShader) {
+      gl.shaderSource(vertexShader, vertex)
+      gl.compileShader(vertexShader)
+      if (gl.getShaderInfoLog(vertexShader) !== '') {
+        console.warn(
+          `${gl.getShaderInfoLog(
+            vertexShader
+          )}\nVertex Shader\n${addLineNumbers(vertex)}`
+        )
+      }
     }
 
     // compile fragment shader and log errors
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-    gl.shaderSource(fragmentShader, fragment)
-    gl.compileShader(fragmentShader)
-    if (gl.getShaderInfoLog(fragmentShader) !== '') {
-      console.warn(
-        `${gl.getShaderInfoLog(
-          fragmentShader
-        )}\nFragment Shader\n${addLineNumbers(fragment)}`
-      )
+    if (fragmentShader) {
+      gl.shaderSource(fragmentShader, fragment)
+      gl.compileShader(fragmentShader)
+      if (gl.getShaderInfoLog(fragmentShader) !== '') {
+        console.warn(
+          `${gl.getShaderInfoLog(
+            fragmentShader
+          )}\nFragment Shader\n${addLineNumbers(fragment)}`
+        )
+      }
     }
 
     // compile program and log errors
-    this.program = gl.createProgram()
-    gl.attachShader(this.program, vertexShader)
-    gl.attachShader(this.program, fragmentShader)
+    this.program = gl.createProgram()!
+    if (vertexShader) gl.attachShader(this.program, vertexShader)
+    if (fragmentShader) gl.attachShader(this.program, fragmentShader)
 
     // If we have transformFeedbackVaryings, bind them
     // TO DO: allow for INTERLEAVED_ATTRIBS as well
     if (transformFeedbackVaryings)
-      gl.transformFeedbackVaryings(
+      gl.transformFeedbackVaryings?.(
         this.program,
         transformFeedbackVaryings,
         gl.SEPARATE_ATTRIBS
@@ -214,25 +215,31 @@ export class Program {
     this.uniformLocations = new Map()
     const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
-      const uniform: WTCGLActiveInfo = gl.getActiveUniform(this.program, uIndex)
+      const uniform: WTCGLActiveInfo = gl.getActiveUniform(
+        this.program,
+        uIndex
+      )!
+
       this.uniformLocations.set(
         uniform,
-        gl.getUniformLocation(this.program, uniform.name)
+        gl.getUniformLocation(this.program, uniform.name)!
       )
 
       // split uniforms' names to separate array and struct declarations
       const split = uniform.name.match(/(\w+)/g)
 
-      uniform.uniformName = split[0]
+      if (split?.length) {
+        uniform.uniformName = split[0]
 
-      // If a uniform location points to a structure, this is how we parse that.
-      if (split.length === 3) {
-        uniform.isStructArray = true
-        uniform.structIndex = Number(split[1])
-        uniform.structProperty = split[2]
-      } else if (split.length === 2 && isNaN(Number(split[1]))) {
-        uniform.isStruct = true
-        uniform.structProperty = split[1]
+        // If a uniform location points to a structure, this is how we parse that.
+        if (split.length === 3) {
+          uniform.isStructArray = true
+          uniform.structIndex = Number(split[1])
+          uniform.structProperty = split[2]
+        } else if (split.length === 2 && isNaN(Number(split[1]))) {
+          uniform.isStruct = true
+          uniform.structProperty = split[1]
+        }
       }
     }
 
@@ -244,7 +251,7 @@ export class Program {
       gl.ACTIVE_ATTRIBUTES
     )
     for (let aIndex = 0; aIndex < numAttribs; aIndex++) {
-      const attribute = gl.getActiveAttrib(this.program, aIndex)
+      const attribute = gl.getActiveAttrib(this.program, aIndex)!
       const location = gl.getAttribLocation(this.program, attribute.name)
       locations[location] = attribute.name
       this.attributeLocations.set(attribute, location)
@@ -286,14 +293,14 @@ export class Program {
    * Apply the program state object to the renderer
    */
   applyState(): void {
-    if (this.depthTest) this.gl.renderer.enable(this.gl.DEPTH_TEST)
-    else this.gl.renderer.disable(this.gl.DEPTH_TEST)
+    if (this.depthTest) this.gl.renderer?.enable(this.gl.DEPTH_TEST)
+    else this.gl.renderer?.disable(this.gl.DEPTH_TEST)
 
-    if (this.cullFace) this.gl.renderer.enable(this.gl.CULL_FACE)
-    else this.gl.renderer.disable(this.gl.CULL_FACE)
+    if (this.cullFace) this.gl.renderer?.enable(this.gl.CULL_FACE)
+    else this.gl.renderer?.disable(this.gl.CULL_FACE)
 
-    if (this.blendFunc.src) this.gl.renderer.enable(this.gl.BLEND)
-    else this.gl.renderer.disable(this.gl.BLEND)
+    if (this.blendFunc.src) this.gl.renderer?.enable(this.gl.BLEND)
+    else this.gl.renderer?.disable(this.gl.BLEND)
 
     if (this.cullFace) this.gl.renderer.cullFace = this.cullFace
     this.gl.renderer.frontFace = this.frontFace
@@ -330,6 +337,8 @@ export class Program {
     this.uniformLocations.forEach((location, activeUniform) => {
       const name = activeUniform.uniformName
 
+      if (!name) return
+
       // get supplied uniform
       const uniform = this.uniforms[name]
 
@@ -354,7 +363,7 @@ export class Program {
   }
 }
 
-function addLineNumbers(string) {
+function addLineNumbers(string: string) {
   const lines = string.split('\n')
   for (let i = 0; i < lines.length; i++) {
     lines[i] = i + 1 + ': ' + lines[i]
@@ -363,7 +372,7 @@ function addLineNumbers(string) {
 }
 
 let warnCount = 0
-function warn(message) {
+function warn(message: string) {
   if (warnCount > 100) return
   console.warn(message)
   warnCount++

@@ -6,11 +6,32 @@ import {
 
 const emptyPixel = new Uint8Array(4)
 
-function isPowerOf2(value) {
+function isPowerOf2(value: number) {
   return (value & (value - 1)) === 0
 }
 
 let ID = 1
+
+export interface TextureOptions {
+  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  data: Float32Array | null
+  target: GLenum
+  type: GLenum
+  format: GLenum
+  internalFormat: GLenum
+  wrapS: GLenum
+  wrapT: GLenum
+  generateMipmaps: boolean
+  minFilter: GLenum
+  magFilter: GLenum
+  premultiplyAlpha: boolean
+  unpackAlignment: 1 | 2 | 4 | 8
+  flipY: boolean
+  anisotropy: number
+  level: number
+  width: number
+  height: number
+}
 
 /**
  * A texture class contains image data for use in a shader. Along with the image data, the texture contains state variable that determine how secondary conditions, like wrapping and interpolation work.
@@ -119,7 +140,7 @@ class Texture {
    * The image store
    */
   store: {
-    image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+    image?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
   }
   /**
    * A local reference to the renderer state
@@ -177,32 +198,15 @@ class Texture {
       level = 0,
       width, // used for RenderTargets or Data Textures
       height = width
-    }: {
-      image?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
-      data?: Float32Array | null
-      target?: GLenum
-      type?: GLenum
-      format?: GLenum
-      internalFormat?: GLenum
-      wrapS?: GLenum
-      wrapT?: GLenum
-      generateMipmaps?: boolean
-      minFilter?: GLenum
-      magFilter?: GLenum
-      premultiplyAlpha?: boolean
-      unpackAlignment?: 1 | 2 | 4 | 8
-      flipY?: boolean
-      anisotropy?: number
-      level?: number
-      width?: number
-      height?: number
-    } = {}
+    }: Partial<TextureOptions> = {}
   ) {
     this.gl = gl
     this.id = ID++
 
-    this.image = image
-    this.data = data
+    if (image) this.image = image
+
+    if (data) this.data = data
+
     this.target = target
     this.type = type
     this.format = format
@@ -220,9 +224,12 @@ class Texture {
       this.gl.renderer.parameters.maxAnisotropy
     )
     this.level = level
-    this.width = width
-    this.height = height
-    this.texture = this.gl.createTexture()
+
+    if (width) this.width = width
+
+    if (height) this.height = height
+
+    this.texture = this.gl.createTexture()!
 
     this.store = {
       image: null

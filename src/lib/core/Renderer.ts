@@ -1,19 +1,48 @@
 import { Vec2 } from 'wtc-math'
+
 import {
   WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLExtensions,
   WTCGLRendererParams
 } from '../types'
+
 import { Camera } from './Camera'
 import { RenderTarget } from './RenderTarget'
 import { Obj } from './Object'
 import { Drawable } from './Drawable'
 
+export interface RendererOptions {
+  canvas: HTMLCanvasElement
+  width: number
+  height: number
+  dpr: number
+  alpha: boolean
+  depth: boolean
+  stencil: boolean
+  antialias: boolean
+  premultipliedAlpha: boolean
+  preserveDrawingBuffer: boolean
+  powerPreference: string
+  autoClear: boolean
+  webgl: number
+}
+
+export interface RenderOptions {
+  scene: Obj
+  camera?: Camera
+  target?: RenderTarget | null
+  update?: boolean
+  sort?: boolean
+  frustumCull?: boolean
+  clear?: boolean
+  viewport?: [Vec2, Vec2]
+}
+
 /**
  * Create a renderer. This is responsible for bringing together the whole state and, eventually, rendering to screen.
  */
-class Renderer {
+export class Renderer {
   /**
    * The pixel aspect ratio of the renderer.
    * @default window.devicePixelRatio or 2, whichever is smaller.
@@ -155,21 +184,7 @@ class Renderer {
     powerPreference = 'default',
     autoClear = true,
     webgl = 2
-  }: {
-    canvas?: HTMLCanvasElement
-    width?: number
-    height?: number
-    dpr?: number
-    alpha?: boolean
-    depth?: boolean
-    stencil?: boolean
-    antialias?: boolean
-    premultipliedAlpha?: boolean
-    preserveDrawingBuffer?: boolean
-    powerPreference?: string
-    autoClear?: boolean
-    webgl?: number
-  } = {}) {
+  }: Partial<RendererOptions> = {}) {
     const attributes = {
       alpha,
       depth,
@@ -205,7 +220,10 @@ class Renderer {
 
     this.state = {
       blendFunc: { src: this.gl.ONE, dst: this.gl.ZERO },
-      blendEquation: { modeRGB: this.gl.FUNC_ADD },
+      blendEquation: {
+        modeRGB: this.gl.FUNC_ADD,
+        modeAlpha: this.gl.ONE_MINUS_SRC_ALPHA
+      },
       cullFace: null,
       frontFace: this.gl.CCW,
       depthMask: true,
@@ -332,9 +350,12 @@ class Renderer {
    * @param id - The ID of the capability to enable
    */
   enable(id: GLenum): void {
-    if (this.state[id] === true) return
+    if (this.state[id as unknown as keyof WTCGLRendererState] === true) return
+    // these typings are ugly I just couldn't find a way to map the rendering context to the state without major refactor of the  interface and its uses
+    if (this.state[id as unknown as keyof WTCGLRendererState] === true) return
+
     this.gl.enable(id)
-    this.state[id] = true
+    this.state[id as unknown as keyof WTCGLRendererState] = true as never
   }
 
   /**
@@ -342,9 +363,11 @@ class Renderer {
    * @param id - The ID of the capability to enable
    */
   disable(id: GLenum): void {
-    if (this.state[id] === false) return
+    // these typings are ugly I just couldn't find a way to map the rendering context to the state without major refactor of the  interface and its uses
+    if (this.state[id as unknown as keyof WTCGLRendererState] === false) return
+
     this.gl.disable(id)
-    this.state[id] = false
+    this.state[id as unknown as keyof WTCGLRendererState] = false as never
   }
 
   /**
@@ -359,8 +382,8 @@ class Renderer {
   setBlendFunc(
     src: GLenum,
     dst: GLenum,
-    srcAlpha: GLenum,
-    dstAlpha: GLenum
+    srcAlpha?: GLenum,
+    dstAlpha?: GLenum
   ): void {
     if (
       this.state.blendFunc.src === src &&
@@ -369,11 +392,13 @@ class Renderer {
       this.state.blendFunc.dstAlpha === dstAlpha
     )
       return
+
     this.state.blendFunc.src = src
     this.state.blendFunc.dst = dst
     this.state.blendFunc.srcAlpha = srcAlpha
     this.state.blendFunc.dstAlpha = dstAlpha
-    if (srcAlpha !== undefined)
+
+    if (srcAlpha !== undefined && dstAlpha !== undefined)
       this.gl.blendFuncSeparate(src, dst, srcAlpha, dstAlpha)
     else this.gl.blendFunc(src, dst)
   }
@@ -406,7 +431,7 @@ class Renderer {
     this.state.cullFace = value
     this.gl.cullFace(value)
   }
-  get cullFace() {
+  get cullFace(): GLenum | null {
     return this.state.cullFace
   }
 
@@ -418,7 +443,7 @@ class Renderer {
     this.state.frontFace = value
     this.gl.frontFace(value)
   }
-  get frontFace() {
+  get frontFace(): GLenum | null {
     return this.state.frontFace
   }
 
@@ -442,7 +467,7 @@ class Renderer {
     this.state.depthFunc = value
     this.gl.depthFunc(value)
   }
-  get depthFunc() {
+  get depthFunc(): GLenum | null {
     return this.state.depthFunc
   }
 
@@ -483,22 +508,37 @@ class Renderer {
    */
   getExtension(extension: string, webgl2Func?: string, extFunc?: string) {
     // if webgl2 function supported, return func bound to gl context
-    if (webgl2Func && this.gl[webgl2Func])
-      return this.gl[webgl2Func].bind(this.gl)
+    const castedWebgl2Func = webgl2Func as keyof WTCGLRenderingContext
+    if (webgl2Func && this.gl[castedWebgl2Func]) {
+      const func = this.gl[castedWebgl2Func]
+
+      if (typeof func === 'function') return func.bind(this.gl)
+      else return func
+    }
+
+    const castedExtension = extension as keyof WTCGLExtensions
 
     // fetch extension once only
-    if (!this.extensions[extension]) {
-      this.extensions[extension] = this.gl.getExtension(extension)
+    if (!this.extensions[castedExtension]) {
+      this.extensions[castedExtension] = this.gl.getExtension(extension)
     }
 
     // return extension if no function requested
-    if (!webgl2Func) return this.extensions[extension]
+    if (!webgl2Func) return this.extensions[castedExtension]
 
     // Return null if extension not supported
-    if (!this.extensions[extension]) return null
+    if (!this.extensions[castedExtension]) return null
 
     // return extension function, bound to extension
-    return this.extensions[extension][extFunc].bind(this.extensions[extension])
+    if (extFunc) {
+      const ext = this.extensions[castedExtension]
+      // bit of type hacking here too unfortunately as I can't mapt the webgl1 function type names to the actual calls
+      const gl1Func = ext?.[
+        extFunc as unknown as number
+        // eslint-disable-next-line @typescript-eslint/ban-types
+      ] as unknown as Function
+      if (gl1Func) return gl1Func.bind(ext)
+    }
   }
 
   /**
@@ -568,47 +608,54 @@ class Renderer {
     sort
   }: {
     scene: Obj
-    camera: Camera
+    camera?: Camera
     frustumCull: boolean
     sort: boolean
   }): Drawable[] {
-    let renderList = []
+    let renderList: Drawable[] = []
 
     if (camera && frustumCull) camera.updateFrustum()
 
     // Get visible
     scene.traverse((node: Obj): boolean | null => {
       if (!node.visible) return true
-      if (!(node instanceof Drawable)) return
+      if (!(node instanceof Drawable)) return null
 
       if (frustumCull && node.frustumCulled && camera) {
-        if (!camera.frustumIntersects(node)) return
+        if (!camera.frustumIntersects(node)) return null
       }
 
       renderList.push(node)
+
+      return null
     })
 
     if (sort) {
-      const opaque = []
-      const transparent = [] // depthTest true
-      const ui = [] // depthTest false
+      const opaque: Drawable[] = []
+      const transparent: Drawable[] = [] // depthTest true
+      const ui: Drawable[] = [] // depthTest false
 
       renderList.forEach((node) => {
         // Split into the 3 render groups
-        if (!node.program.transparent) {
-          opaque.push(node)
-        } else if (node.program.depthTest) {
-          transparent.push(node)
+        const { program } = node
+
+        if (program) {
+          if (!program.transparent) {
+            opaque.push(node)
+          } else if (program.depthTest) {
+            transparent.push(node)
+          }
         } else {
           ui.push(node)
         }
 
         // Only calculate z-depth if renderOrder unset and depthTest is true
-        if (node.renderOrder !== 0 || !node.program.depthTest || !camera) return
+        if (node.renderOrder !== 0 || !program.depthTest || !camera) return
 
         // update z-depth
         const translation = node.worldMatrix.translation
         translation.transformByMat4(camera.projectionViewMatrix)
+
         node.zDepth = translation.z
       })
 
@@ -641,28 +688,18 @@ class Renderer {
     sort = true,
     frustumCull = true,
     clear,
-    viewport = null
-  }: {
-    scene: Obj
-    camera?: Camera
-    target?: RenderTarget | null
-    update?: boolean
-    sort?: boolean
-    frustumCull?: boolean
-    clear?: boolean
-    viewport?: [Vec2, Vec2]
-  }) {
+    viewport
+  }: RenderOptions) {
     if (target === null) {
       // make sure no render target bound so draws to canvas
       this.bindFramebuffer()
-      if (viewport === null)
-        viewport = [this.dimensions.scaleNew(this.dpr), new Vec2()]
+      if (!viewport) viewport = [this.dimensions.scaleNew(this.dpr), new Vec2()]
       this.setViewport(...viewport)
     } else {
       // bind supplied render target and update viewport
 
       this.bindFramebuffer(target)
-      if (viewport === null)
+      if (!viewport)
         viewport = [new Vec2(target.width, target.height), new Vec2()]
       this.setViewport(...viewport)
     }
@@ -694,5 +731,3 @@ class Renderer {
     })
   }
 }
-
-export { Renderer }

@@ -1,18 +1,30 @@
-import { WTCGLRenderingContext } from '../types'
 import { Mat3, Mat4 } from 'wtc-math'
-import { Drawable } from './Drawable'
+
+import { WTCGLRenderingContext } from '../types'
 import { Geometry } from '../geometry/Geometry'
+
+import { Drawable } from './Drawable'
 import { Program } from './Program'
 import { Camera } from './Camera'
 import { Uniform } from './Uniform'
 
-type MeshCallback = ({ mesh: Mesh, camera: Camera }) => void
+type BaseMeshOptions = { mesh: Mesh; camera: Camera }
+
+type MeshCallback = (props: BaseMeshOptions) => void
+
+export interface MeshOptions {
+  geometry: Geometry
+  program: Program
+  mode?: GLenum
+  frustumCulled?: boolean
+  renderOrder?: number
+}
 
 /**
  * Class representing a mesh. A mesh is a binding point between geometry and a program.
  * @extends Drawable
  **/
-class Mesh extends Drawable {
+export class Mesh extends Drawable {
   /**
    * The geometry to render.
    */
@@ -41,11 +53,11 @@ class Mesh extends Drawable {
   /**
    * Any callbacks to run before render
    */
-  beforeRenderCallbacks: { ({ mesh: Mesh, camera: number }): void }[]
+  beforeRenderCallbacks: { (props: BaseMeshOptions): void }[]
   /**
    * Any callbacks to run after render
    */
-  afterRenderCallbacks: { ({ mesh: Mesh, camera: number }): void }[]
+  afterRenderCallbacks: { (props: BaseMeshOptions): void }[]
 
   /**
    * Create a mesh
@@ -65,15 +77,10 @@ class Mesh extends Drawable {
       mode = gl.TRIANGLES,
       frustumCulled = true,
       renderOrder = 0
-    }: {
-      geometry?: Geometry
-      program?: Program
-      mode?: GLenum
-      frustumCulled?: boolean
-      renderOrder?: number
-    } = {}
+    }: MeshOptions
   ) {
     super(gl, { frustumCulled, renderOrder })
+
     if (!gl.canvas) console.error('gl not passed as first argument to Mesh')
 
     this.geometry = geometry
@@ -143,45 +150,46 @@ class Mesh extends Drawable {
    * Drw the mesh. If a camera is supplied to the draw call, its various matrices will be added to the program uniforms
    * @param {Camera} camera - The camera to use to supply transformation matrices
    */
-  draw({ camera }: { camera?: Camera } = {}): void {
+  draw({ camera }: { camera: Camera }): void {
     this.beforeRenderCallbacks.forEach((f) => f && f({ mesh: this, camera }))
+
     if (camera) {
       // Add empty matrix uniforms to program if unset
       if (!this.program.uniforms.modelMatrix) {
         Object.assign(this.program.uniforms, {
           u_modelMatrix: new Uniform({
             name: 'modelMatrix',
-            value: null,
+            value: undefined,
             kind: 'mat4'
           }),
           u_viewMatrix: new Uniform({
             name: 'viewMatrix',
-            value: null,
+            value: undefined,
             kind: 'mat4'
           }),
           u_modelViewMatrix: new Uniform({
             name: 'modelViewMatrix',
-            value: null,
+            value: undefined,
             kind: 'mat4'
           }),
           u_normalMatrix: new Uniform({
             name: 'normalMatrix',
-            value: null,
+            value: undefined,
             kind: 'mat3'
           }),
           u_projectionMatrix: new Uniform({
             name: 'projectionMatrix',
-            value: null,
+            value: undefined,
             kind: 'mat4'
           }),
           u_cameraPosition: new Uniform({
             name: 'cameraPosition',
-            value: null,
+            value: undefined,
             kind: 'float_vec3'
           }),
           u_objectPosition: new Uniform({
             name: 'objectPosition',
-            value: null,
+            value: undefined,
             kind: 'float_vec3'
           })
         })
@@ -204,7 +212,7 @@ class Mesh extends Drawable {
         Object.assign(this.program.uniforms, {
           u_objectPosition: new Uniform({
             name: 'objectPosition',
-            value: null,
+            value: undefined,
             kind: 'float_vec3'
           })
         })
@@ -214,11 +222,12 @@ class Mesh extends Drawable {
     }
 
     // determine if faces need to be flipped - when mesh scaled negatively
-    const flipFaces = this.program.cullFace && this.worldMatrix.determinant < 0
+    const flipFaces = !!(
+      this.program.cullFace && this.worldMatrix.determinant < 0
+    )
+
     this.program.use({ flipFaces })
     this.geometry.draw({ mode: this.mode, program: this.program })
     this.afterRenderCallbacks.forEach((f) => f && f({ mesh: this, camera }))
   }
 }
-
-export { Mesh }
