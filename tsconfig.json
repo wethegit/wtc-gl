@@ -19,6 +19,7 @@
     "strictPropertyInitialization": false
   },
   "include": ["src", "types"],
+  "exclude": ["docs/", "dist/", "node_modules/"],
   "typedocOptions": {
     "out": "docs",
     "entryPoints": "src/lib/index.ts",

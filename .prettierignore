@@ -4,3 +4,4 @@
 *.frag
 *.vs
 *.fs
+docs/**/*
