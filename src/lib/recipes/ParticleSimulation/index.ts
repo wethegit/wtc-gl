@@ -8,6 +8,7 @@ import { Uniform } from '../../core/Uniform'
 import { PointCloud } from '../../geometry/PointCloud'
 import { GeometryAttribute } from '../../geometry/GeometryAttribute'
 import { Camera } from '../../core/Camera'
+import { Framebuffer } from '../../ext/Framebuffer'
 
 const defaultShaderV = `
   attribute vec2 reference;
@@ -74,8 +75,7 @@ class ParticleSimulation {
   textureArraySize: number
   simDimensions: number
 
-  references
-  properties
+  references: Float32Array
 
   cloud: PointCloud
 
@@ -231,7 +231,7 @@ class ParticleSimulation {
     this.renderer.dimensions = this.dimensions
   }
 
-  #post
+  #post: Framebuffer
   set post(p) {
     if (p.render) {
       this.#post = p

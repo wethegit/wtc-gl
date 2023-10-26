@@ -13,21 +13,21 @@ class Framebuffer {
 
   name: string
 
-  #readFB
-  #writeFB
+  #readFB: RenderTarget
+  #writeFB: RenderTarget
   #width: number
   #height: number
   #pxRatio: number
   #tiling: number = Framebuffer.IMAGETYPE_REGULAR
   #texdepth: number = Framebuffer.TEXTYPE_UNSIGNED_BYTE
-  #data
+  #data: Float32Array | null
 
   minFilter
   magFilter
   premultiplyAlpha
 
   constructor(
-    gl,
+    gl: WTCGLRenderingContext,
     {
       name = 'FBO',
       width = 512,
@@ -39,6 +39,17 @@ class Framebuffer {
       magFilter = minFilter,
       premultiplyAlpha = false,
       data = null
+    }: {
+      name?: string
+      width?: number
+      height?: number
+      dpr?: number
+      tiling?: number
+      texdepth?: number
+      minFilter?: GLenum
+      magFilter?: GLenum
+      premultiplyAlpha?: boolean
+      data?: Float32Array | null
     } = {}
   ) {
     this.gl = gl
@@ -55,7 +66,7 @@ class Framebuffer {
 
     this.resize(width, height)
   }
-  resize(width, height) {
+  resize(width: number, height: number) {
     this.width = width
     this.height = height
     this.#readFB = this.createFrameBuffer()
