@@ -1,6 +1,7 @@
 import { Vec2 } from 'wtc-math'
 
 import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
+import type { Framebuffer } from '../../ext/Framebuffer'
 import { Renderer } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
@@ -136,11 +137,9 @@ export class FragmentShader {
     this.onAfterRender(t)
   }
 
-  #post
+  #post: Framebuffer
   set post(p) {
-    if (p.render) {
-      this.#post = p
-    }
+    this.#post = p
   }
   get post() {
     return this.#post || null

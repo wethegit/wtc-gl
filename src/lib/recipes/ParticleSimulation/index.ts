@@ -161,7 +161,7 @@ export class ParticleSimulation {
     })
   }
 
-  render(t) {
+  render(t: number) {
     const diff = t - this.lastTime
     this.lastTime = t
 
@@ -172,7 +172,7 @@ export class ParticleSimulation {
     const v = this.u_time.value as number
     this.u_time.value = v + diff * 0.00005
 
-    this.onBeforeRender(t, this)
+    this.onBeforeRender(t)
 
     if (this.post)
       this.post.render(this.renderer, {
@@ -208,9 +208,7 @@ export class ParticleSimulation {
 
   #post: Framebuffer
   set post(p) {
-    if (p.render) {
-      this.#post = p
-    }
+    this.#post = p
   }
   get post() {
     return this.#post || null
@@ -231,7 +229,7 @@ export class ParticleSimulation {
 
   // Getters and setters for renderer
 
-  #camera: null | Camera
+  #camera: undefined | Camera
   set camera(v) {
     if (v == null || v instanceof Camera) {
       this.#camera = v
@@ -265,7 +263,7 @@ export class ParticleSimulation {
     return this.#frustumCull
   }
 
-  #clear: boolean | null
+  #clear: boolean | undefined
   set clear(v) {
     this.#clear = v === true
   }
@@ -273,7 +271,7 @@ export class ParticleSimulation {
     return this.#clear
   }
 
-  #viewport: [Vec2, Vec2] | null
+  #viewport: [Vec2, Vec2] | undefined
   set viewport(v) {
     if (
       (v instanceof Array && v[0] instanceof Vec2 && v[1] instanceof Vec2) ||
