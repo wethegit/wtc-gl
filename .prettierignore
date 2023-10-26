@@ -1,0 +1,6 @@
+*.glsl
+*.wgsl
+*.vert
+*.frag
+*.vs
+*.fs
