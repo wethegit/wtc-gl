@@ -103,7 +103,7 @@ export class Uniform {
     }
 
     // Doing this to get around typescript's nonsense
-    const val = value
+    const val = value as Float32List
 
     switch (type) {
       case 5126: {
@@ -132,7 +132,7 @@ export class Uniform {
         // SAMPLER_CUBE
         return val.length
           ? gl.uniform1iv(location, val)
-          : gl.uniform1i(location, val)
+          : gl.uniform1i(location, val as unknown as number)
       case 35671: // BOOL_VEC2
       case 35667:
         // INT_VEC2
