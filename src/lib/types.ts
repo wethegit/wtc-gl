@@ -299,12 +299,20 @@ export interface WTCGLGeometryAttribute {
   updateAttribute(gl: WTCGLRenderingContext): void
 }
 
+type ContextOverflow =
+  | 'createVertexArray'
+  | 'bindVertexArray'
+  | 'transformFeedbackVaryings'
+  | 'createTransformFeedback'
 /**
  * A simple extension of [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext) that supplies a couple of convenient variables.
  * @interface
  * @extends WebGLRenderingContext
  */
-export interface WTCGLRenderingContext extends WebGLRenderingContext {
+export type WTCGLRenderingContext = Omit<
+  WebGLRenderingContext | WebGL2RenderingContext,
+  ContextOverflow
+> & {
   /**
    * The WTCGL Renderer object
    */
@@ -321,9 +329,14 @@ export interface WTCGLRenderingContext extends WebGLRenderingContext {
   TRANSFORM_FEEDBACK_BUFFER: GLenum
   SEPARATE_ATTRIBS: GLenum
 
-  createVertexArray: () => WebGLVertexArrayObject
-  bindVertexArray: (vertexArray: WebGLVertexArrayObject) => void
-  transformFeedbackVaryings?: (...args: unknown[]) => void
+  createVertexArray(): WebGLVertexArrayObject
+  bindVertexArray(vertexArray: WebGLVertexArrayObject): void
+  transformFeedbackVaryings(
+    program: WebGLProgram,
+    varyings: string[],
+    bufferMode: GLenum
+  ): void
+  createTransformFeedback(): WebGLTransformFeedback
 }
 
 /**
