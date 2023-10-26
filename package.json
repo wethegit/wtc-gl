@@ -6,8 +6,19 @@
   "files": [
     "dist"
   ],
+  "types": "./dist/index.d.ts",
   "main": "./dist/wtc-gl.umd.cjs",
   "module": "./dist/wtc-gl.js",
+  "exports": {
+    "import": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/wtc-gl.js"
+    },
+    "require": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/wtc-gl.umd.cjs"
+    }
+  },
   "scripts": {
     "prepare": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
     "dev": "vite",
@@ -17,9 +28,9 @@
     "document": "npx typedoc --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
+    "@types/webgl2": "0.0.4",
     "@typescript-eslint/eslint-plugin": "~6.9.0",
     "@typescript-eslint/parser": "~6.9.0",
-    "@types/webgl2": "0.0.4",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "~8.3.0",
     "husky": "^8.0.3",
@@ -28,6 +39,7 @@
     "typedoc": "~0.25.2",
     "typescript": "~5.2.2",
     "vite": "^4.4.5",
+    "vite-plugin-dts": "~3.6.1",
     "vite-plugin-glsl": "~1.1.2"
   },
   "dependencies": {
@@ -40,7 +52,6 @@
     "type": "git",
     "url": "git+https://github.com/wethegit/wtc-gl.git"
   },
-  "types": "dist/types.d.ts",
   "keywords": [],
   "homepage": "https://github.com/wethegit/wtc-gl#readme",
   "author": "Liam Egan <liam@wethecollective.com> (http://wethecollective.com)",
