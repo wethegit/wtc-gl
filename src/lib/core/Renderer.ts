@@ -350,7 +350,6 @@ export class Renderer {
    * @param id - The ID of the capability to enable
    */
   enable(id: GLenum): void {
-    if (this.state[id as unknown as keyof WTCGLRendererState] === true) return
     // these typings are ugly I just couldn't find a way to map the rendering context to the state without major refactor of the  interface and its uses
     if (this.state[id as unknown as keyof WTCGLRendererState] === true) return
 
