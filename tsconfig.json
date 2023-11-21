@@ -1,12 +1,28 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "rootDir": "src",
-    "moduleResolution": "node"
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictPropertyInitialization": false
   },
+  "include": ["src", "types"],
+  "exclude": ["docs/", "dist/", "node_modules/"],
   "typedocOptions": {
     "out": "docs",
-    "entryPoints": "src/index.ts",
+    "entryPoints": "src/lib/index.ts",
     "exclude": ["dist/*+.ts*"]
   }
 }
