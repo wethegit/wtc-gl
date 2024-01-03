@@ -1,4 +1,4 @@
-name: Storybook
+name: Docs
 
 on:
   push:
@@ -21,7 +21,7 @@ permissions:
   id-token: write
 
 jobs:
-  storybook:
+  docs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
