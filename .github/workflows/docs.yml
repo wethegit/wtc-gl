@@ -38,7 +38,7 @@ jobs:
           node-version: 16
 
       - name: Install Dependencies
-        run: yarn
+        run: npm install
 
       - name: Build Docs
         run: npm run document

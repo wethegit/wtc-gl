@@ -4,3 +4,9 @@ docs/
 .husky
 .github
 jsdoc.json
+vite.config.js
+tsconfig.json
+index.html
+.prettierrc
+.prettieriignore
+.eslintrc.yml
