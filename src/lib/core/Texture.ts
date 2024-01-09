@@ -245,6 +245,8 @@ export class Texture {
       wrapT: this.gl.REPEAT,
       anisotropy: 0
     }
+
+    this.needsUpdate = true
   }
 
   /**
@@ -381,6 +383,9 @@ export class Texture {
           this.target,
           this.level,
           this.internalFormat,
+          this.width,
+          this.height,
+          0,
           this.format,
           this.type,
           this.image

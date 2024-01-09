@@ -37,6 +37,9 @@ void main() {
   } else {
     l = texture(b_render,gl_FragCoord.xy/u_resolution*scale).r;
   }
+
+  float m = u_time*10.;
+  float c = smoothstep(0.01,0.,length(uv+vec2(cos(m),sin(m))*.3)-.1);
   
   vec4 t = texture(b_render,floor((gl_FragCoord.xy+scale*.5)/scale)/u_resolution*scale);
   vec4 tr = texture(b_render,gl_FragCoord.xy/u_resolution,10.);
@@ -44,6 +47,7 @@ void main() {
   // l = smoothstep(0., .01, length(suv)-.3);
   
   colour = vec4(vec3(l,tr.x,l),1.);
-  colour = texture(s_noise, gl_FragCoord.xy);
+  colour = vec4(vec3(c)*.02+texture(b_render,gl_FragCoord.xy/u_resolution).rgb*.995,1);
+  // colour = texture(s_noise, uv, -1.);
   // colour = a;
 }

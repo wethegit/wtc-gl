@@ -16,18 +16,18 @@ async function init() {
   let mainFBO = null;
   let onBeforeRender = function() {
     // if(it++>20) FSWrapper.playing = false;
-    // uniforms.u_frame.value += 1;
-    // if(mainFBO) {
-    //   const res = [...this.uniforms[`u_resolution`].value];
-    //   this.uniforms[`u_resolution`].value = [res[0]/div, res[1]/div];
-    //   this.uniforms[`u_blurdir`].value = dir.reverse();
-    //   this.uniforms[`b_render`].value = mainFBO.read.texture;
-    //   mainFBO.render(this.renderer, { scene: mainMesh });
-    //   this.uniforms[`u_blurdir`].value = dir.reverse();
-    //   this.uniforms[`b_render`].value = mainFBO.read.texture;
-    //   mainFBO.render(this.renderer, { scene: mainMesh });
-    //   this.uniforms[`u_resolution`].value = res;
-    // }
+    uniforms.u_frame.value += 1;
+    if(mainFBO) {
+      const res = [...this.uniforms[`u_resolution`].value];
+      this.uniforms[`u_resolution`].value = [res[0]/div, res[1]/div];
+      this.uniforms[`u_blurdir`].value = dir.reverse();
+      this.uniforms[`b_render`].value = mainFBO.read.texture;
+      mainFBO.render(this.renderer, { scene: mainMesh });
+      // this.uniforms[`u_blurdir`].value = dir.reverse();
+      // this.uniforms[`b_render`].value = mainFBO.read.texture;
+      // mainFBO.render(this.renderer, { scene: mainMesh });
+      this.uniforms[`u_resolution`].value = res;
+    }
   }
   let resizeTimer;
   window.addEventListener('resize', (e) => {
@@ -76,28 +76,28 @@ async function init() {
     name: 'render', 
     width: dimensions.width/div, 
     height: dimensions.height/div, 
-    // texdepth: Framebuffer.TEXTYPE_FLOAT,
-    // tiling: Framebuffer.IMAGETYPE_MIRROR,
-    // type: gl.FLOAT,
-    depth: false
+    texdepth: Framebuffer.TEXTYPE_FLOAT,
+    tiling: Framebuffer.IMAGETYPE_MIRROR,
+    type: gl.FLOAT
   });
 
   // Create the texture
-  const texture = new Texture(gl, {
-    wrapS: gl.REPEAT,
-    wrapT: gl.REPEAT
-  });
-  // Load the image into the uniform
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.src = "/public/noise.png";
-  img.onload = () => (texture.image = img);
+  // const texture = new Texture(gl, {
+  //   wrapS: gl.REPEAT,
+  //   wrapT: gl.REPEAT,
+  //   generateMipmaps: false
+  // });
+  // // Load the image into the uniform
+  // const img = new Image();
+  // img.crossOrigin = "anonymous";
+  // img.src = "/public/noise.png";
+  // img.onload = () => (texture.image = img);
 
-  uniforms.s_noise = new Uniform({
-    name: "noise",
-    value: texture,
-    kind: "texture"
-  });
+  // uniforms.s_noise = new Uniform({
+  //   name: "noise",
+  //   value: texture,
+  //   kind: "texture"
+  // });
 }
 
 init()
