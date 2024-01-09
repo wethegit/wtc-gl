@@ -123,7 +123,7 @@ export class Uniform {
       case 35678: // SAMPLER_2D
       case 35680:
         // SAMPLER_CUBE
-        return val.length
+        return val?.length
           ? gl.uniform1iv(location, val)
           : gl.uniform1i(location, val as unknown as number)
       case 35671: // BOOL_VEC2

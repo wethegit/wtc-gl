@@ -12,20 +12,22 @@ async function init() {
   const div = 1;
   let dir = [0,1];
 
+  let it = 0;
   let mainFBO = null;
   let onBeforeRender = function() {
-    uniforms.u_frame.value += 1;
-    if(mainFBO) {
-      const res = [...this.uniforms[`u_resolution`].value];
-      this.uniforms[`u_resolution`].value = [res[0]/div, res[1]/div];
-      this.uniforms[`u_blurdir`].value = dir.reverse();
-      this.uniforms[`b_render`].value = mainFBO.read.texture;
-      mainFBO.render(this.renderer, { scene: mainMesh });
-      this.uniforms[`u_blurdir`].value = dir.reverse();
-      this.uniforms[`b_render`].value = mainFBO.read.texture;
-      mainFBO.render(this.renderer, { scene: mainMesh });
-      this.uniforms[`u_resolution`].value = res;
-    }
+    // if(it++>20) FSWrapper.playing = false;
+    // uniforms.u_frame.value += 1;
+    // if(mainFBO) {
+    //   const res = [...this.uniforms[`u_resolution`].value];
+    //   this.uniforms[`u_resolution`].value = [res[0]/div, res[1]/div];
+    //   this.uniforms[`u_blurdir`].value = dir.reverse();
+    //   this.uniforms[`b_render`].value = mainFBO.read.texture;
+    //   mainFBO.render(this.renderer, { scene: mainMesh });
+    //   this.uniforms[`u_blurdir`].value = dir.reverse();
+    //   this.uniforms[`b_render`].value = mainFBO.read.texture;
+    //   mainFBO.render(this.renderer, { scene: mainMesh });
+    //   this.uniforms[`u_resolution`].value = res;
+    // }
   }
   let resizeTimer;
   window.addEventListener('resize', (e) => {
@@ -38,7 +40,7 @@ async function init() {
 
   // Create the fragment shader wrapper
   const FSWrapper = new FragmentShader({
-    fragment: renderFragment,
+    fragment,
     vertex,
     onBeforeRender,
     rendererProps: {dpr:2},
@@ -74,9 +76,10 @@ async function init() {
     name: 'render', 
     width: dimensions.width/div, 
     height: dimensions.height/div, 
-    texdepth: Framebuffer.TEXTYPE_FLOAT,
+    // texdepth: Framebuffer.TEXTYPE_FLOAT,
     // tiling: Framebuffer.IMAGETYPE_MIRROR,
-    type: gl.FLOAT
+    // type: gl.FLOAT,
+    depth: false
   });
 
   // Create the texture
@@ -87,7 +90,7 @@ async function init() {
   // Load the image into the uniform
   const img = new Image();
   img.crossOrigin = "anonymous";
-  img.src = "https://assets.codepen.io/982762/noise.png";
+  img.src = "/public/noise.png";
   img.onload = () => (texture.image = img);
 
   uniforms.s_noise = new Uniform({
