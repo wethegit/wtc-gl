@@ -98,7 +98,6 @@ export class Framebuffer {
       premultiplyAlpha: this.premultiplyAlpha,
       depth: this.depth
     })
-    console.log(FB)
     return FB
   }
 
