@@ -23,3 +23,5 @@ export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
 export * from './recipes/ParticleSimulation'
+
+export * from 'wtc-math'
