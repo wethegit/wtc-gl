@@ -20,6 +20,7 @@ export interface RenderTargetOptions {
   internalFormat: GLenum
   unpackAlignment: 1 | 2 | 4 | 8
   premultiplyAlpha: boolean
+  generateMipmaps: boolean
 }
 
 /**
@@ -116,7 +117,8 @@ export class RenderTarget {
       format = gl.RGBA,
       internalFormat = format,
       unpackAlignment = 4,
-      premultiplyAlpha = false
+      premultiplyAlpha = false,
+      generateMipmaps = false
     }: Partial<RenderTargetOptions> = {}
   ) {
     this.gl = gl
@@ -154,7 +156,7 @@ export class RenderTarget {
           unpackAlignment,
           premultiplyAlpha,
           flipY: false,
-          generateMipmaps: false
+          generateMipmaps
         })
       )
       this.textures[i].update()
