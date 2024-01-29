@@ -14,6 +14,7 @@ export interface FramebufferOptions {
   premultiplyAlpha: boolean
   data: Float32Array | null
   depth: boolean
+  generateMipmaps: boolean
 }
 
 export class Framebuffer {
@@ -42,6 +43,7 @@ export class Framebuffer {
   minFilter
   magFilter
   premultiplyAlpha
+  generateMipmaps
 
   constructor(
     gl: WTCGLRenderingContext,
@@ -56,7 +58,8 @@ export class Framebuffer {
       magFilter = minFilter,
       premultiplyAlpha = false,
       data = null,
-      depth = true
+      depth = true,
+      generateMipmaps = false
     }: Partial<FramebufferOptions> = {}
   ) {
     this.gl = gl
@@ -71,6 +74,8 @@ export class Framebuffer {
     this.minFilter = minFilter
     this.magFilter = magFilter
     this.premultiplyAlpha = premultiplyAlpha
+
+    this.generateMipmaps = generateMipmaps
 
     this.resize(width, height)
   }
@@ -96,7 +101,8 @@ export class Framebuffer {
       type: this.type,
       internalFormat: internalFormat,
       premultiplyAlpha: this.premultiplyAlpha,
-      depth: this.depth
+      depth: this.depth,
+      generateMipmaps: this.generateMipmaps
     })
     return FB
   }
@@ -119,6 +125,10 @@ export class Framebuffer {
       clear,
       viewport
     })
+    if (this.generateMipmaps) {
+      // this.gl.bindTexture(this.gl.TEXTURE_2D, this.#writeFB.texture)
+      this.gl.generateMipmap(this.gl.TEXTURE_2D)
+    }
 
     this.swap()
   }

@@ -47,7 +47,7 @@ void main() {
   // l = smoothstep(0., .01, length(suv)-.3);
   
   colour = vec4(vec3(l,tr.x,l),1.);
-  colour = vec4(vec3(c)*.02+texture(b_render,gl_FragCoord.xy/u_resolution).rgb*.995,1);
+  colour = vec4(vec3(c)*.1+texture(b_render,gl_FragCoord.xy/u_resolution, 5.).rgb*.995,1);
   // colour = texture(s_noise, uv, -1.);
   // colour = a;
 }

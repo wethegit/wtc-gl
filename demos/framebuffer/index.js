@@ -78,7 +78,9 @@ async function init() {
     height: dimensions.height/div, 
     texdepth: Framebuffer.TEXTYPE_FLOAT,
     tiling: Framebuffer.IMAGETYPE_MIRROR,
-    type: gl.FLOAT
+    type: gl.FLOAT,
+    minFilter: gl.NEAREST_MIPMAP_LINEAR,
+    generateMipmaps: true
   });
 
   // Create the texture
