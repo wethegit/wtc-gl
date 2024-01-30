@@ -25,7 +25,7 @@
     "build": "rm -rf dist; tsc && vite build",
     "lint": "eslint --fix --ext .ts --ignore-path .gitignore ./src/**/*",
     "preview": "vite preview",
-    "document": "npx typedoc --tsconfig ./tsconfig.json"
+    "document": "npx typedoc --entryPointStrategy Expand"
   },
   "devDependencies": {
     "@types/webgl2": "0.0.4",
