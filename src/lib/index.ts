@@ -23,3 +23,8 @@ export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
 export * from './recipes/ParticleSimulation'
+
+/**
+ * Including everything in wtc-math. See https://wethegit.github.io/wtc-math/ for more information.
+ */
+export * from 'wtc-math'

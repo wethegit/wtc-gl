@@ -1,6 +1,6 @@
 {
   "name": "wtc-gl",
-  "version": "1.1.0-beta.53",
+  "version": "1.2.0-beta.0",
   "description": "Typescript simple Web GL library.",
   "type": "module",
   "files": [
@@ -25,7 +25,7 @@
     "build": "rm -rf dist; tsc && vite build",
     "lint": "eslint --fix --ext .ts --ignore-path .gitignore ./src/**/*",
     "preview": "vite preview",
-    "document": "npx typedoc --tsconfig ./tsconfig.json"
+    "document": "npx typedoc --entryPointStrategy Expand"
   },
   "devDependencies": {
     "@types/webgl2": "0.0.4",
@@ -43,10 +43,10 @@
     "vite-plugin-glsl": "~1.1.2"
   },
   "dependencies": {
-    "wtc-math": "^1.0.13"
+    "wtc-math": "^1.0.20"
   },
   "peerDependencies": {
-    "wtc-math": "^1.0.13"
+    "wtc-math": "^1.0.20"
   },
   "repository": {
     "type": "git",
