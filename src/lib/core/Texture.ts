@@ -267,10 +267,6 @@ export class Texture {
   }
 
   /**
-   * TODO: An internal version of WebGL's texImage2D for use when binding images to properly ensure compatibility and remain somewhat dry
-   */
-
-  /**
    * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
    * @param textureUnit The texture unit to update against.
    * @returns
@@ -348,7 +344,10 @@ export class Texture {
     }
 
     if (this.image || this.data) {
-      if (this.image && 'width' in this.image) {
+      if (this.image instanceof HTMLVideoElement) {
+        this.width = this.image.videoWidth
+        this.height = this.image.videoHeight
+      } else if (this.image && 'width' in this.image) {
         this.width = this.image.width
         this.height = this.image.height
       }
@@ -383,28 +382,17 @@ export class Texture {
         )
       } else if (!Array.isArray(this.image)) {
         // Regular texture
-        if (this.width > 0 && this.height > 0) {
-          this.gl.texImage2D(
-            this.target,
-            this.level,
-            this.internalFormat,
-            this.width,
-            this.height,
-            0,
-            this.format,
-            this.type,
-            this.image
-          )
-        } else {
-          this.gl.texImage2D(
-            this.target,
-            this.level,
-            this.internalFormat,
-            this.format,
-            this.type,
-            this.image
-          )
-        }
+        this.gl.texImage2D(
+          this.target,
+          this.level,
+          this.internalFormat,
+          this.width,
+          this.height,
+          0,
+          this.format,
+          this.type,
+          this.image
+        )
       }
 
       if (this.generateMipmaps) {
