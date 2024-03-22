@@ -344,7 +344,10 @@ export class Texture {
     }
 
     if (this.image || this.data) {
-      if (this.image && 'width' in this.image) {
+      if (this.image instanceof HTMLVideoElement) {
+        this.width = this.image.videoWidth
+        this.height = this.image.videoHeight
+      } else if (this.image && 'width' in this.image) {
         this.width = this.image.width
         this.height = this.image.height
       }
