@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "prepare": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
+    "prepare": "husky",
     "dev": "vite",
     "build": "rm -rf dist; tsc && vite build",
     "lint": "eslint --fix --ext .ts --ignore-path .gitignore ./src/**/*",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@types/webgl2": "0.0.11",
-    "@typescript-eslint/eslint-plugin": "~6.21.0",
+    "@typescript-eslint/eslint-plugin": "~7.10.0",
     "@typescript-eslint/parser": "~7.10.0",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "~8.3.0",
