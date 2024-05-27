@@ -34,7 +34,7 @@
     "eslint": "^8.38.0",
     "eslint-config-prettier": "~8.3.0",
     "husky": "^9.0.11",
-    "lint-staged": "^13.2.2",
+    "lint-staged": "^15.2.5",
     "prettier": "^2.8.8",
     "typedoc": "~0.25.2",
     "typescript": "~5.4.5",
