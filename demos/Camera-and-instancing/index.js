@@ -9,19 +9,68 @@ import {
   GeometryAttribute,
   Drawable,
   Vec3,
-  Mat4
+  Mat4,
+  Framebuffer
 } from '../../src/lib'
 
 import '../style.css'
 
 import fragment from './main.frag'
 import vertex from './main.vert'
+import screenspace from './post.vert'
+import post from './post.frag'
 
 const numT = 3
+const dimensions = new Vec2(window.innerWidth, window.innerHeight)
+
+const initBlurBuffer = (renderer, u) => {
+  const gl = renderer.gl
+  const uniforms = {
+    u_bd: new Uniform({ name: 'bd', value: [0, 1], kind: '2fv' }),
+    u_time: u.u_time,
+    u_resolution: u.u_resolution,
+    b_render: new Uniform({
+      name: 'render',
+      value: null,
+      kind: 'texture'
+    })
+  }
+
+  const geometry = new Triangle(gl)
+  const mainProgram = new Program(gl, {
+    vertex: screenspace,
+    fragment: post,
+    uniforms: uniforms
+  })
+  const mainMesh = new Mesh(gl, { geometry, program: mainProgram })
+  const mainFBO = new Framebuffer(gl, {
+    dpr: renderer.dpr,
+    name: 'render',
+    width: dimensions.width,
+    height: dimensions.height
+  })
+
+  const passes = 8
+  const render = (d) => {
+    for (let i = 0; i < passes; i++) {
+      uniforms['u_bd'].value = [0, 1]
+      uniforms[`b_render`].value = mainFBO.read.texture
+
+      mainFBO.render(renderer, { scene: mainMesh })
+
+      uniforms['u_bd'].value = [1, 0]
+      uniforms[`b_render`].value = mainFBO.read.texture
+
+      if (i == passes - 1) renderer.render({ scene: mainMesh })
+      else mainFBO.render(renderer, { scene: mainMesh })
+    }
+  }
+
+  return { mainFBO, render }
+}
 
 const initWebgl = () => {
   const rendererProps = { antialias: true, premultipliedAlpha: true }
-  const dimensions = new Vec2(window.innerWidth, window.innerHeight)
 
   const mats = []
   const transformationsa = new Float32Array(numT * 16)
@@ -90,10 +139,16 @@ const initWebgl = () => {
 
   let playing = true
 
+  let { mainFBO, render: renderFramebuffer } = initBlurBuffer(
+    renderer,
+    uniforms
+  )
+
   const resize = () => {
     dimensions.reset(window.innerWidth, window.innerHeight)
     uniforms.u_resolution.value = [...dimensions.scaleNew(dpr)]
     renderer.dimensions = dimensions
+    mainFBO.resize(dimensions.width, dimensions.height)
   }
   window.addEventListener('resize', resize, false)
   resize()
@@ -110,7 +165,9 @@ const initWebgl = () => {
     transformationsa.set([...mats[2]], 2 * 16)
     attributes.transformation.updateAttribute(gl)
 
-    renderer.render({ scene, camera })
+    mainFBO.render(renderer, { scene, camera })
+    renderFramebuffer(d)
+
     if (playing) requestAnimationFrame(run)
   }
   requestAnimationFrame(run)
