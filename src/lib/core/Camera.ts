@@ -127,7 +127,7 @@ export class Camera extends Obj {
     top,
     bottom,
     zoom = 1
-  }: CameraOptions) {
+  }: CameraOptions = {}) {
     super()
 
     this.near = near
