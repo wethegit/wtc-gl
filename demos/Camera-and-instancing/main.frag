@@ -16,5 +16,5 @@ vec2 getScreenSpaceCoords(vec2 uv) {
 }
 void main() {
   vec2 p = getScreenSpaceCoords(gl_FragCoord.xy);
-  colour = vec4(v_c, 1.);
+  colour = vec4(v_c, .3);
 }

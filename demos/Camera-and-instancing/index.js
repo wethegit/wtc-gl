@@ -50,7 +50,7 @@ const initBlurBuffer = (renderer, u) => {
     height: dimensions.height
   })
 
-  const passes = 8
+  const passes = 4
   const render = (d) => {
     for (let i = 0; i < passes; i++) {
       uniforms['u_bd'].value = [0, 1]
@@ -159,9 +159,9 @@ const initWebgl = () => {
 
     mats[0].rotate(0.01, [0, 1, 0])
     transformationsa.set([...mats[0]], 0)
-    mats[1].rotate(0.012, [0, 0.5, -0.5])
+    mats[1].rotate(0.012, [0, 0, 1])
     transformationsa.set([...mats[1]], 16)
-    mats[2].rotate(0.014, [0.5, 0, 0.5])
+    mats[2].rotate(0.014, [1, 0, 0])
     transformationsa.set([...mats[2]], 2 * 16)
     attributes.transformation.updateAttribute(gl)
 
