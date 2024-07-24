@@ -70,7 +70,7 @@ const initBlurBuffer = (renderer, u) => {
 }
 
 const initWebgl = () => {
-  const rendererProps = { antialias: true, premultipliedAlpha: true }
+  const rendererProps = { antialias: true, premultipliedAlpha: true, dpr: 2 }
 
   const mats = []
   const transformationsa = new Float32Array(numT * 16)
