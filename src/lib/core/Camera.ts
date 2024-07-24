@@ -122,12 +122,12 @@ export class Camera extends Obj {
     far = 100,
     fov = 45,
     aspect = 1,
-    left,
-    right,
-    top,
-    bottom,
+    left = 0,
+    right = 0,
+    top = 0,
+    bottom = 0,
     zoom = 1
-  }: CameraOptions = {}) {
+  }: Partial<CameraOptions> = {}) {
     super()
 
     this.near = near

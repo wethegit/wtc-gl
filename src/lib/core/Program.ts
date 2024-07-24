@@ -149,7 +149,7 @@ export class Program {
     this.depthTest = depthTest
     this.depthWrite = depthWrite
     this.depthFunc = depthFunc
-    this.blendFunc = {}
+    this.blendFunc = { src: 0, dst: 0 }
 
     // set default blendFunc if transparent flagged
     if (this.transparent && !this.blendFunc?.src) {
