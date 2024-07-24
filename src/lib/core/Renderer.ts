@@ -649,7 +649,7 @@ export class Renderer {
         }
 
         // Only calculate z-depth if renderOrder unset and depthTest is true
-        if (node.renderOrder !== 0 || !program.depthTest || !camera) return
+        if (node.renderOrder !== 0 || !program?.depthTest || !camera) return
 
         // update z-depth
         const translation = node.worldMatrix.translation
