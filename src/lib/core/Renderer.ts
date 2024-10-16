@@ -74,7 +74,7 @@ export class Renderer {
    */
   stencil: boolean
   /**
-   * Whether to use premultiplied alphs. This property is passed to the rendering context.
+   * Whether to use premultiplied alphas. This property is passed to the rendering context.
    * @default false
    */
   premultipliedAlpha: boolean

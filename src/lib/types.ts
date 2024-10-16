@@ -121,7 +121,7 @@ export interface WTCGLRendererState {
   cullFace: GLenum | null
   /**
    * A GLEnum representing the order to face vertices to use to determine whether what the "front" face of a polygon is.
-   * Eother gl.CCW or gl.CW
+   * Either gl.CCW or gl.CW
    */
   frontFace: GLenum | null
   /**
@@ -293,7 +293,7 @@ export interface WTCGLGeometryAttribute {
   needsUpdate: boolean
 
   /**
-   * Udpate an attribute for rendering
+   * Update an attribute for rendering
    *@param {WTCGLRenderingContext} gl - The WTCGL rendering context.
    */
   updateAttribute(gl: WTCGLRenderingContext): void
