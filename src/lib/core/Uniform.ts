@@ -46,7 +46,7 @@ export class Uniform {
    */
   kind: Kind
   /**
-   * Create a unform object
+   * Create a uniform object
    * @param __namedParameters
    * @param name - The name of the uniform.
    * @param value - The value for the uniform.
@@ -154,7 +154,7 @@ export class Uniform {
    * Binds the uniform to the program.
    * @param program - The program to which to bind the uniform.
    * @param location - A flag representing the uniform's location in memory.
-   * @param activeUniform - Representes an extention of the standard Web GL active info for uniform.
+   * @param activeUniform - Represents an extention of the standard Web GL active info for uniform.
    */
   bind(
     program: Program,

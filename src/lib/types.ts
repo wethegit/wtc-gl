@@ -47,7 +47,7 @@ export interface WTCGLBlendEquation {
 }
 
 /**
- * Representes an extention of the standard Web GL active info for uniforms and attributes.
+ * Represents an extention of the standard Web GL active info for uniforms and attributes.
  * See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLActiveInfo) for more information on WebGLActiveInfo.
  * @interface
  * @extends WebGLActiveInfo
@@ -197,7 +197,7 @@ export interface WTCGLTextureState {
    */
   wrapT: GLenum
   /**
-   * The anistropic filtering level for the texture.
+   * The anisotropic filtering level for the texture.
    */
   anisotropy: number
 }
@@ -328,7 +328,7 @@ export type WTCGLRenderingContext = Omit<
 }
 
 /**
- * A list of enabled extenions.
+ * A list of enabled extensions.
  * @interface
  */
 export interface WTCGLExtensions {

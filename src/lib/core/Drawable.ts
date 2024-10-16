@@ -44,7 +44,7 @@ export class Drawable extends Obj {
   zDepth: number = 0
 
   /**
-   * Create a drawable object. This should never be instanciated directly
+   * Create a drawable object. This should never be instantiated directly
    * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
    * @param {Object} __namedParameters - The parameters to be used for the camera
    * @param {boolean} frustumCulled - Whether to apply culling to this object
