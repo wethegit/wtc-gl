@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - master
+    paths:
+      - src/**
+      - types/**
+
 jobs:
   build:
     runs-on: ubuntu-latest
