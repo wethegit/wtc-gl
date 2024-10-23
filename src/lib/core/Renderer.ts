@@ -121,7 +121,7 @@ export class Renderer {
     mode: GLenum,
     first: number,
     count: number,
-    instanceCound: number
+    instanceCount: number
   ) => void
   /**
    * The WebGL2RenderingContext.drawElementsInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawElements() method. In addition, it can execute multiple instances of a set of elements.
