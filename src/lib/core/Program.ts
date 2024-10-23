@@ -24,11 +24,11 @@ export interface ProgramOptions {
 }
 
 /**
- * The program class prvides the rendering setup, internal logic, and state for rendering an object.
+ * The program class provides the rendering setup, internal logic, and state for rendering an object.
  */
 export class Program {
   /**
-   * The ID of the program. Simple auto-incremening. Used for identifying the program for setup.
+   * The ID of the program. Simple auto-incrementing. Used for identifying the program for setup.
    */
   id: number
   /**
@@ -67,7 +67,7 @@ export class Program {
    */
   frontFace: GLenum
   /**
-   * The depth function to use when determinging the current pixel against the depth buffer
+   * The depth function to use when determining the current pixel against the depth buffer
    * @default gl.LESS
    */
   depthFunc: GLenum
@@ -108,7 +108,7 @@ export class Program {
    * Create a Program
    * @param gl - The WTCGL Rendering context
    * @param __namedParameters - The parameters for the Program
-   * @param vertex - The vertext shader
+   * @param vertex - The vertex shader
    * @param fragment - The fragment shader
    * @param uniforms - An object of uniforms for use in the program
    * @param transparent - Whether to render the program with transparency

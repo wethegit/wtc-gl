@@ -106,7 +106,7 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
     this.divisor = instanced || 0
   }
   /**
-   * Udpate an attribute for rendering
+   * Update an attribute for rendering
    * @param {WTCGLRenderingContext} gl - The WTCGL rendering context.
    */
   updateAttribute(gl: WTCGLRenderingContext): void {

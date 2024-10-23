@@ -245,7 +245,7 @@ export class Camera extends Obj {
   }
 
   /**
-   * Update the frustum parameters based on the prejection view matrix
+   * Update the frustum parameters based on the projection view matrix
    */
   updateFrustum(): void {
     if (!this.frustum) {
@@ -354,7 +354,7 @@ export class Camera extends Obj {
   }
 
   /**
-   * Determines the largist axis scale of a matrix
+   * Determines the largest axis scale of a matrix
    * @param {Mat4} m - The matrix to find the max axis of
    * @returns The max axis scale
    */

@@ -1,7 +1,7 @@
 import { Vec3, Quat, Mat4 } from 'wtc-math'
 
 /**
- * Class representing an object. This provides basic transformations for sub-objects and shouldn't be instanciated directly.
+ * Class representing an object. This provides basic transformations for sub-objects and shouldn't be instantiated directly.
  **/
 export class Obj {
   /**
@@ -13,7 +13,7 @@ export class Obj {
    */
   children: Obj[]
   /**
-   * Whether this objec is visible or not. This will stop the renderer from trying to render this object
+   * Whether this object is visible or not. This will stop the renderer from trying to render this object
    */
   visible: boolean
 
@@ -106,7 +106,7 @@ export class Obj {
   /**
    * Sets the parent of this object and indicates whether to set a child relationship on the parent.
    * @param parent - The parent object to use
-   * @param notifyParent - Whether to set the full parent-child relationsjip
+   * @param notifyParent - Whether to set the full parent-child relationship
    */
   setParent(parent: Obj | null, notifyParent: boolean = true): void {
     if (this.parent && parent !== this.parent)

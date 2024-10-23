@@ -12,7 +12,7 @@ import { TransformFeedback } from '../core/TransformFeedback'
 
 let ID = 1
 
-// To stop inifinite warnings
+// To stop infinite warnings
 let isBoundsWarned = false
 
 const originArrayToVec3 = function (
@@ -334,7 +334,7 @@ export class Geometry {
   }
 
   /**
-   * Returns the position atribute array
+   * Returns the position attribute array
    * @returns {WTCGLGeometryAttribute}
    */
   getPosition(): WTCGLGeometryAttribute | undefined {
@@ -347,7 +347,7 @@ export class Geometry {
   }
 
   /**
-   * Computes the bounding box of the geometry. If no attribute is provided to compue with, try to use the position attribute array by default.
+   * Computes the bounding box of the geometry. If no attribute is provided to compute with, try to use the position attribute array by default.
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
   computeBoundingBox(attr?: WTCGLGeometryAttribute): void {
@@ -394,7 +394,7 @@ export class Geometry {
   }
 
   /**
-   * Computes the bounding sphere of the geometry. If no attribute is provided to compue with, try to use the position attribute array by default.
+   * Computes the bounding sphere of the geometry. If no attribute is provided to compute with, try to use the position attribute array by default.
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
   computeBoundingSphere(attr?: WTCGLGeometryAttribute | null): void {
@@ -418,7 +418,7 @@ export class Geometry {
   }
 
   /**
-   * Remoce all of the vertex array objects and buffers from memory
+   * Remove all of the vertex array objects and buffers from memory
    */
   remove(): void {
     for (const key in this.VAOs) {

@@ -47,7 +47,7 @@ export interface WTCGLBlendEquation {
 }
 
 /**
- * Representes an extention of the standard Web GL active info for uniforms and attributes.
+ * Represents an extention of the standard Web GL active info for uniforms and attributes.
  * See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLActiveInfo) for more information on WebGLActiveInfo.
  * @interface
  * @extends WebGLActiveInfo
@@ -121,7 +121,7 @@ export interface WTCGLRendererState {
   cullFace: GLenum | null
   /**
    * A GLEnum representing the order to face vertices to use to determine whether what the "front" face of a polygon is.
-   * Eother gl.CCW or gl.CW
+   * Either gl.CCW or gl.CW
    */
   frontFace: GLenum | null
   /**
@@ -197,7 +197,7 @@ export interface WTCGLTextureState {
    */
   wrapT: GLenum
   /**
-   * The anistropic filtering level for the texture.
+   * The anisotropic filtering level for the texture.
    */
   anisotropy: number
 }
@@ -293,7 +293,7 @@ export interface WTCGLGeometryAttribute {
   needsUpdate: boolean
 
   /**
-   * Udpate an attribute for rendering
+   * Update an attribute for rendering
    *@param {WTCGLRenderingContext} gl - The WTCGL rendering context.
    */
   updateAttribute(gl: WTCGLRenderingContext): void
@@ -328,7 +328,7 @@ export type WTCGLRenderingContext = Omit<
 }
 
 /**
- * A list of enabled extenions.
+ * A list of enabled extensions.
  * @interface
  */
 export interface WTCGLExtensions {

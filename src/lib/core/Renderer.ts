@@ -74,7 +74,7 @@ export class Renderer {
    */
   stencil: boolean
   /**
-   * Whether to use premultiplied alphs. This property is passed to the rendering context.
+   * Whether to use premultiplied alphas. This property is passed to the rendering context.
    * @default false
    */
   premultipliedAlpha: boolean
@@ -502,7 +502,7 @@ export class Renderer {
    * Finds and enables a webGL extension and, if it has a corresponding function, returns that.
    * @param extension - The extension identifier.
    * @param webgl2Func -The name of the webGL2 function to return.
-   * @param extFunc - The name of the webGL1 functiont to return.
+   * @param extFunc - The name of the webGL1 function to return.
    * @returns - A WebGL function, bound to this renderer or null (if no function exists)
    */
   getExtension(extension: string, webgl2Func?: string, extFunc?: string) {
@@ -674,7 +674,7 @@ export class Renderer {
    * @param scene - The renderable object to render.
    * @param camera - The camera to render with. If not supplied will just render as is.
    * @param target - The render target to render to.
-   * @param update - Whether to update all of the object worl matrices prior to rendering.
+   * @param update - Whether to update all of the object world matrices prior to rendering.
    * @param sort - Whether to sort the objects prior to rendering.
    * @param frustumCull - Whether to apply frustum culling prior to rendering.
    * @param clear - Whether to clear the scene prior to rendering. Only matters if renderer.autoClear is false.
