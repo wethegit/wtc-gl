@@ -128,7 +128,7 @@ export class Texture {
    */
   unpackAlignment: 1 | 2 | 4 | 8
   /**
-   * The anistropic filtering level for the texture.
+   * The anisotropic filtering level for the texture.
    * @default 0
    */
   anisotropy: number

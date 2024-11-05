@@ -140,7 +140,7 @@ export class Mesh extends Drawable {
   }
 
   /**
-   * Remove all afyer render callbacks
+   * Remove all after render callbacks
    */
   removeAllAfterRender() {
     this.afterRenderCallbacks = []
