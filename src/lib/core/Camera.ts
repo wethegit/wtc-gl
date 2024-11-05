@@ -16,7 +16,7 @@ export interface CameraOptions {
   bottom: number
 }
 
-export interface OrtographicOptions {
+export interface OrthographicOptions {
   near: number
   far: number
   left: number
@@ -59,23 +59,23 @@ export class Camera extends Obj {
    */
   aspect: number
   /**
-   * The left plane of the orthagraphic view
+   * The left plane of the orthographic view
    */
   left: number
   /**
-   * The right plane of the orthagraphic view
+   * The right plane of the orthographic view
    */
   right: number
   /**
-   * The top plane of the orthagraphic view
+   * The top plane of the orthographic view
    */
   top: number
   /**
-   * The bottom plane of the orthagraphic view
+   * The bottom plane of the orthographic view
    */
   bottom: number
   /**
-   * The zoom level of the orthagraphic view
+   * The zoom level of the orthographic view
    * @default 1
    */
   zoom: number
@@ -199,7 +199,7 @@ export class Camera extends Obj {
     bottom = this.bottom,
     top = this.top,
     zoom = this.zoom
-  }: Partial<OrtographicOptions> = {}): Camera {
+  }: Partial<OrthographicOptions> = {}): Camera {
     Object.assign(this, { near, far, left, right, bottom, top, zoom })
 
     left /= zoom
