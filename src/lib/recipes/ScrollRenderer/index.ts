@@ -60,8 +60,8 @@ export class ScrollScene {
     })
     this.u_origin = new Uniform({
       name: 'u_origin',
-      value: [0, 0, 0, 0],
-      kind: 'float_vec4'
+      value: [0, 0],
+      kind: 'float_vec2'
     })
     this.uniforms = {
       u_time: this.u_time,
@@ -73,6 +73,28 @@ export class ScrollScene {
       this.visible = entries[0].isIntersecting
     })
     this.#observer.observe(element)
+  }
+
+  /**
+   * Converts the element's current bounding rect to GL viewport coordinates.
+   * canvasHeight must be in physical pixels (renderer.dimensions.height * dpr).
+   */
+  glRect(
+    canvasHeight: number,
+    dpr: number
+  ): { x: number; y: number; width: number; height: number; rect: DOMRect } {
+    const rect = this.element.getBoundingClientRect()
+    return {
+      x: Math.round(rect.left * dpr),
+      y: Math.round(canvasHeight - rect.bottom * dpr),
+      width: Math.round(rect.width * dpr),
+      height: Math.round(rect.height * dpr),
+      rect
+    }
+  }
+
+  destroy() {
+    this.#observer.disconnect()
   }
 }
 
@@ -140,21 +162,51 @@ export class ScrollRenderer {
 
     this.onBeforeRender(delta)
 
+    const { gl } = this
+    const { dpr } = this.renderer
+    const canvasWidth = this.renderer.dimensions.width * dpr
+    const canvasHeight = this.renderer.dimensions.height * dpr
+
+    this.renderer.bindFramebuffer()
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+    gl.enable(gl.SCISSOR_TEST)
+
     for (const scrollScene of this.#scenes) {
       if (!scrollScene.visible) continue
 
+      const { x, y, width, height, rect } = scrollScene.glRect(
+        canvasHeight,
+        dpr
+      )
+
       if (width <= 0 || height <= 0) continue
+
+      scrollScene.u_time.value =
+        (scrollScene.u_time.value as number) + delta * 0.00005
+      scrollScene.u_resolution.value = [width, height]
+      scrollScene.u_origin.value = [
+        x,
+        y,
+        ((x + width * 0.5) / canvasWidth) * 2 - 1,
+        ((y + height * 0.5) / canvasHeight) * 2 - 1
+      ]
 
       scrollScene.onBeforeRender(delta, rect)
 
+      gl.disable(gl.SCISSOR_TEST)
       this.renderer.render({
         scene: scrollScene.scene,
         camera: scrollScene.camera,
         clear: false
       })
+      gl.enable(gl.SCISSOR_TEST)
 
       scrollScene.onAfterRender(delta, rect)
     }
+
+    gl.disable(gl.SCISSOR_TEST)
 
     this.onAfterRender(delta)
   }
