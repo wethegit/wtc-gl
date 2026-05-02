@@ -6,31 +6,123 @@ import type { Camera } from '../../core/Camera'
 import { Renderer, type RendererOptions } from '../../core/Renderer'
 import { Uniform } from '../../core/Uniform'
 
+/**
+ * Tagged template literal for inline GLSL. A no-op at runtime; exists so
+ * editors with a GLSL extension can syntax-highlight the string contents.
+ *
+ * @example
+ * const frag = glsl`
+ *   #version 300 es
+ *   precision highp float;
+ *   out vec4 colour;
+ *   void main() { colour = vec4(1.); }
+ * `
+ */
+export const glsl = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): string =>
+  strings.raw.reduce(
+    (acc, str, i) => acc + str + (i < values.length ? String(values[i]) : ''),
+    ''
+  )
+
+/**
+ * Reads GLSL source from a `<script>` element in the page. Useful when you
+ * want to keep shaders inline in HTML rather than in separate `.frag` files.
+ *
+ * @param selector - CSS selector for the script element containing the GLSL source.
+ * @throws {Error} If no element is found for the given selector.
+ *
+ * @example
+ * // HTML: <script type="x-shader/x-fragment" id="myFrag">...</script>
+ * const frag = heredoc('#myFrag')
+ */
+export const heredoc = (selector: string): string => {
+  const el = document.querySelector(selector)
+  if (!el) throw new Error(`heredoc: no element matches "${selector}"`)
+  return el.textContent ?? ''
+}
+
+/** Options passed to the {@link ScrollScene} constructor. */
 export interface ScrollSceneOptions {
+  /** The DOM element this scene is anchored to. */
   element: HTMLElement
+  /** The scene graph root to render. */
   scene: Obj
+  /** Optional camera. Defaults to the renderer's orthographic camera if omitted. */
   camera?: Camera
+  /**
+   * When `true` (default), the GL viewport and scissor are locked to the
+   * element's bounds each frame. Set to `false` for scenes that need a
+   * full-canvas viewport (e.g. transform-feedback particle systems that
+   * position themselves via `u_origin.zw`).
+   */
   useViewport?: boolean
+  /**
+   * When `true` (default), the renderer clears the scissored region before
+   * drawing this scene. Set to `false` to composite on top of previously
+   * rendered scenes — useful for particle overlays.
+   */
   clearOnRender?: boolean
+  /** Called immediately before the scene is rendered each frame. */
   onBeforeRender?: (delta: number, rect: DOMRect) => void
+  /** Called immediately after the scene is rendered each frame. */
   onAfterRender?: (delta: number, rect: DOMRect) => void
 }
 
+/**
+ * A single WebGL scene anchored to a DOM element inside a {@link ScrollRenderer}.
+ *
+ * Each `ScrollScene` tracks its element's position via `getBoundingClientRect()`
+ * every frame and exposes a set of uniforms that are updated automatically:
+ *
+ * | Uniform        | Type    | Description |
+ * |----------------|---------|-------------|
+ * | `u_time`       | `float` | Elapsed time (increments by `delta * 0.00005` per frame). |
+ * | `u_resolution` | `vec2`  | Element size in physical pixels. |
+ * | `u_origin`     | `vec4`  | `.xy` — element bottom-left in physical pixels, GL canvas space (Y-up). Use with `gl_FragCoord` for element-relative fragment math. `.zw` — element centre in canvas NDC [-1, 1]. Use for vertex positioning when `useViewport` is `false`. |
+ *
+ * An `IntersectionObserver` automatically pauses rendering when the element
+ * leaves the viewport.
+ *
+ * @example
+ * const drawable = new Drawable(gl)
+ * const scene = new ScrollScene({ element: document.querySelector('.hero'), scene: drawable })
+ * new Mesh(gl, { geometry: new Triangle(gl), program }).setParent(drawable)
+ * renderer.addScene(scene)
+ */
 export class ScrollScene {
+  /** The DOM element this scene tracks. */
   element: HTMLElement
+  /** The scene graph root passed to the renderer each frame. */
   scene: Obj
+  /** Optional camera used when rendering this scene. */
   camera?: Camera
+  /** Whether to lock the GL viewport to the element's bounds. */
   useViewport: boolean
+  /** Whether to clear the scissored region before rendering. */
   clearOnRender: boolean
 
+  /** Elapsed time uniform (`float`). Increments by `delta * 0.00005` per frame. */
   u_time: Uniform
+  /** Element size in physical pixels (`vec2`). */
   u_resolution: Uniform
+  /**
+   * Packed origin uniform (`vec4`):
+   * - `.xy` — element bottom-left in physical pixels, GL canvas space (Y-up).
+   * - `.zw` — element centre in canvas NDC [-1, 1].
+   */
   u_origin: Uniform
+  /** All three auto-updated uniforms, ready to spread into a {@link Program}'s `uniforms` option. */
   uniforms: WTCGLUniformArray
 
+  /** Whether the element is currently intersecting the viewport. */
   visible: boolean = true
 
+  /** @see {@link ScrollSceneOptions.onBeforeRender} */
   onBeforeRender: (delta: number, rect: DOMRect) => void
+  /** @see {@link ScrollSceneOptions.onAfterRender} */
   onAfterRender: (delta: number, rect: DOMRect) => void
 
   #observer: IntersectionObserver
@@ -60,8 +152,8 @@ export class ScrollScene {
     })
     this.u_origin = new Uniform({
       name: 'u_origin',
-      value: [0, 0],
-      kind: 'float_vec2'
+      value: [0, 0, 0, 0],
+      kind: 'float_vec4'
     })
     this.uniforms = {
       u_time: this.u_time,
@@ -77,7 +169,10 @@ export class ScrollScene {
 
   /**
    * Converts the element's current bounding rect to GL viewport coordinates.
-   * canvasHeight must be in physical pixels (renderer.dimensions.height * dpr).
+   *
+   * @param canvasHeight - Canvas height in physical pixels (`renderer.dimensions.height * dpr`).
+   * @param dpr - Device pixel ratio from the renderer.
+   * @returns GL-space `x`, `y`, `width`, `height` (all in physical pixels) plus the raw `DOMRect`.
    */
   glRect(
     canvasHeight: number,
@@ -93,22 +188,52 @@ export class ScrollScene {
     }
   }
 
+  /** Disconnects the `IntersectionObserver`. Call when removing the scene permanently. */
   destroy() {
     this.#observer.disconnect()
   }
 }
 
+/** Options passed to the {@link ScrollRenderer} constructor. */
 export interface ScrollRendererOptions {
+  /** Props forwarded to the underlying {@link Renderer}. `autoClear` is always overridden to `false`. */
   rendererProps?: Partial<RendererOptions>
+  /** Called once per frame before any scenes are rendered. */
   onBeforeRender?: (delta: number) => void
+  /** Called once per frame after all scenes are rendered. */
   onAfterRender?: (delta: number) => void
 }
 
+/**
+ * Renders multiple independent WebGL scenes on a single fixed canvas, each
+ * scissor-tested to a DOM element's exact pixel bounds.
+ *
+ * A single `requestAnimationFrame` loop drives all registered {@link ScrollScene}
+ * instances. Scenes outside the viewport are skipped automatically via
+ * `IntersectionObserver`. The canvas is cleared to transparent once per frame
+ * before the scissored passes run.
+ *
+ * @example
+ * const renderer = new ScrollRenderer()
+ * Object.assign(renderer.canvas.style, {
+ *   position: 'fixed', inset: '0', width: '100%', height: '100%',
+ *   pointerEvents: 'none', zIndex: '0',
+ * })
+ * document.body.appendChild(renderer.canvas)
+ *
+ * const scene = new ScrollScene({ element: document.querySelector('.hero'), scene: drawable })
+ * renderer.addScene(scene)
+ * renderer.playing = true
+ */
 export class ScrollRenderer {
+  /** The underlying {@link Renderer} instance. */
   renderer: Renderer
+  /** The WebGL rendering context. */
   gl: WTCGLRenderingContext
 
+  /** @see {@link ScrollRendererOptions.onBeforeRender} */
   onBeforeRender: (delta: number) => void
+  /** @see {@link ScrollRendererOptions.onAfterRender} */
   onAfterRender: (delta: number) => void
 
   #scenes: ScrollScene[] = []
@@ -137,23 +262,51 @@ export class ScrollRenderer {
     this.resize()
   }
 
+  /** The underlying `<canvas>` element. Append this to the document yourself. */
   get canvas(): HTMLCanvasElement {
     return this.gl.canvas
   }
 
+  /**
+   * Synchronises the GL canvas buffer size with the layout viewport.
+   *
+   * Uses `document.documentElement.clientWidth/clientHeight` rather than
+   * `window.innerWidth/innerHeight` because on systems with classic
+   * (non-overlay) scrollbars `innerWidth` includes the scrollbar gutter,
+   * while a `position:fixed; width:100%` canvas does not — causing every
+   * scissor rect to clip a few pixels short on the trailing edge.
+   *
+   * Called automatically on construction and on every `resize` event.
+   */
   resize() {
     const el = document.documentElement
     this.renderer.dimensions = new Vec2(el.clientWidth, el.clientHeight)
   }
 
+  /**
+   * Registers a scene with the renderer. Scenes are rendered in insertion order.
+   *
+   * @param scene - The {@link ScrollScene} to add.
+   */
   addScene(scene: ScrollScene) {
     this.#scenes.push(scene)
   }
 
+  /**
+   * Removes a previously registered scene.
+   *
+   * @param scene - The {@link ScrollScene} to remove.
+   */
   removeScene(scene: ScrollScene) {
     this.#scenes = this.#scenes.filter((s) => s !== scene)
   }
 
+  /**
+   * The main render loop — called internally via `requestAnimationFrame`.
+   * Do not call this directly; use the `playing` setter instead.
+   *
+   * @param t - Timestamp provided by `requestAnimationFrame`.
+   */
   render(t: number) {
     const delta = t - this.#lastTime
     this.#lastTime = t
@@ -167,6 +320,7 @@ export class ScrollRenderer {
     const canvasWidth = this.renderer.dimensions.width * dpr
     const canvasHeight = this.renderer.dimensions.height * dpr
 
+    // Clear the full canvas to transparent before scissored scene renders
     this.renderer.bindFramebuffer()
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -221,6 +375,10 @@ export class ScrollRenderer {
     this.onAfterRender(delta)
   }
 
+  /**
+   * Controls the render loop. Setting to `true` starts `requestAnimationFrame`;
+   * setting to `false` stops it.
+   */
   set playing(v: boolean) {
     if (!this.#playing && v) {
       requestAnimationFrame(this.render)
@@ -231,10 +389,15 @@ export class ScrollRenderer {
     }
   }
 
+  /** Whether the render loop is currently running. */
   get playing(): boolean {
     return this.#playing
   }
 
+  /**
+   * Stops the render loop, removes the resize listener, and destroys all
+   * registered scenes. Call when tearing down the renderer.
+   */
   destroy() {
     this.playing = false
     window.removeEventListener('resize', this.resize)
