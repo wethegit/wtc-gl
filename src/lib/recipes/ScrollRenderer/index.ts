@@ -195,13 +195,23 @@ export class ScrollRenderer {
 
       scrollScene.onBeforeRender(delta, rect)
 
-      gl.disable(gl.SCISSOR_TEST)
-      this.renderer.render({
-        scene: scrollScene.scene,
-        camera: scrollScene.camera,
-        clear: false
-      })
-      gl.enable(gl.SCISSOR_TEST)
+      if (scrollScene.useViewport) {
+        gl.scissor(x, y, width, height)
+        this.renderer.render({
+          scene: scrollScene.scene,
+          camera: scrollScene.camera,
+          clear: scrollScene.clearOnRender,
+          viewport: [new Vec2(width, height), new Vec2(x, y)]
+        })
+      } else {
+        gl.disable(gl.SCISSOR_TEST)
+        this.renderer.render({
+          scene: scrollScene.scene,
+          camera: scrollScene.camera,
+          clear: false
+        })
+        gl.enable(gl.SCISSOR_TEST)
+      }
 
       scrollScene.onAfterRender(delta, rect)
     }
