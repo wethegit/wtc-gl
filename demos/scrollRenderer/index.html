@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ScrollRenderer — basic example</title>
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
       body {
         background: #07070e;
         color: #dde0ee;
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
         line-height: 1.65;
       }
 
@@ -54,15 +63,14 @@
     </style>
   </head>
   <body>
-
     <section class="scene">
       <div class="scene__text">
         <h2>DOM-anchored viewports</h2>
         <p>
           The shader to the right is a <code>ScrollScene</code> tracking this
           section's right column. <code>u_resolution</code> updates every frame
-          to the element's exact physical pixel size — no iframes, no per-element
-          canvases, one shared GL context.
+          to the element's exact physical pixel size. Each webGL program on this
+          page shares a single webGL context via wtc-gl scrollRenderer
         </p>
       </div>
       <div class="scene--voronoi"></div>
@@ -74,7 +82,7 @@
         <p>
           The rings are centred on <em>this element's</em> midpoint. The shader
           reads <code>u_origin.xy</code> (element bottom-left in GL pixel space)
-          and <code>u_resolution</code> to find the centre — so the rings stay
+          and <code>u_resolution</code> to find the centre, so the rings stay
           locked here regardless of scroll position.
         </p>
       </div>
@@ -83,12 +91,11 @@
 
     <section class="scene">
       <div class="scene__text">
-        <h2>One RAF, zero overhead</h2>
+        <h2>One RAF</h2>
         <p>
-          This noise field, the Voronoi above, and the rings in the middle are
-          all driven by a single <code>requestAnimationFrame</code>. Scenes
-          outside the viewport are skipped automatically via
-          <code>IntersectionObserver</code>.
+          All three shaders here are driven by a single
+          <code>requestAnimationFrame</code>. Scenes outside the viewport are
+          skipped automatically via <code>IntersectionObserver</code>.
         </p>
       </div>
       <div class="scene--flow"></div>
