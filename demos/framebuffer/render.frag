@@ -1,20 +1,19 @@
 #version 300 es
-  precision highp float;
+precision highp float;
 
-  uniform vec2 u_resolution;
-  uniform float u_time;
-  uniform vec2 u_mouse;
-  uniform sampler2D s_noise;
-  uniform sampler2D b_render;
+uniform vec2 u_resolution;
+uniform sampler2D b_render;
 
-  in vec2 v_uv;
+out vec4 colour;
 
-  out vec4 colour;
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  vec3 col = texture(b_render, uv).rgb;
 
-  
-  /* Utilities */
-  /* ---------- */
-  
-  void main() {
-    colour = texture(b_render, gl_FragCoord.xy / u_resolution );
-  }
+  col = col * 1.2 / (col + 1.0);
+
+  vec2 c = uv * 2.0 - 1.0;
+  col *= 1.0 - dot(c, c) * 0.28;
+
+  colour = vec4(col, 1.0);
+}

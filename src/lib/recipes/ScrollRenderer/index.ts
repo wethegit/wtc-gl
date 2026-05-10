@@ -53,10 +53,7 @@ export interface ScrollSceneOptions {
   /** Optional camera. Defaults to the renderer's orthographic camera if omitted. */
   camera?: Camera
   /**
-   * When `true` (default), the GL viewport and scissor are locked to the
-   * element's bounds each frame. Set to `false` for scenes that need a
-   * full-canvas viewport (e.g. transform-feedback particle systems that
-   * position themselves via `u_origin.zw`).
+   * When `true` (default), the GL viewport is locked to the element's bounds each frame, so all coordinates are relative to the element. When `false`, the viewport is left unlocked at the renderer level and it's up to you to use the `u_origin` uniform for element-relative math in your shader.
    */
   useViewport?: boolean
   /**
@@ -64,7 +61,41 @@ export interface ScrollSceneOptions {
    * drawing this scene. Set to `false` to composite on top of previously
    * rendered scenes — useful for particle overlays.
    */
+  clipToViewport?: boolean
+  /**
+   * When `true` (default), the renderer clears the scissored region before
+   * drawing this scene. Set to `false` to composite on top of previously
+   * rendered scenes — useful for particle overlays.
+   */
   clearOnRender?: boolean
+  /**
+   * When `true`, exposes a `u_elementSize` uniform (`vec2`) that describes
+   * the element's dimensions in canvas NDC units. Use this in your vertex
+   * shader to position geometry in element-local coordinates while keeping
+   * the full canvas clip volume (so rendering can bleed outside the element):
+   *
+   * ```glsl
+   * gl_Position = vec4(a_position.xy * u_elementSize + u_origin.zw, a_position.z, 1.0);
+   * ```
+   *
+   * A vertex at `(0.4, 0)` (edge of a `width: 0.8` plane) will land 40 % of
+   * the element's width from its centre, regardless of canvas size.
+   *
+   * Combine with `useViewport: false` and `clipToViewport: false` to allow
+   * rendering beyond the element boundary (e.g. isometric layer bleed).
+   */
+  elementSpace?: boolean
+  /**
+   * Extra margin (in pixels) applied to all four sides of the viewport when
+   * determining whether the element is visible. A positive value keeps the
+   * scene active while the element is that many pixels off-screen; a negative
+   * value deactivates it before it fully leaves.
+   *
+   * Passed directly to `IntersectionObserver` as `rootMargin`.
+   *
+   * @default 0
+   */
+  margin?: number
   /** Called immediately before the scene is rendered each frame. */
   onBeforeRender?: (delta: number, rect: DOMRect) => void
   /** Called immediately after the scene is rendered each frame. */
@@ -101,8 +132,12 @@ export class ScrollScene {
   camera?: Camera
   /** Whether to lock the GL viewport to the element's bounds. */
   useViewport: boolean
+  /** Whether to clip the GL viewport to the element's bounds. */
+  clipToViewport: boolean
   /** Whether to clear the scissored region before rendering. */
   clearOnRender: boolean
+  /** Whether to expose element-space coordinate helpers via `u_elementSize`. */
+  elementSpace: boolean
 
   /** Elapsed time uniform (`float`). Increments by `delta * 0.00005` per frame. */
   u_time: Uniform
@@ -114,7 +149,17 @@ export class ScrollScene {
    * - `.zw` — element centre in canvas NDC [-1, 1].
    */
   u_origin: Uniform
-  /** All three auto-updated uniforms, ready to spread into a {@link Program}'s `uniforms` option. */
+  /**
+   * Element dimensions in canvas NDC units (`vec2`). Only present when
+   * `elementSpace: true`. Use in a vertex shader to map element-local
+   * coordinates to canvas NDC:
+   *
+   * ```glsl
+   * gl_Position = vec4(a_position.xy * u_elementSize + u_origin.zw, a_position.z, 1.0);
+   * ```
+   */
+  u_elementSize?: Uniform
+  /** All auto-updated uniforms, ready to spread into a {@link Program}'s `uniforms` option. */
   uniforms: WTCGLUniformArray
 
   /** Whether the element is currently intersecting the viewport. */
@@ -132,7 +177,10 @@ export class ScrollScene {
     scene,
     camera,
     useViewport = true,
+    clipToViewport = true,
     clearOnRender = true,
+    elementSpace = false,
+    margin = 0,
     onBeforeRender = () => {},
     onAfterRender = () => {}
   }: ScrollSceneOptions) {
@@ -140,7 +188,9 @@ export class ScrollScene {
     this.scene = scene
     this.camera = camera
     this.useViewport = useViewport
+    this.clipToViewport = clipToViewport
     this.clearOnRender = clearOnRender
+    this.elementSpace = elementSpace
     this.onBeforeRender = onBeforeRender
     this.onAfterRender = onAfterRender
 
@@ -161,9 +211,21 @@ export class ScrollScene {
       u_origin: this.u_origin
     }
 
-    this.#observer = new IntersectionObserver((entries) => {
-      this.visible = entries[0].isIntersecting
-    })
+    if (elementSpace) {
+      this.u_elementSize = new Uniform({
+        name: 'u_elementSize',
+        value: [0, 0],
+        kind: 'float_vec2'
+      })
+      this.uniforms.u_elementSize = this.u_elementSize
+    }
+
+    this.#observer = new IntersectionObserver(
+      (entries) => {
+        this.visible = entries[0].isIntersecting
+      },
+      { rootMargin: `${margin}px` }
+    )
     this.#observer.observe(element)
   }
 
@@ -346,23 +408,34 @@ export class ScrollRenderer {
         ((x + width * 0.5) / canvasWidth) * 2 - 1,
         ((y + height * 0.5) / canvasHeight) * 2 - 1
       ]
+      if (scrollScene.elementSpace && scrollScene.u_elementSize) {
+        scrollScene.u_elementSize.value = [
+          (width / canvasWidth) * 2,
+          (height / canvasHeight) * 2
+        ]
+      }
 
       scrollScene.onBeforeRender(delta, rect)
 
-      if (scrollScene.useViewport) {
+      const vp = scrollScene.useViewport
+        ? ([new Vec2(width, height), new Vec2(x, y)] as [Vec2, Vec2])
+        : undefined
+
+      if (scrollScene.clipToViewport) {
         gl.scissor(x, y, width, height)
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
           clear: scrollScene.clearOnRender,
-          viewport: [new Vec2(width, height), new Vec2(x, y)]
+          viewport: vp
         })
       } else {
         gl.disable(gl.SCISSOR_TEST)
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
-          clear: false
+          clear: false,
+          viewport: vp
         })
         gl.enable(gl.SCISSOR_TEST)
       }

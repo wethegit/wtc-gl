@@ -1,0 +1,66 @@
+.scene {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 3rem 4rem;
+}
+
+.scene--mid {
+  min-height: 80vh;
+}
+
+.scene__label {
+  max-width: 38ch;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  opacity: 0.55;
+  line-height: 1.65;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 1rem;
+}
+
+.scene--split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  padding: 0;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.scene__left {
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.scene__right {
+  height: 80vh;
+  margin-top: -15vh;
+  margin-bottom: -15vh;
+}

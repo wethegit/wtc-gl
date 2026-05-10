@@ -1,0 +1,28 @@
+.scene {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.scene__text {
+  padding: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.scene__text h2 {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.scene__text p {
+  color: rgba(221, 224, 238, 0.55);
+  font-size: 0.92rem;
+  max-width: 48ch;
+}
