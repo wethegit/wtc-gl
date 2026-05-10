@@ -31,3 +31,4 @@ bower_components
 **/*/bower_components
 **/*/*.log
 docs/
+dist-site/
