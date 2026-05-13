@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — ScrollImage &amp; ScrollHTML</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">ScrollImage &amp; ScrollHTML</span>
+    </nav>
+
+    <div class="content">
+
+      <section class="hero-text">
+        <div>
+          <span class="tag">Recipes</span>
+          <h1>ScrollImage &amp; ScrollHTML</h1>
+          <p class="lead">
+            Two extensions of <code>ScrollScene</code> that bridge the DOM and
+            the GPU. <code>ScrollImage</code> uploads any
+            <code>HTMLImageElement</code> as a live texture. <code>ScrollHTML</code>
+            goes further — it captures an arbitrary DOM subtree via the
+            experimental
+            <a href="https://github.com/WICG/html-in-canvas" target="_blank" rel="noopener">HTML-in-Canvas API</a>
+            and renders it as a texture, keeping the underlying HTML fully
+            interactive.
+          </p>
+          <p class="hint">
+            Scene 1: move your cursor over the image &mdash;
+            Scene 3: click into the cloth to fill the form
+            (requires <code>chrome://flags/#canvas-draw-element</code>).
+          </p>
+        </div>
+      </section>
+
+      <!-- Scene 1: ScrollImage — hue cycling at cursor -->
+      <section class="cloth-section">
+        <div class="cloth-panel" id="scene1-panel">
+          <img
+            class="hue-target"
+            src="https://picsum.photos/1200/900?random=11"
+            crossorigin="anonymous"
+            width="1200"
+            height="900"
+            alt=""
+          />
+        </div>
+        <div class="text-panel">
+          <span class="tag">Scene 1 — ScrollImage</span>
+          <h2>Hue Cycling at Cursor</h2>
+          <p>
+            <code>ScrollImage</code> exposes the image as <code>u_image</code>
+            (sampler2D) and <code>u_imageSize</code> (vec2). Here a simple flat
+            quad runs a fragment shader that ripples the hue around the mouse
+            cursor using Rodrigues rotation on the RGB colour vector.
+          </p>
+          <pre><code><span class="kw">const</span> scene = <span class="kw">new</span> <span class="cls">ScrollImage</span>({
+  gl, element: imgEl, scene: drawable
+})
+
+<span class="cm">// Add your own mouse uniform</span>
+scene.uniforms.u_mouse = <span class="kw">new</span> <span class="cls">Uniform</span>({
+  name: <span class="str">'u_mouse'</span>,
+  value: [<span class="prop">0.5</span>, <span class="prop">0.5</span>],
+  kind: <span class="str">'float_vec2'</span>
+})</code></pre>
+        </div>
+      </section>
+
+      <!-- Scene 2: ScrollImage — verlet cloth -->
+      <section class="cloth-section cloth-section--reverse">
+        <div class="cloth-panel">
+          <img
+            class="cloth-target"
+            src="https://picsum.photos/1200/900?random=42"
+            crossorigin="anonymous"
+            width="1200"
+            height="900"
+            alt=""
+          />
+        </div>
+        <div class="text-panel">
+          <span class="tag">Scene 2 — ScrollImage</span>
+          <h2>Verlet Cloth</h2>
+          <p>
+            The top row of cloth particles is pinned; gravity and a
+            time-varying wind force drive the rest. Constraint resolution
+            runs on the CPU each frame, then positions are written back to
+            the geometry via <code>needsUpdate</code>. Scroll to inject inertia —
+            click and drag to grab.
+          </p>
+          <pre><code>scene.onBeforeRender = (delta) => {
+  sim.step(delta, scene.u_time.value)
+  sim.writePositions(posAttr.data)
+  posAttr.needsUpdate = <span class="kw">true</span>
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- Scene 3: ScrollHTML — verlet cloth on live HTML -->
+      <section class="cloth-section" id="scene3">
+        <div class="cloth-panel" id="scene3-panel">
+          <!-- This div is captured by ScrollHTML and moved to its internal
+               layoutsubtree canvas. A placeholder takes its space here. -->
+          <div id="html-target" class="html-target" aria-hidden="true">
+            <div class="form-card">
+              <header class="form-card__header">
+                <span class="form-card__tag">HTML-in-Canvas</span>
+                <h3 class="form-card__title">Get in touch</h3>
+                <p class="form-card__sub">This form is a live WebGL texture.</p>
+              </header>
+              <div class="form-card__body">
+                <div class="form-field">
+                  <label for="fc-name">Name</label>
+                  <input id="fc-name" type="text" placeholder="Your name" />
+                </div>
+                <div class="form-field">
+                  <label for="fc-email">Email</label>
+                  <input id="fc-email" type="email" placeholder="you@example.com" />
+                </div>
+                <div class="form-field">
+                  <label for="fc-msg">Message</label>
+                  <textarea id="fc-msg" rows="3" placeholder="What's on your mind?"></textarea>
+                </div>
+                <button class="form-card__btn" type="button">Send message →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-panel">
+          <span class="tag">Scene 3 — ScrollHTML</span>
+          <h2>HTML as a Cloth Texture</h2>
+          <p>
+            <code>ScrollHTML</code> moves the target element into an internal
+            <code>&lt;canvas&nbsp;layoutsubtree&gt;</code>, captures each frame
+            with <code>drawElementImage()</code>, and feeds the result into the
+            same verlet cloth as Scene 2 — but now the texture is live HTML.
+            The canvas is placed over the panel so the form is still interactive.
+          </p>
+          <pre><code><span class="kw">const</span> scene = <span class="kw">new</span> <span class="cls">ScrollHTML</span>({
+  gl,
+  element: panelEl,   <span class="cm">// positional anchor</span>
+  htmlElement: formEl, <span class="cm">// captured as texture</span>
+  scene: drawable,
+  useViewport: <span class="kw">false</span>,
+  elementSpace: <span class="kw">true</span>
+})
+
+<span class="cm">// u_html and u_htmlSize in scene.uniforms</span></code></pre>
+        </div>
+      </section>
+
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

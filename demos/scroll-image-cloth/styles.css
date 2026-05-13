@@ -1,0 +1,225 @@
+.hero-text {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  padding: 8em 3em 4em;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-text h1 {
+  font-size: clamp(2.5em, 6vw, 5em);
+  margin-bottom: 0.3em;
+}
+
+.hero-text .lead {
+  font-size: 1em;
+  line-height: 1.75;
+  margin-top: 0.75em;
+  max-width: 560px;
+  color: var(--muted);
+}
+
+.hero-text .hint {
+  margin-top: 1em;
+  font-size: 0.82em;
+  color: var(--accent);
+  opacity: 0.75;
+}
+
+/* ── cloth sections ── */
+
+.cloth-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  border-top: 1px solid var(--border);
+}
+
+.cloth-section--reverse {
+  direction: rtl;
+}
+
+.cloth-section--reverse > * {
+  direction: ltr;
+}
+
+.cloth-panel {
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: #000;
+  cursor: crosshair;
+}
+
+.cloth-section--reverse .cloth-panel {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+/* Hidden from view but preserves layout; WebGL renders in its place. */
+.cloth-target,
+.hue-target {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── HTML capture target ── */
+
+.html-target {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.form-card {
+  width: 100%;
+  height: 100%;
+  background: #0f0f1a;
+  color: #e8e8f0;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, sans-serif;
+  box-sizing: border-box;
+}
+
+.form-card__header {
+  padding: 1.75em 2em 1.25em;
+  border-bottom: 1px solid rgba(255 255 255 / 0.08);
+  background: #161627;
+  flex-shrink: 0;
+}
+
+.form-card__tag {
+  font-size: 0.68em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7c6bff;
+  font-weight: 600;
+}
+
+.form-card__title {
+  margin: 0.3em 0 0.2em;
+  font-size: 1.4em;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+}
+
+.form-card__sub {
+  margin: 0;
+  font-size: 0.78em;
+  color: rgba(255 255 255 / 0.4);
+}
+
+.form-card__body {
+  padding: 1.5em 2em 2em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  flex: 1;
+  overflow: hidden;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.form-field label {
+  font-size: 0.72em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / 0.45);
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field textarea {
+  background: rgba(255 255 255 / 0.06);
+  border: 1px solid rgba(255 255 255 / 0.12);
+  border-radius: 6px;
+  color: #e8e8f0;
+  font-size: 0.88em;
+  font-family: inherit;
+  padding: 0.55em 0.75em;
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field input.proxy-focus,
+.form-field textarea.proxy-focus {
+  border-color: #7c6bff;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: rgba(255 255 255 / 0.25);
+}
+
+.form-card__btn {
+  margin-top: auto;
+  align-self: flex-start;
+  background: #7c6bff;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.84em;
+  font-weight: 600;
+  padding: 0.6em 1.2em;
+  letter-spacing: 0.02em;
+}
+
+.text-panel {
+  padding: 4em 3.5em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.text-panel h2 {
+  margin-bottom: 0.8em;
+}
+
+.text-panel p {
+  margin-bottom: 1.5em;
+  font-size: 0.92em;
+  line-height: 1.75;
+}
+
+.text-panel pre {
+  margin-top: 0;
+}
+
+@media (max-width: 800px) {
+  .cloth-section,
+  .cloth-section--reverse {
+    grid-template-columns: 1fr;
+    direction: ltr;
+  }
+
+  .cloth-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cloth-section--reverse .cloth-panel {
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .text-panel {
+    padding: 3em 2em;
+  }
+}

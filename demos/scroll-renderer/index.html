@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — ScrollRenderer</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">ScrollRenderer</span>
+    </nav>
+    <div class="content">
+      <section class="scene scene--hero">
+        <div class="scene__label">
+          <span class="tag">Scene 1 — plasma</span>
+          <h1>ScrollRenderer</h1>
+          <p>A single WebGL canvas fixed to the page, rendering independent scenes anchored to DOM elements via getBoundingClientRect.</p>
+        </div>
+      </section>
+
+      <section class="scene scene--mid">
+        <div class="scene__label">
+          <span class="tag">Scene 2 — rings</span>
+          <h2>Scroll-linked viewports</h2>
+          <p>Each scene tracks its element's bounding rect every frame. Scissor testing clips each render to the element's exact screen position.</p>
+        </div>
+      </section>
+
+      <section class="scene scene--end">
+        <div class="scene__label">
+          <span class="tag">Scene 3 — grid</span>
+          <h2>One render loop</h2>
+          <p>All scenes share a single renderer and RAF loop. Off-screen scenes are culled automatically via IntersectionObserver.</p>
+        </div>
+      </section>
+
+      <section class="scene scene--split">
+        <div class="scene__left">
+          <span class="tag">Scene 4 — particles</span>
+          <h2>DOM-anchored elements</h2>
+          <p>Any element in your layout can be a GL anchor. Here a particle field tracks the right panel independently from the page copy beside it.</p>
+        </div>
+        <div class="scene__right scene--particles"></div>
+      </section>
+    </div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

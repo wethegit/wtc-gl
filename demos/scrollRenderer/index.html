@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — ScrollRenderer basic example</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">ScrollRenderer</span>
+    </nav>
+    <section class="scene">
+      <div class="scene__text">
+        <h2>DOM-anchored viewports</h2>
+        <p>
+          The shader to the right is a <code>ScrollScene</code> tracking this
+          section's right column. <code>u_resolution</code> updates every frame
+          to the element's exact physical pixel size. Each webGL program on this
+          page shares a single webGL context via wtc-gl scrollRenderer
+        </p>
+      </div>
+      <div class="scene--voronoi"></div>
+    </section>
+
+    <section class="scene">
+      <div class="scene__text">
+        <h2>Element-relative fragment math</h2>
+        <p>
+          The rings are centred on <em>this element's</em> midpoint. The shader
+          reads <code>u_origin.xy</code> (element bottom-left in GL pixel space)
+          and <code>u_resolution</code> to find the centre, so the rings stay
+          locked here regardless of scroll position.
+        </p>
+      </div>
+      <div class="scene--waves"></div>
+    </section>
+
+    <section class="scene">
+      <div class="scene__text">
+        <h2>One RAF</h2>
+        <p>
+          All three shaders here are driven by a single
+          <code>requestAnimationFrame</code>. Scenes outside the viewport are
+          skipped automatically via <code>IntersectionObserver</code>.
+        </p>
+      </div>
+      <div class="scene--flow"></div>
+    </section>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

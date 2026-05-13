@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScrollRenderer - wtc-gl</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav__brand"><a href="../">wtc-gl</a> <span>/</span> ScrollRenderer</div>
+      <ul class="nav__links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#problem">Problem</a></li>
+        <li><a href="#api">API</a></li>
+        <li><a href="#showcase">Showcase</a></li>
+        <li>
+          <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+            >GitHub ↗</a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <div class="content">
+      <!-- Hero - full section is the shader canvas -->
+      <section class="hero scene--hero">
+        <div class="hero__text">
+          <span class="tag">wtc-gl - recipe</span>
+          <h1>One canvas.<br />Every scene.</h1>
+          <p class="lead">
+            Anchor independent WebGL programs to any DOM element. A single fixed
+            canvas, scissor-tested viewports, one shared render loop.
+            ScrollRenderer is a WebGL scene manager for inline WebGL effects
+            that scale.
+          </p>
+
+          <div class="hero__actions">
+            <span class="chip">npm install wtc-gl</span>
+            <a
+              class="btn"
+              href="https://github.com/wethecollective/wtc-gl"
+              target="_blank"
+              >View on GitHub</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Intro -->
+      <div class="intro" id="features">
+        <span class="tag">How it works</span>
+        <h2>
+          No iframes. No per-element canvases. Just one shared GL context.
+        </h2>
+        <p>
+          Each <code>ScrollScene</code> tracks a DOM element via
+          <code>getBoundingClientRect()</code> every frame. WebGL's scissor test
+          clips each render to that element's exact pixel bounds. Scenes outside
+          the viewport are culled automatically by IntersectionObserver.
+        </p>
+      </div>
+
+      <!-- Feature cards - each is its own ScrollScene -->
+      <div class="features">
+        <div class="feature">
+          <div class="feature__shader scene--voronoi"></div>
+          <div class="feature__body">
+            <h3>DOM anchored</h3>
+            <p>
+              Every scene knows its element. <code>u_origin</code> and
+              <code>u_resolution</code> update each frame automatically, with no
+              event wiring required.
+            </p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature__shader scene--waves"></div>
+          <div class="feature__body">
+            <h3>Scissor-tested viewports</h3>
+            <p>
+              The rings above are centred on this card's exact position in the
+              canvas using <code>u_origin.xy</code> and
+              <code>gl_FragCoord</code>, demonstrating element-relative fragment
+              math.
+            </p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature__shader scene--flow"></div>
+          <div class="feature__body">
+            <h3>Single render loop</h3>
+            <p>
+              One <code>requestAnimationFrame</code> drives all scenes. The
+              shared GL context means zero per-canvas overhead, no
+              synchronisation, and no scheduling jank between effects.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem statement - shader on left, text on right -->
+      <div class="framed split" id="problem">
+        <div class="framed__scene">
+          <div class="framed__shader scene--problem"></div>
+        </div>
+        <div class="framed__text panel">
+          <span class="tag">The problem</span>
+          <h2>Multiple WebGL programs don't scale.</h2>
+          <p>
+            The traditional answer to "WebGL effects on multiple page elements"
+            is one
+            <code>&lt;canvas&gt;</code> per effect - a separate GPU context for
+            each. Browsers cap active WebGL contexts. Each one competes for GPU
+            memory, initialises its own GL state, and drives its own render loop
+            with zero coordination between them.
+          </p>
+          <p>
+            In addition to CPU, GPU and memory load, you also run into issues
+            with browswers dropping contexts in order to free up resources,
+            causing your effects to disappear without warning. This requires you
+            to create complex context-management solutions that are fragile and
+            error-prone.
+          </p>
+          <p>
+            ScrollRenderer is designed to solve these problems with a single
+            shared context and one coordinated render loop.
+          </p>
+        </div>
+      </div>
+
+      <!-- Layers diagram — scroll-driven isometric explode -->
+      <div class="framed split" id="how-it-works">
+        <div class="framed__text panel">
+          <span class="tag">Composited layers</span>
+          <h2>Your markup and your GL, in the same stack.</h2>
+          <p>
+            A single fixed <code>&lt;canvas&gt;</code> sits on top of your page.
+            <code>ScrollRenderer</code> scissor-clips each scene to its DOM
+            element, so WebGL effects land exactly where your HTML does
+          </p>
+          <p>
+            Scroll to see how the layers relate: the
+            <span style="color: #dde0ee">HTML document</span> lays the page out,
+            including the elements that serve as placeholders for the
+            <span style="color: #48fa71">WebGL programs</span> which are
+            composed into the shared,
+            <span style="color: #0e97f8">full-screen canvas</span> that renders
+            everything in place via a scroll-renderer coordinator..
+          </p>
+        </div>
+        <div class="framed__scene">
+          <div class="framed__shader scene--layers"></div>
+        </div>
+      </div>
+
+      <!-- API / Code section -->
+      <div class="code-section split" id="api">
+        <div class="code-section__bg scene--terminal"></div>
+        <div class="code-section__text panel">
+          <span class="tag">API</span>
+          <h2>Three lines to anchor a shader to any element.</h2>
+          <pre><span class="kw">const</span> renderer = <span class="kw">new</span> <span class="cls">ScrollRenderer</span>()
+<span class="kw">const</span> scene    = <span class="kw">new</span> <span class="cls">ScrollScene</span>({ element, scene: drawable })
+renderer.<span class="prop">addScene</span>(scene)
+
+<span class="cm">// Uniforms updated automatically every frame:</span>
+<span class="cm">// u_time        float  - elapsed time</span>
+<span class="cm">// u_resolution  vec2   - element size in physical pixels</span>
+<span class="cm">// u_origin      vec4   - .xy pixel origin (gl_FragCoord space)</span>
+<span class="cm">//                         .zw element centre in canvas NDC</span></pre>
+          <p>
+            Extend with <code>onBeforeRender</code> and
+            <code>onAfterRender</code> hooks, or opt out of per-scene clearing
+            and viewport locking independently.
+          </p>
+        </div>
+      </div>
+
+      <!-- Particle showcase -->
+      <div class="showcase split" id="showcase">
+        <div class="showcase__text panel">
+          <span class="tag">Transform feedback</span>
+          <h2>GPU simulations alongside fragment shaders.</h2>
+          <p>
+            The <code>TransformFeedback</code> class handles ping-pong buffers
+            automatically. Complex particle systems run in the shared context
+            alongside simple fragment-shader scenes with no extra overhead.
+          </p>
+          <ul class="feature-list">
+            <li>Curl-noise velocity field, GPU-side</li>
+            <li>Per-particle life, respawn, and seed</li>
+            <li>
+              Composites over adjacent scenes via
+              <code>clearOnRender: false</code>
+            </li>
+            <li>
+              Positioned with <code>u_origin.zw</code> when
+              <code>useViewport</code> is false
+            </li>
+          </ul>
+        </div>
+        <div class="showcase__particles scene--particles"></div>
+      </div>
+
+      <footer class="footer">
+        <p>
+          ScrollRenderer is part of <strong>wtc-gl</strong> - a lightweight
+          WebGL2 library by
+          <a href="https://wethecollective.com" target="_blank"
+            >We The Collective</a
+          >.
+        </p>
+        <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+          >GitHub →</a
+        >
+      </footer>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

@@ -1,16 +1,13 @@
 import { FragmentShader, Texture, Uniform } from '../../src/lib'
 
-import '../style.css'
-
 import fragment from './main.frag'
 import vertex from './main.vert'
 
 const initWebgl = (video) => {
-  // Create the fragment shader wrapper
   const FSWrapper = new FragmentShader({
     fragment,
     vertex,
-    rendererProps: { alpha: true, premultipliedAlpha: false },
+    rendererProps: { alpha: false, premultipliedAlpha: false },
     onBeforeRender: () => {
       videoTexture.needsUpdate = true
     }
@@ -25,22 +22,22 @@ const initWebgl = (video) => {
     generateMipmaps: false
   })
 
-  uniforms.s_smoke = new Uniform({
-    name: 'smoke',
-    value: videoTexture,
-    kind: 'texture'
+  uniforms.s_smoke = new Uniform({ name: 'smoke', value: videoTexture, kind: 'texture' })
+
+  const u_mouse = new Uniform({ name: 'u_mouse', value: [0, 0], kind: 'float_vec2' })
+  uniforms.u_mouse = u_mouse
+  window.addEventListener('mousemove', (e) => {
+    u_mouse.value = [e.clientX / window.innerWidth, 1 - e.clientY / window.innerHeight]
   })
 }
 
-// Create the video element
 const video = document.createElement('video')
 video.autoplay = true
 video.loop = true
 video.muted = true
-video.crossOrigin = true
-video.src = 'https://assets.codepen.io/982762/smoke.mp4'
+video.playsInline = true
+video.src = './smoke.mp4'
 video.addEventListener('canplaythrough', () => {
   video.play()
   initWebgl(video)
-  // videoTexture.image = video;
 })

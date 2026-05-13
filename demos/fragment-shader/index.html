@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FragmentShader — wtc-gl</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav__brand"><a href="../">wtc-gl</a> <span>/</span> FragmentShader</div>
+      <ul class="nav__links">
+        <li><a href="#usage">Usage</a></li>
+        <li><a href="#options">Options</a></li>
+        <li><a href="../scroll-renderer-homepage/">ScrollRenderer</a></li>
+        <li>
+          <a href="https://github.com/wethecollective/wtc-gl" target="_blank">GitHub ↗</a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="content">
+
+      <!-- Hero — shader fills the background, move your mouse -->
+      <section class="hero">
+        <div class="hero__text">
+          <span class="tag">wtc-gl — recipe</span>
+          <h1>One class.<br />One shader.</h1>
+          <p class="hero__lead">
+            <code>FragmentShader</code> handles canvas creation, pixel-ratio scaling,
+            resize, and a render loop. Move your mouse — the shader above responds
+            to <code>u_mouse</code> via a custom uniform.
+          </p>
+          <div class="hero__actions">
+            <span class="chip">npm install wtc-gl</span>
+            <a class="btn" href="https://github.com/wethecollective/wtc-gl" target="_blank">
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Usage / code -->
+      <div class="usage split" id="usage">
+        <div class="usage__text panel">
+          <span class="tag">Usage</span>
+          <h2>Running in seconds.</h2>
+          <pre><span class="kw">import</span> { <span class="cls">FragmentShader</span>, <span class="cls">Uniform</span> } <span class="kw">from</span> <span class="str">'wtc-gl'</span>
+<span class="kw">import</span> frag <span class="kw">from</span> <span class="str">'./my-shader.frag'</span>
+
+<span class="cm">// Custom uniforms go in alongside u_time / u_resolution</span>
+<span class="kw">const</span> u_mouse = <span class="kw">new</span> <span class="cls">Uniform</span>({
+  name: <span class="str">'u_mouse'</span>,
+  value: [<span class="str">0</span>, <span class="str">0</span>],
+  kind: <span class="str">'float_vec2'</span>
+})
+
+<span class="kw">const</span> fs = <span class="kw">new</span> <span class="cls">FragmentShader</span>({
+  fragment: frag,
+  uniforms: { u_mouse }
+})
+
+<span class="cm">// Update the uniform value any time</span>
+window.<span class="prop">addEventListener</span>(<span class="str">'mousemove'</span>, e => {
+  u_mouse.value = [e.clientX, e.clientY]
+})</pre>
+          <p>
+            The canvas is appended to <code>document.body</code> by default.
+            Pass a <code>container</code> element to mount it elsewhere.
+          </p>
+          <p>
+            <code>u_time</code> and <code>u_resolution</code> are always provided.
+            Add any number of extra uniforms via the <code>uniforms</code> option.
+          </p>
+        </div>
+        <div class="usage__bg"></div>
+      </div>
+
+      <!-- Options -->
+      <section class="options" id="options">
+        <span class="tag">API</span>
+        <h2>Constructor options.</h2>
+        <div class="options__grid">
+          <div class="option">
+            <h3>fragment</h3>
+            <p>GLSL fragment shader string. Import your <code>.frag</code> file via vite-plugin-glsl.</p>
+          </div>
+          <div class="option">
+            <h3>vertex</h3>
+            <p>Custom vertex shader. Defaults to a full-screen triangle that covers the viewport.</p>
+          </div>
+          <div class="option">
+            <h3>uniforms</h3>
+            <p>Extra <code>Uniform</code> instances beyond <code>u_time</code> and <code>u_resolution</code>.</p>
+          </div>
+          <div class="option">
+            <h3>container</h3>
+            <p>The element the canvas is appended to. Defaults to <code>document.body</code>.</p>
+          </div>
+          <div class="option">
+            <h3>autoResize</h3>
+            <p>Listens for window resize and updates the canvas and resolution uniform automatically.</p>
+          </div>
+          <div class="option">
+            <h3>onBeforeRender / onAfterRender</h3>
+            <p>Callbacks fired each frame — useful for reading back values or driving external state.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>
+          <strong>FragmentShader</strong> is part of
+          <a href="../">wtc-gl</a> by
+          <a href="https://wethecollective.com" target="_blank">We The Collective</a>.
+        </p>
+        <a href="https://github.com/wethecollective/wtc-gl" target="_blank">GitHub →</a>
+      </footer>
+
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

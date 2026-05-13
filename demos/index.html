@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — WebGL2 toolkit</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="nav__brand">wtc-gl</div>
+      <ul class="nav__links">
+        <li><a href="#recipes">Recipes</a></li>
+        <li><a href="#demos">Demos</a></li>
+        <li><a href="#getting-started">Get started</a></li>
+        <li><a href="#core">Core</a></li>
+        <li><a href="./docs/">Docs</a></li>
+        <li>
+          <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+            >GitHub ↗</a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <div class="content">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero__text">
+          <span class="tag">wtc-gl</span>
+          <h1>WebGL2,<br />without the boilerplate.</h1>
+          <p class="hero__lead">
+            A lightweight toolkit for building fragment shaders, scroll-driven
+            scenes, and simple WebGL scenes.
+          </p>
+          <div class="hero__actions">
+            <span class="chip">npm install wtc-gl</span>
+            <a
+              class="btn"
+              href="https://github.com/wethecollective/wtc-gl"
+              target="_blank"
+            >
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Intro -->
+      <div class="intro">
+        <span class="tag">What is it?</span>
+        <h2>WebGL2 primitives and high-level recipes that compose.</h2>
+        <p>
+          wtc-gl provides the scaffolding - programs, meshes, cameras, render
+          loops, texture utilities - so you spend time on the interesting parts.
+          Use just the pieces you need, or reach for the opinionated recipes.
+        </p>
+      </div>
+
+      <!-- Recipes -->
+      <section class="recipes" id="recipes">
+        <div class="recipe">
+          <span class="recipe__icon">FragmentShader</span>
+          <h3>Full-screen fragment shaders</h3>
+          <p>
+            One class, one shader. <code>FragmentShader</code> creates a canvas,
+            wires up <code>u_time</code> and <code>u_resolution</code>, and
+            starts the render loop. Mouse, resize, and pixel-ratio are all
+            handled for you.
+          </p>
+          <a class="btn" href="./fragment-shader/">View demo →</a>
+        </div>
+
+        <div class="recipe">
+          <span class="recipe__icon">ScrollRenderer</span>
+          <h3>Inline scenes on any element</h3>
+          <p>
+            One fixed canvas, scissor-tested viewports, one shared render loop.
+            <code>ScrollRenderer</code> anchors independent WebGL programs to
+            DOM elements - no iframes, no per-canvas GPU contexts, no scheduling
+            jank.
+          </p>
+          <a class="btn" href="./scroll-renderer-homepage/">View demo →</a>
+        </div>
+
+        <div class="recipe">
+          <span class="recipe__icon">TransformFeedback</span>
+          <h3>GPU particle simulations</h3>
+          <p>
+            <code>TransformFeedback</code> handles ping-pong buffers
+            automatically. Write your velocity kernel in GLSL, read positions
+            back as attributes - millions of particles without touching the CPU
+            each frame.
+          </p>
+          <a class="btn" href="./scroll-renderer-homepage/#showcase"
+            >View demo →</a
+          >
+        </div>
+      </section>
+
+      <!-- Demos -->
+      <div class="intro">
+        <span class="tag">Demos</span>
+        <h2>See the primitives in action.</h2>
+        <p>
+          Each demo isolates one or two core concepts - textures, framebuffers,
+          webcam input, GPU particles - so you can pull the code apart and adapt
+          it.
+        </p>
+      </div>
+
+      <section class="demos" id="demos">
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/videoTex.png"
+              alt="Video texture demo"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">FragmentShader</span>
+              <span class="demo__class">Texture</span>
+            </div>
+            <h3>Video texture</h3>
+            <p>
+              A video element sampled as a live <code>Texture</code> and fed
+              into a fragment shader each frame. The
+              <code>onBeforeRender</code> hook marks the texture dirty so the
+              GPU always sees the current video frame.
+            </p>
+            <a class="btn" href="./videoTex/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/transformFeedback.png"
+              alt="Transform feedback particles demo"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">TransformFeedback</span>
+              <span class="demo__class">PointCloud</span>
+              <span class="demo__class">Camera</span>
+            </div>
+            <h3>GPU particle simulation</h3>
+            <p>
+              Thousands of particles simulated entirely on the GPU using
+              <code>TransformFeedback</code> ping-pong buffers. Velocity is
+              computed in a vertex shader and fed back as position attributes
+              each frame - zero CPU involvement per particle.
+            </p>
+            <a class="btn" href="./transformFeedback/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/framebuffer.png"
+              alt="Framebuffer post-processing demo"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Framebuffer</span>
+              <span class="demo__class">Texture</span>
+              <span class="demo__class">Program</span>
+            </div>
+            <h3>Framebuffer post-processing</h3>
+            <p>
+              A scene rendered to an off-screen <code>Framebuffer</code>, then
+              composited through a second pass. Demonstrates the
+              render-to-texture pipeline for effects like bloom, blur, and
+              feedback loops.
+            </p>
+            <a class="btn" href="./framebuffer/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/scroll-image-cloth.png"
+              alt="ScrollImage and ScrollHTML cloth demo"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">ScrollImage</span>
+              <span class="demo__class">ScrollHTML</span>
+              <span class="demo__class">ScrollRenderer</span>
+            </div>
+            <h3>ScrollImage &amp; ScrollHTML</h3>
+            <p>
+              Three scenes on one canvas. Scene 1: hue ripple at the cursor via
+              Rodrigues rotation. Scene 2: a Verlet cloth simulation deforming
+              an image — scroll to inject inertia, click to grab. Scene 3: the
+              same cloth with a live HTML form as its texture using the
+              experimental HTML-in-Canvas API.
+            </p>
+            <a class="btn" href="./scroll-image-cloth/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0a0a1a 0%,
+                #0d1a2e 40%,
+                #0a1a10 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(74, 158, 255, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >WEBCAM</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Framebuffer</span>
+              <span class="demo__class">Texture</span>
+              <span class="demo__class">getUserMedia</span>
+            </div>
+            <h3>Webcam cellular automata</h3>
+            <p>
+              A ping-pong <code>Framebuffer</code> runs Conway's Game of Life
+              where webcam brightness seeds new cells. Living cells inherit the
+              webcam's colour at the moment of their birth, creating a living
+              portrait that evolves frame by frame.
+            </p>
+            <a class="btn" href="./webcam-ca/">Open demo →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Getting started -->
+      <div class="getting-started split" id="getting-started">
+        <div class="getting-started__text panel">
+          <span class="tag">Get started</span>
+          <h2>A shader on screen in five lines.</h2>
+          <pre><span class="kw">import</span> { <span class="cls">FragmentShader</span> } <span class="kw">from</span> <span class="str">'wtc-gl'</span>
+<span class="kw">import</span> myFrag <span class="kw">from</span> <span class="str">'./my-shader.frag'</span>
+
+<span class="kw">const</span> fs = <span class="kw">new</span> <span class="cls">FragmentShader</span>({
+  fragment: myFrag,
+  container: document.<span class="prop">querySelector</span>(<span class="str">'.canvas-wrap'</span>)
+})
+
+<span class="cm">// u_time and u_resolution are wired up automatically.</span>
+<span class="cm">// Add your own uniforms any time:</span>
+fs.<span class="prop">setUniform</span>(<span class="str">'u_mouse'</span>, [x, y])</pre>
+          <p>
+            Install via npm, import from your bundler, and point it at a
+            container. The canvas is created, sized, and animated for you.
+          </p>
+          <p style="margin-top: 1.2em">
+            For scroll-driven multi-scene layouts see
+            <a href="./scroll-renderer-homepage/">ScrollRenderer →</a>
+          </p>
+        </div>
+        <div class="getting-started__bg hero-canvas" id="gs-canvas"></div>
+      </div>
+
+      <!-- Core classes -->
+      <section class="core" id="core">
+        <span class="tag">Core</span>
+        <h2>The building blocks.</h2>
+        <div class="core__grid">
+          <div class="core__item">
+            <h3>Renderer</h3>
+            <p>
+              WebGL2 context creation, pixel-ratio handling, and the main render
+              loop.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Program</h3>
+            <p>
+              Shader compilation, uniform management, and attribute binding in
+              one place.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Mesh</h3>
+            <p>
+              Geometry + program pairing with transform hierarchy via
+              parent/child scene graph.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Geometry</h3>
+            <p>
+              Triangle, Plane, and Box primitives; or supply your own attribute
+              buffers.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Texture</h3>
+            <p>
+              Create textures from typed arrays, images, or video — with format
+              helpers.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Framebuffer</h3>
+            <p>
+              Off-screen render targets for post-processing and ping-pong
+              feedback.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Camera</h3>
+            <p>
+              Perspective and orthographic cameras with look-at and dolly
+              helpers.
+            </p>
+          </div>
+          <div class="core__item">
+            <h3>Uniform</h3>
+            <p>
+              Typed uniform wrappers that track dirty state and batch-upload
+              efficiently.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>
+          <strong>wtc-gl</strong> is built by
+          <a href="https://wethecollective.com" target="_blank"
+            >We The Collective</a
+          >.
+        </p>
+        <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+          >GitHub →</a
+        >
+      </footer>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
