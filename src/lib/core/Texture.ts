@@ -352,10 +352,9 @@ export class Texture {
         // the source bitmap. Use natural dimensions so the full image uploads.
         this.width = this.image.naturalWidth
         this.height = this.image.naturalHeight
-      } else if (this.image && 'width' in this.image) {
-        const img = this.image as HTMLImageElement
-        this.width = img.naturalWidth > 0 ? img.naturalWidth : img.width
-        this.height = img.naturalHeight > 0 ? img.naturalHeight : img.height
+      } else if (this.image instanceof HTMLCanvasElement) {
+        this.width = this.image.width
+        this.height = this.image.height
       }
 
       if (
