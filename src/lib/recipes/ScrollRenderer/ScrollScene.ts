@@ -55,6 +55,13 @@ export interface ScrollSceneOptions {
    * @default 0
    */
   margin?: number
+  /**
+   * CSS class added to the element when the scene is successfully registered
+   * with a {@link ScrollRenderer} (i.e. when WebGL is confirmed working).
+   * Useful for revealing content that should only be visible when WebGL is
+   * active — hide it by default in CSS, then show it via this class.
+   */
+  initializedClass?: string
   /** Called immediately before the scene is rendered each frame. */
   onBeforeRender?: (delta: number, rect: DOMRect) => void
   /** Called immediately after the scene is rendered each frame. */
@@ -124,6 +131,9 @@ export class ScrollScene {
   /** Whether the element is currently intersecting the viewport. */
   visible: boolean = true
 
+  /** @see {@link ScrollSceneOptions.initializedClass} */
+  initializedClass?: string
+
   /** @see {@link ScrollSceneOptions.onBeforeRender} */
   onBeforeRender: (delta: number, rect: DOMRect) => void
   /** @see {@link ScrollSceneOptions.onAfterRender} */
@@ -140,6 +150,7 @@ export class ScrollScene {
     clearOnRender = true,
     elementSpace = false,
     margin = 0,
+    initializedClass = 'scroll-scene--initialized',
     onBeforeRender = () => {},
     onAfterRender = () => {}
   }: ScrollSceneOptions) {
@@ -150,6 +161,7 @@ export class ScrollScene {
     this.clipToViewport = clipToViewport
     this.clearOnRender = clearOnRender
     this.elementSpace = elementSpace
+    this.initializedClass = initializedClass
     this.onBeforeRender = onBeforeRender
     this.onAfterRender = onAfterRender
 

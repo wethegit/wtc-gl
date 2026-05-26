@@ -51,10 +51,11 @@ void main() {
   vec2  vel  = a_velocity;
   float life = a_life - lifeRate;
 
+  float dt = u_delta * 60.0;
   if (life > 0.0) {
     vec2 force = curl(pos * 2.0 + u_time * 0.12) * 0.0003;
-    vel = vel * 0.98 + force;
-    pos = pos + vel;
+    vel = vel * pow(0.98, dt) + force * dt;
+    pos = pos + vel * dt;
   } else {
     // Respawn at centre, random outward burst
     float angle = a_seed * 6.28318 + u_time;

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll Blades — wtc-gl</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+
+    <!-- Fixed DOM anchor for the fullscreen background ScrollScene -->
+    <div class="bg-scene"></div>
+
+    <div class="page">
+
+      <header class="site-header">
+        <div class="site-header__brand">wtc-gl <span>/</span> scroll-blades</div>
+        <ul class="site-header__nav">
+          <li><a href="#01">Light &amp; Shadow</a></li>
+          <li><a href="#02">Fluid Edge</a></li>
+          <li><a href="#03">Depth of Field</a></li>
+          <li><a href="#04">Still Becoming</a></li>
+        </ul>
+        <button class="debug-toggle" id="debug-toggle">WebGL</button>
+      </header>
+
+      <main class="blades">
+
+        <!-- Intro blade — no image, pure text over WebGL background -->
+        <section class="blade blade--intro">
+          <div class="blade__text">
+            <p class="blade__index">ScrollRenderer · ScrollImage · ScrollScene</p>
+            <h1 class="blade__title">One canvas.<br />Four scenes.</h1>
+            <p class="blade__body">
+              A single fixed WebGL canvas renders every image and the animated
+              background simultaneously, scissor-tested to each DOM element.
+              Scroll to see it in motion.
+            </p>
+          </div>
+        </section>
+
+        <!-- Blade 01 — image left, text right -->
+        <section class="blade" id="01">
+          <div class="blade__media">
+            <img
+              class="blade-img"
+              src="./1.webp"
+              alt=""
+            />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">01 — Light &amp; Shadow</p>
+            <h2 class="blade__title">Where illumination meets form.</h2>
+            <p class="blade__body">
+              Every shadow is a shape in its own right. The eye finds meaning
+              in contrast — in the boundary between what is revealed and what
+              remains concealed.
+            </p>
+            <p class="blade__body">
+              Each image above is rendered through a WebGL fragment shader via
+              <code>ScrollImage</code>, which uploads the source as a GPU
+              texture and applies cover-fit, parallax, and chromatic aberration
+              per-frame.
+            </p>
+          </div>
+        </section>
+
+        <!-- Blade 02 — text left, image right -->
+        <section class="blade blade--reverse" id="02">
+          <div class="blade__media">
+            <img
+              class="blade-img"
+              src="./2.webp"
+              alt=""
+            />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">02 — The Fluid Edge</p>
+            <h2 class="blade__title">Between states, geometry is honest.</h2>
+            <p class="blade__body">
+              Flow is not chaos — it is clarity in motion. Where matter
+              transitions, the underlying structure of a system becomes briefly
+              legible.
+            </p>
+            <p class="blade__body">
+              The dark aurora in the background is a domain-warped FBM rendered
+              by a <code>ScrollScene</code> anchored to a fixed full-viewport
+              element, giving it perpetual coverage.
+            </p>
+          </div>
+        </section>
+
+        <!-- Blade 03 — image left, text right -->
+        <section class="blade" id="03">
+          <div class="blade__media">
+            <img
+              class="blade-img"
+              src="./3.webp"
+              alt=""
+            />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">03 — Depth of Field</p>
+            <h2 class="blade__title">Distance compresses to a single plane.</h2>
+            <p class="blade__body">
+              What lies beyond the focal point is not absence — it is
+              possibility held softly out of reach. The blurred edge is where
+              attention ends and imagination begins.
+            </p>
+            <p class="blade__body">
+              Scroll progress is tracked per-element via
+              <code>onBeforeRender</code> and passed as <code>u_scroll</code>
+              to drive the parallax offset in the image shader.
+            </p>
+          </div>
+        </section>
+
+        <!-- Blade 04 — text left, image right -->
+        <section class="blade blade--reverse" id="04">
+          <div class="blade__media">
+            <img
+              class="blade-img"
+              src="./4.webp"
+              alt=""
+            />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">04 — Still Becoming</p>
+            <h2 class="blade__title">Stillness is motion's accumulation.</h2>
+            <p class="blade__body">
+              The moment before change holds everything. Inertia is not
+              resistance — it is the weight of becoming made temporarily
+              visible.
+            </p>
+            <p class="blade__body">
+              All four images and the background share a single WebGL context
+              and one <code>requestAnimationFrame</code> loop via
+              <code>ScrollRenderer</code>.
+            </p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

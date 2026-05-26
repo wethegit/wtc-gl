@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #07070e;
+  --text: #dde0ee;
+  --muted: rgba(221, 224, 238, 0.52);
+  --accent: #4a9eff;
+  --border: rgba(255, 255, 255, 0.07);
+  --glass: rgba(7, 7, 14, 0.86);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+/* ── Fixed background anchor (DOM size ref for ScrollScene, no visual) ── */
+.bg-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ── Page wrapper — sits above WebGL canvas (canvas is z-index: 1) ── */
+.page {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Blades ── */
+.blades {
+  display: flex;
+  flex-direction: column;
+}
+
+.blade {
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  min-height: 100vh;
+  border-bottom: 1px solid var(--border);
+}
+
+.blade--reverse {
+  grid-template-columns: 45fr 55fr;
+}
+
+.blade--reverse .blade__media {
+  order: 2;
+}
+
+/* Image half — transparent so the WebGL canvas shows through */
+.blade__media {
+  position: relative;
+  overflow: hidden;
+  min-height: 60vmin;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+
+/* Hidden placeholder: real image rendered by WebGL, inset from container edges */
+.blade-img {
+  max-width: 90%;
+  /* position: absolute;
+  inset: 24px;
+  display: block; */
+  /* visibility: hidden; */
+}
+.scroll-scene--initialized {
+  visibility: hidden;
+}
+.debug .scroll-scene--initialized {
+  visibility: visible;
+}
+
+/* Text half */
+.blade__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5em 3.5em 5em 4em;
+  border-left: 1px solid var(--border);
+}
+
+.blade--reverse .blade__text {
+  padding: 5em 4em 5em 3.5em;
+  border-left: none;
+  border-right: 1px solid var(--border);
+}
+
+.blade__index {
+  font-family: monospace;
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.5em;
+  opacity: 0.9;
+}
+
+.blade__title {
+  font-size: clamp(2em, 3.5vw, 3em);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-bottom: 0.8em;
+}
+
+.blade__body {
+  color: var(--muted);
+  font-size: 0.9em;
+  line-height: 1.8;
+  max-width: 34em;
+}
+
+.blade__body + .blade__body {
+  margin-top: 1em;
+}
+
+/* ── Site header ── */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5em;
+  height: 3em;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 7, 14, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 0.8em;
+}
+
+.site-header__brand {
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.site-header__brand span {
+  color: var(--accent);
+}
+
+.site-header__nav {
+  display: flex;
+  gap: 2em;
+  list-style: none;
+}
+
+.site-header__nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9em;
+  transition: color 0.15s;
+}
+
+.debug-toggle {
+  font-family: monospace;
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.3em 0.8em;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.debug-toggle:hover,
+.debug-toggle.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.site-header__nav a:hover {
+  color: var(--text);
+}
+
+/* ── Intro / hero blade ── */
+.blade--intro {
+  grid-template-columns: 1fr;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  padding: 8em 5em 5em;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+}
+
+.blade--intro .blade__text {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  padding: 0;
+  max-width: 740px;
+}
+
+.blade--intro .blade__title {
+  font-size: clamp(3em, 6vw, 5.5em);
+  letter-spacing: -0.05em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .blade {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
+
+  .blade--reverse {
+    grid-template-columns: 1fr;
+  }
+
+  .blade--reverse .blade__media {
+    order: 0;
+  }
+
+  .blade__media {
+    min-height: 60vw;
+  }
+
+  .blade__media::after {
+    width: 0;
+  }
+
+  .blade__text {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding: 3em 2em;
+  }
+
+  .blade--reverse .blade__text {
+    border-right: none;
+    border-top: 1px solid var(--border);
+    padding: 3em 2em;
+  }
+
+  .blade--intro {
+    padding: 7em 2em 3em;
+  }
+
+  .site-header__nav {
+    display: none;
+  }
+}
+.scroll-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}

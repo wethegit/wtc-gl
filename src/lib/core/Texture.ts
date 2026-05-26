@@ -348,8 +348,9 @@ export class Texture {
         this.width = this.image.videoWidth
         this.height = this.image.videoHeight
       } else if (this.image && 'width' in this.image) {
-        this.width = this.image.width
-        this.height = this.image.height
+        const img = this.image as HTMLImageElement
+        this.width = img.naturalWidth > 0 ? img.naturalWidth : img.width
+        this.height = img.naturalHeight > 0 ? img.naturalHeight : img.height
       }
 
       if (

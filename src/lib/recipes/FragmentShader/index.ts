@@ -119,7 +119,8 @@ export class FragmentShader {
   }
 
   render(t: number) {
-    const diff = t - this.lastTime
+    if (this.lastTime === 0) this.lastTime = t
+    const diff = Math.min(t - this.lastTime, 50)
     this.lastTime = t
 
     if (this.playing) {
