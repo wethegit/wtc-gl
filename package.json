@@ -29,7 +29,7 @@
     "build:site": "npm run document && npx vite build --config vite.site.config.js && cp -r docs dist-site/demos/docs"
   },
   "devDependencies": {
-    "@types/webgl2": "0.0.11",
+    "@types/webgl2": "0.0.12",
     "@typescript-eslint/eslint-plugin": "~7.18.0",
     "@typescript-eslint/parser": "~7.18.0",
     "eslint": "^8.38.0",
