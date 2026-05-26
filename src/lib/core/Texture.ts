@@ -347,6 +347,11 @@ export class Texture {
       if (this.image instanceof HTMLVideoElement) {
         this.width = this.image.videoWidth
         this.height = this.image.videoHeight
+      } else if (this.image instanceof HTMLImageElement) {
+        // `.width`/`.height` on HTMLImageElement reflect layout/CSS sizing, not
+        // the source bitmap. Use natural dimensions so the full image uploads.
+        this.width = this.image.naturalWidth
+        this.height = this.image.naturalHeight
       } else if (this.image && 'width' in this.image) {
         const img = this.image as HTMLImageElement
         this.width = img.naturalWidth > 0 ? img.naturalWidth : img.width
