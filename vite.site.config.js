@@ -24,6 +24,8 @@ export default defineConfig({
         transformFeedback: resolvePath('demos/transformFeedback/index.html'),
         videoTex: resolvePath('demos/videoTex/index.html'),
         webcamCa: resolvePath('demos/webcam-ca/index.html'),
+        raymarchingWebgl2: resolvePath('demos/raymarching-webgl2/index.html'),
+        scrollBlades: resolvePath('demos/scroll-blades/index.html'),
       }
     }
   }

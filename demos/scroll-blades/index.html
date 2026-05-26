@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll Blades - wtc-gl</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-scene"></div>
+
+    <div class="page">
+      <header class="site-header">
+        <div class="site-header__brand">
+          wtc-gl <span>/</span> scroll-blades
+        </div>
+        <ul class="site-header__nav">
+          <li><a href="#01">How to</a></li>
+          <li><a href="#02">ScrollRenderer</a></li>
+          <li><a href="#03">Uniforms</a></li>
+          <li><a href="#04">Another image</a></li>
+        </ul>
+        <button class="debug-toggle" id="debug-toggle">WebGL</button>
+      </header>
+
+      <main class="blades">
+        <section class="blade blade--intro">
+          <div class="blade--intro__header">
+            <p class="blade__index">
+              ScrollRenderer · TransformFeedback · Scroll Image
+            </p>
+            <h1 class="blade__title">Scroll Image.</h1>
+          </div>
+          <div class="blade__text">
+            <p class="blade__body">
+              The Scroll Renderer recipe provides a framework for scroll-linked
+              WebGL effects on arbitrary DOM elements. It comes with a couple of
+              different classes to link to WebGL drawables:
+              <code>ScrollScene</code> forms the base layer, linking arbitrary
+              DOM elements to WebGL effects, and <code>ScrollImage</code> links
+              individual images to scroll-reactive WebGL effects.
+            </p>
+            <p class="blade__body">
+              It controls a single WebGL context and render loop, allowing for
+              complex layered effects with multiple scroll-linked elements
+              without the overhead of multiple contexts or loops.
+            </p>
+          </div>
+          <div class="blade__text">
+            <p class="blade__body">
+              In this demo, we've linked the background shader to a
+              <code>ScrollScene</code> anchored to a fixed full-viewport
+              element, and each of the four foreground images to individual
+              <code>ScrollImage</code>s. The scroll position of each image is
+              tracked separately via <code>onBeforeRender</code>, allowing for
+              independent parallax and distortion effects.
+            </p>
+            <p class="blade__body">
+              Hit the "WEBGL" toggle, top-left to switch between WebGL and DOM
+              views so you can see how the image positioning informs the shader
+              layout.
+            </p>
+          </div>
+        </section>
+
+        <section class="blade" id="01">
+          <div class="blade__media">
+            <img class="blade-img" src="./1.webp" alt="" />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">01 · How to</p>
+            <h2 class="blade__title">Example.</h2>
+            <p class="blade__body">
+              The WebGL program for each image is a simple mesh shader with
+              transform feedback, allowing the vertex shader to update the
+              position and velocity of each vertex on the fly. Scroll-linked
+              distortion and mouse interaction are added as uniform offsets to
+              the vertex positions, and a noise function is used to create an
+              organic erosion effect around the edges.
+            </p>
+            <pre class="blade__code"><code>const renderer = new ScrollRenderer()
+document.body.appendChild(renderer.canvas)
+
+document.querySelectorAll('.blade-img').forEach((imgEl) => {
+  const drawable = new Drawable(gl)
+  const scene = new ScrollImage({ gl, element: imgEl, scene: drawable })
+
+  const program = new Program(gl, {
+    vertex: imageVert,
+    fragment: imageFrag,
+    uniforms: { ...scene.uniforms },
+    transparent: true,
+  })
+
+  new Mesh(gl, {
+    geometry: new Plane(gl, { widthSegments: 24, heightSegments: 18 }),
+    program,
+  }).setParent(drawable)
+
+  renderer.addScene(scene)
+})
+
+renderer.playing = true</code></pre>
+          </div>
+        </section>
+
+        <section class="blade blade--reverse" id="02">
+          <div class="blade__media">
+            <img class="blade-img" src="./2.webp" alt="" />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">02 · ScrollRenderer</p>
+            <h2 class="blade__title">One canvas. Many scenes.</h2>
+            <p class="blade__body">
+              <code>ScrollRenderer</code> manages a single fixed
+              <code>&lt;canvas&gt;</code> and one
+              <code>requestAnimationFrame</code> loop for all registered scenes.
+              Each scene is scissor-tested to its DOM element's exact pixel
+              bounds, so multiple WebGL effects share one context with no
+              overdraw outside their element.
+            </p>
+            <p class="blade__body">
+              Scenes outside the viewport are skipped automatically via
+              <code>IntersectionObserver</code>. The aurora background is a
+              <code>ScrollScene</code> anchored to a fixed full-viewport
+              element. Which shows off the fact that scroll renderer just knows
+              where to draw things.
+            </p>
+          </div>
+        </section>
+
+        <section class="blade" id="03">
+          <div class="blade__media">
+            <img class="blade-img" src="./3.webp" alt="" />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">03 · Uniforms</p>
+            <h2 class="blade__title">Wired up automatically.</h2>
+            <p class="blade__body">
+              <code>ScrollScene</code> maintains a set of uniforms that are
+              updated every frame and ready to spread directly into your
+              <code>Program</code>: <code>u_time</code> (elapsed),
+              <code>u_resolution</code> (element size in physical pixels), and
+              <code>u_origin</code> (element position in both pixel and NDC
+              space). <code>ScrollImage</code> adds <code>u_image</code> and
+              <code>u_imageSize</code> for the GPU-uploaded texture.
+            </p>
+            <p class="blade__body">
+              Custom uniforms - like the scroll velocity and mouse position used
+              for the cloth simulation here - are created with
+              <code>Uniform</code> and merged in alongside them. Update
+              <code>.value</code> each frame inside <code>onBeforeRender</code>
+              and the program picks up the change automatically.
+            </p>
+            <pre class="blade__code"><code>const u_mouse = new Uniform({
+  name: 'u_mouse', value: [0.5, 0.5], kind: 'float_vec2',
+})
+
+const program = new Program(gl, {
+  uniforms: {
+    ...scene.uniforms, // u_time, u_resolution, u_origin,
+                       // u_image, u_imageSize
+    u_mouse,
+  },
+})
+
+scene.onBeforeRender = () => {
+  u_mouse.value = mouse
+}</code></pre>
+          </div>
+        </section>
+
+        <section class="blade blade--reverse" id="04">
+          <div class="blade__media">
+            <img class="blade-img" src="./4.webp" alt="" />
+          </div>
+          <div class="blade__text">
+            <p class="blade__index">04 · Another image</p>
+            <h2 class="blade__title">We had a fourth image.</h2>
+            <p class="blade__body">
+              It needed to go somewhere. Here it is. It looks great. The cloth
+              effect works on it too.
+            </p>
+            <p class="blade__body">
+              There's no technical insight here. We just didn't want to waste
+              it.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

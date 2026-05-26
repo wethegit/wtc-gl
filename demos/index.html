@@ -251,6 +251,65 @@
             <a class="btn" href="./webcam-ca/">Open demo →</a>
           </div>
         </div>
+
+        <div class="demo">
+          <div class="demo__preview" style="background:linear-gradient(135deg,#000d1a 0%,#000814 50%,#0d001a 100%);display:flex;align-items:center;justify-content:center;">
+            <span style="font-family:monospace;font-size:0.7em;color:rgba(100,180,255,0.4);letter-spacing:0.1em;">SDF</span>
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Mesh</span>
+              <span class="demo__class">Box</span>
+              <span class="demo__class">DollyCamera</span>
+            </div>
+            <h3>Raymarching on a mesh</h3>
+            <p>
+              A raymarching SDF rendered inside the volume of a rotating
+              <code>Box</code> mesh. The fragment shader casts rays from each
+              mesh surface point, infinitely repeating a frame-and-sphere
+              lattice. The cube's model matrix is passed as a uniform so the
+              SDF space rotates in sync with the geometry.
+            </p>
+            <a class="btn" href="./raymarching-webgl2/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(135deg, #07070e 0%, #05051a 40%, #040814 100%);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(74, 158, 255, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >BLADES</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">ScrollRenderer</span>
+              <span class="demo__class">ScrollScene</span>
+              <span class="demo__class">ScrollImage</span>
+            </div>
+            <h3>Scroll blades</h3>
+            <p>
+              An editorial scroll layout: a fullscreen animated background via
+              <code>ScrollScene</code>, four alternating image/text blades each
+              using <code>ScrollImage</code> for cover-fit, parallax, and
+              chromatic aberration — all on one shared WebGL context.
+            </p>
+            <a class="btn" href="./scroll-blades/">Open demo →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Getting started -->

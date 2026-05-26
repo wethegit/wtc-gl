@@ -76,10 +76,11 @@ void main() {
   vec3  vel  = a_velocity;
   float life = a_life - lifeRate;
 
+  float dt = u_delta * 60.0;
   if (life > 0.0) {
     vec3 force = curl3(pos * 5.0 + u_time * 0.12) * 0.0001;
-    vel = vel * 0.98 + force;
-    pos = pos + vel;
+    vel = vel * pow(0.98, dt) + force * dt;
+    pos = pos + vel * dt;
   } else {
     float angle = rand(a_seed,        u_time) * 6.28318;
     float phi   = rand(a_seed + 17.3, u_time) * 3.14159;

@@ -128,6 +128,8 @@ export class ScrollRenderer {
    */
   addScene(scene: ScrollScene) {
     this.#scenes.push(scene)
+    if (scene.initializedClass)
+      scene.element.classList.add(scene.initializedClass)
   }
 
   /**
@@ -150,7 +152,8 @@ export class ScrollRenderer {
    * @param t - Timestamp provided by `requestAnimationFrame`.
    */
   render(t: number) {
-    const delta = t - this.#lastTime
+    if (this.#lastTime === 0) this.#lastTime = t
+    const delta = Math.min(t - this.#lastTime, 50)
     this.#lastTime = t
 
     if (this.#playing) requestAnimationFrame(this.render)
