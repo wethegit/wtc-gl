@@ -1,12 +1,11 @@
 #version 300 es
 precision highp float;
 
-uniform vec2      u_resolution;
-uniform float     u_time;
 uniform sampler2D u_image;
 uniform vec2      u_imageSize;
-uniform float     u_scroll;
-uniform vec2      u_mouse; // element-space [0,1], default (0.5, 0.5)
+uniform vec2      u_resolution;
+uniform float     u_time;
+uniform vec2      u_mouse;
 
 in vec2 v_uv;
 out vec4 colour;
@@ -45,43 +44,32 @@ float fbm(vec2 p) {
 }
 
 void main() {
-  vec2 uv = v_uv;
-
-  // Scroll parallax (Y) + mouse parallax (XY)
-  vec2 mouse  = u_mouse - 0.5;
-  vec2 offset = vec2(mouse.x * 0.05, (u_scroll - 0.5) * 0.15 + mouse.y * 0.04);
-  vec2 imgUV  = coverUV((uv-.5)*1.1+.5, u_resolution, u_imageSize) + offset;
+  vec2 imgUV = coverUV(v_uv, u_resolution, u_imageSize);
   imgUV = clamp(imgUV, 0.0, 1.0);
 
-  // Chromatic aberration — stronger at edges, zero at centre
-  float ca  = 0.004 * (1.0 - length(uv * 2.0 - 1.0) * 0.45);
-  vec2  dir = normalize(uv - 0.5 + 1e-4);
+  // Chromatic aberration based on rest-UV distance from centre
+  float ca  = 0.003 * (1.0 - length(v_uv * 2.0 - 1.0) * 0.45);
+  vec2  dir = normalize(v_uv - 0.5 + 1e-4);
   float r   = texture(u_image, imgUV + dir * ca).r;
   float g   = texture(u_image, imgUV).g;
   float b   = texture(u_image, imgUV - dir * ca).b;
+  vec3  col = vec3(r, g, b);
 
-  float a = step(imgUV.x, 0.0) + step(1.0, imgUV.x) + step(imgUV.y, 0.0) + step(1.0, imgUV.y);
-
-  vec3 col = mix(vec3(r, g, b), vec3(0), a);
-
-  // Cool editorial grade: pull toward blue, reduce red
+  // Editorial grade: pull toward blue
   col = mix(col, col * vec3(0.90, 0.95, 1.10), 0.35);
 
   // Radial vignette
-  vec2  c    = uv * 2.0 - 1.0;
+  vec2  c    = v_uv * 2.0 - 1.0;
   float vign = 1.0 - dot(c, c) * 0.28;
   col *= vign;
 
-  // Noise edge mask — mouse offsets noise sample so erosion pattern shifts with cursor
-  vec2 noiseUV = uv * 5.0 + u_time * 0.025 + mouse * 0.8;
-  float n = fbm(noiseUV); // ~0 to ~0.97
-
-  // Distance from nearest edge [0 at edge .. 0.5 at centre]
-  float edgeDist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
-
-  // Noise sets erosion depth per-pixel between 0.05 and 0.15
-  float erosion = 0.04 + n * 0.10;
-  float mask = smoothstep(erosion - 0.03, erosion + 0.03, edgeDist) * (1.0 - a);
+  // Noise edge mask — mouse shifts the erosion pattern
+  vec2  mouse   = u_mouse - 0.5;
+  vec2  noiseUV = v_uv * 5.0 + u_time * 0.025 + mouse * 0.8;
+  float n        = fbm(noiseUV);
+  float edgeDist = min(min(v_uv.x, 1.0 - v_uv.x), min(v_uv.y, 1.0 - v_uv.y));
+  vec2 erosion  = vec2(0.04 + n * 0.10, 0.02 + n * 0.06);
+  float mask     = smoothstep(erosion.x - 0.03, erosion.x + 0.03, edgeDist) * .6 + smoothstep(erosion.y - 0.01, erosion.y + 0.01, edgeDist) * .4;
 
   colour = vec4(col, mask);
 }
