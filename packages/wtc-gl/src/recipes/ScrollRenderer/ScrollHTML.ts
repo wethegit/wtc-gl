@@ -8,8 +8,7 @@ import { ScrollScene, type ScrollSceneOptions } from './ScrollScene'
  * Requires `chrome://flags/#canvas-draw-element` to be enabled.
  * @see https://github.com/WICG/html-in-canvas
  */
-interface CanvasRenderingContext2DWithElementDraw
-  extends CanvasRenderingContext2D {
+interface CanvasRenderingContext2DWithElementDraw extends CanvasRenderingContext2D {
   drawElementImage(
     element: HTMLElement,
     dx: number,

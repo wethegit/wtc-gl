@@ -1,4 +1,4 @@
-import { FragmentShader } from '../src/lib'
+import { FragmentShader } from 'wtc-gl'
 import fragment from './hero.frag'
 import vertex from './fs.vert'
 

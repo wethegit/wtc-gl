@@ -7,7 +7,7 @@ import {
   Plane,
   Drawable,
   Uniform
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import clothVert    from './cloth.vert'
 import clothFrag    from './cloth.frag'

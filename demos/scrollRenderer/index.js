@@ -5,7 +5,7 @@ import {
   Mesh,
   Triangle,
   Drawable
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import vert from './default.vert'
 import voronoiFrag from './voronoi.frag'

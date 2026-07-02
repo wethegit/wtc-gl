@@ -1,4 +1,4 @@
-import { ScrollRenderer } from '../../src/lib'
+import { ScrollRenderer } from 'wtc-gl'
 import { createSharedTextures } from './textures.js'
 
 import { initHero }      from './scenes/hero'

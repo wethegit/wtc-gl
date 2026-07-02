@@ -5,7 +5,7 @@ import {
   Program,
   Mesh,
   Framebuffer
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import fragment from './main.frag'
 import vertex from './main.vert'

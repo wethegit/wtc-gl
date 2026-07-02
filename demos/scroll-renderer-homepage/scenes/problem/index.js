@@ -1,4 +1,4 @@
-import { Uniform } from '../../../../src/lib'
+import { Uniform } from 'wtc-gl'
 import { makeScene, scrollProgress } from '../../utils.js'
 import problemFrag from './problem.frag'
 

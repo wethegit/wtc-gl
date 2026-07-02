@@ -79,13 +79,7 @@ export interface WTCGLActiveInfo extends WebGLActiveInfo {
  * Represents a value that can be bound to a uniform.
  */
 export type WTCGLUniformValue =
-  | Texture
-  | Texture[]
-  | number[]
-  | string
-  | number
-  | boolean
-  | Float32Array
+  Texture | Texture[] | number[] | string | number | boolean | Float32Array
 /**
  * Represents a map of uniforms returned from a program.
  */

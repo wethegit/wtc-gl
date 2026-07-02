@@ -1,4 +1,4 @@
-import { Texture, Drawable, ScrollScene, Mesh, Triangle, Program } from '../../src/lib'
+import { Texture, Drawable, ScrollScene, Mesh, Triangle, Program } from 'wtc-gl'
 import vert from './default.vert'
 
 export const makeTexture = (gl, data, size) => {

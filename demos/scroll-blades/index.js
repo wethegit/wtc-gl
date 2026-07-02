@@ -10,7 +10,7 @@ import {
   TransformFeedback,
   Geometry,
   GeometryAttribute
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import defaultVert from './default.vert'
 import bgFrag from './bg.frag'

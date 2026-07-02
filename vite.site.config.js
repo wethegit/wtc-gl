@@ -7,6 +7,11 @@ const resolvePath = (str) => resolve(__dirname, str)
 export default defineConfig({
   plugins: [glsl()],
   base: '/wtc-gl/',
+  resolve: {
+    alias: {
+      'wtc-gl': resolvePath('packages/wtc-gl/src/index.ts')
+    }
+  },
   build: {
     outDir: 'dist-site',
     emptyOutDir: true,

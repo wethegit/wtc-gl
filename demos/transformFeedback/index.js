@@ -9,7 +9,7 @@ import {
   GeometryAttribute,
   Camera,
   Vec2
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import vertex from './particles.vert'
 import fragment from './particle.frag'

@@ -11,7 +11,7 @@ import {
   Vec3,
   Mat4,
   Framebuffer
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import '../style.css'
 

@@ -1,4 +1,4 @@
-import { Uniform } from '../../../../src/lib'
+import { Uniform } from 'wtc-gl'
 import { makeScene } from '../../utils.js'
 import heroFrag from './hero.frag'
 

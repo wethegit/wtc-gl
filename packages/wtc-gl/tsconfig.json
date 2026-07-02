@@ -18,11 +18,5 @@
     "noFallthroughCasesInSwitch": true,
     "strictPropertyInitialization": false
   },
-  "include": ["src", "types"],
-  "exclude": ["docs/", "dist/", "node_modules/", "demos"],
-  "typedocOptions": {
-    "out": "docs",
-    "entryPoints": "src/lib/index.ts",
-    "exclude": ["dist/*+.ts*"]
-  }
+  "include": ["src", "types"]
 }

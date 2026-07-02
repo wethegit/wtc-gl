@@ -6,7 +6,7 @@ import {
   Mesh,
   Framebuffer,
   Texture
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import simFragment from './sim.frag'
 import renderFragment from './render.frag'

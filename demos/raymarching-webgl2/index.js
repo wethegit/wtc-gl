@@ -9,7 +9,7 @@ import {
   Vec2,
   Vec3,
   Mat4,
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import vertex from './main.vert'
 import fragment from './main.frag'

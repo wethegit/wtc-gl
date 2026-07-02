@@ -7,7 +7,7 @@ import {
   TransformFeedback,
   PointCloud,
   DollyCamera
-} from '../../../../src/lib'
+} from 'wtc-gl'
 import particlesVert from './particles.vert'
 import particlesFrag from './particles.frag'
 

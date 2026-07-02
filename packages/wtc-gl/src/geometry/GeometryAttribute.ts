@@ -98,8 +98,8 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
       (this.data.constructor === Float32Array
         ? window.WebGLRenderingContext.FLOAT
         : this.data.constructor === Uint16Array
-        ? window.WebGLRenderingContext.UNSIGNED_SHORT
-        : window.WebGLRenderingContext.UNSIGNED_INT)
+          ? window.WebGLRenderingContext.UNSIGNED_SHORT
+          : window.WebGLRenderingContext.UNSIGNED_INT)
     this.normalized = normalized
 
     this.count = count || stride ? data.byteLength / stride : data.length / size

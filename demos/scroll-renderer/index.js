@@ -8,7 +8,7 @@ import {
   Uniform,
   TransformFeedback,
   PointCloud
-} from '../../src/lib'
+} from 'wtc-gl'
 
 import vert from '../fs.vert'
 import heroFrag from './hero.frag'

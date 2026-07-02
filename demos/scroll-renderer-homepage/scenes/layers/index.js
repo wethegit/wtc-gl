@@ -7,7 +7,7 @@ import {
   Camera,
   Vec3,
   glsl
-} from '../../../../src/lib'
+} from 'wtc-gl'
 import { scrollProgress, smoothstep } from '../../utils.js'
 import layers3dVert from './layers3d.vert'
 import layer1Frag from './layer1.frag'

@@ -1,4 +1,4 @@
-import { FragmentShader, Texture, Uniform } from '../../src/lib'
+import { FragmentShader, Texture, Uniform } from 'wtc-gl'
 
 import fragment from './main.frag'
 import vertex from './main.vert'
