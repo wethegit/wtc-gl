@@ -5,12 +5,12 @@
   "packageManager": "pnpm@10.13.1",
   "scripts": {
     "prepare": "husky",
-    "dev": "vite",
+    "dev": "pnpm --filter wtc-gl-site run dev",
     "build": "pnpm -r run build",
     "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/*",
-    "preview": "vite preview --config vite.site.config.js",
+    "preview": "pnpm --filter wtc-gl-site run preview",
     "document": "typedoc --entryPointStrategy Expand",
-    "build:site": "pnpm run document && vite build --config vite.site.config.js && cp -r docs dist-site/demos/docs"
+    "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~7.18.0",
@@ -21,10 +21,7 @@
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "typedoc": "~0.28.19",
-    "typescript": "~6.0.3",
-    "vite": "^8.0.0",
-    "vite-plugin-glsl": "~1.6.0",
-    "wtc-gl": "workspace:*"
+    "typescript": "~6.0.3"
   },
   "lint-staged": {
     "packages/*/src/**/*.{ts,tsx,js}": "eslint --fix",

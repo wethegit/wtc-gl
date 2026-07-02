@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [glsl()],
   resolve: {
     alias: {
-      'wtc-gl': resolvePath('packages/wtc-gl/src/index.ts')
+      'wtc-gl': resolvePath('../wtc-gl/src/index.ts')
     }
   }
 })

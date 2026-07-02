@@ -9,7 +9,7 @@ export default defineConfig({
   base: '/wtc-gl/',
   resolve: {
     alias: {
-      'wtc-gl': resolvePath('packages/wtc-gl/src/index.ts')
+      'wtc-gl': resolvePath('../wtc-gl/src/index.ts')
     }
   },
   build: {
