@@ -9,7 +9,7 @@ import type { ScrollSceneSetup } from './use-scroll-scene'
  * except `gl` (taken from the provider), `element` (taken from the ref) and
  * `scene` (a root `Drawable` is created for you).
  *
- * `onBeforeRender`/`onAfterRender` may change between renders — the latest
+ * `onBeforeRender`/`onAfterRender` may change between renders - the latest
  * ones are always called. All other options are captured when the scene is
  * created.
  */
@@ -46,7 +46,7 @@ export type UseScrollImageOptions = Omit<
  *   return <img ref={ref} src={src} alt="" />
  * }
  *
- * @param elementRef - Ref to the tracked element — an `<img>` unless `options.image` is set.
+ * @param elementRef - Ref to the tracked element - an `<img>` unless `options.image` is set.
  * @param setup - Builds the scene's GL content; may return a cleanup function.
  * @param options - Forwarded to the `ScrollImage` constructor.
  * @returns A ref holding the live `ScrollImage`, or `null` before creation.

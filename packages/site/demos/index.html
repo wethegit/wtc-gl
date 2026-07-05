@@ -217,6 +217,48 @@
               background: linear-gradient(
                 135deg,
                 #0a0a1a 0%,
+                #16203a 50%,
+                #0d1a2e 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(97, 218, 251, 0.5);
+                letter-spacing: 0.1em;
+              "
+              >&lt;REACT /&gt;</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">ScrollRendererProvider</span>
+              <span class="demo__class">useScrollScene</span>
+            </div>
+            <h3>React ScrollRenderer</h3>
+            <p>
+              The ScrollRenderer demo rebuilt with
+              <code>@wethegit/react-wtc-gl</code>: a provider owns the canvas
+              and render loop, hooks register scenes from components, and
+              React state pauses the loop. Runs in StrictMode to exercise the
+              cleanup paths.
+            </p>
+            <a class="btn" href="./react-scroll-renderer/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0a0a1a 0%,
                 #0d1a2e 40%,
                 #0a1a10 100%
               );

@@ -23,12 +23,12 @@ export interface ScrollSceneSetupContext<S extends ScrollScene = ScrollScene> {
 }
 
 /**
- * Builds the GL content for a scene. Runs once when the scene is created —
+ * Builds the GL content for a scene. Runs once when the scene is created -
  * after the `ScrollScene` is constructed (so its auto-managed uniforms are
  * available) and before it is registered with the renderer.
  *
  * Like a `useEffect` callback, it may return a cleanup function, which is
- * called when the scene is removed — free any GL resources you created there.
+ * called when the scene is removed - free any GL resources you created there.
  */
 export type ScrollSceneSetup<S extends ScrollScene = ScrollScene> = (
   context: ScrollSceneSetupContext<S>
@@ -39,7 +39,7 @@ export type ScrollSceneSetup<S extends ScrollScene = ScrollScene> = (
  * except `element` (taken from the ref) and `scene` (a root `Drawable` is
  * created for you).
  *
- * `onBeforeRender`/`onAfterRender` may change between renders — the latest
+ * `onBeforeRender`/`onAfterRender` may change between renders - the latest
  * ones are always called. All other options are captured when the scene is
  * created.
  */

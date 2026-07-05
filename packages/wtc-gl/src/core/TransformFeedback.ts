@@ -45,14 +45,20 @@ export type BufferRecord = Record<string, BufferRef>
  * Update this class to take care of its own internal state (like render targets) rather than relying on geo to control state
  */
 export class TransformFeedback {
+  gl: WTCGLRenderingContext
   VAOs: [WebGLVertexArrayObject, WebGLVertexArrayObject]
   TFBs: [WebGLTransformFeedback, WebGLTransformFeedback]
   BufferRefs: BufferRecord[]
+
+  // Buffers created by this instance (as opposed to caller-supplied ones),
+  // so remove() only deletes what it owns.
+  #ownedBuffers: WebGLBuffer[] = []
 
   constructor(
     gl: WTCGLRenderingContext,
     { program, transformFeedbacks }: TransformFeedbackOptions
   ) {
+    this.gl = gl
     this.VAOs = [gl.createVertexArray(), gl.createVertexArray()]
     this.TFBs = [gl.createTransformFeedback()!, gl.createTransformFeedback()!]
     this.BufferRefs = []
@@ -79,10 +85,11 @@ export class TransformFeedback {
           buffer: defaultBuffer = null
         } = tf
 
-        const buffer =
-          data && !defaultBuffer
-            ? createBuffer(gl, data, usage, buffertype)
-            : defaultBuffer
+        let buffer = defaultBuffer
+        if (data && !defaultBuffer) {
+          buffer = createBuffer(gl, data, usage, buffertype)
+          this.#ownedBuffers.push(buffer)
+        }
 
         bufferRef[names[i]] = { i, buffer }
 
@@ -107,5 +114,20 @@ export class TransformFeedback {
 
       this.BufferRefs.push(bufferRef)
     })
+  }
+
+  /**
+   * Deletes the GL resources this instance created: both vertex array
+   * objects, both transform feedback objects, and any buffers it allocated
+   * from attribute data. Buffers supplied by the caller via the `buffer`
+   * option are left alone.
+   */
+  remove(): void {
+    const { gl } = this
+    this.VAOs.forEach((vao) => gl.renderer.deleteVertexArray(vao))
+    this.TFBs.forEach((tfb) => gl.deleteTransformFeedback(tfb))
+    this.#ownedBuffers.forEach((buffer) => gl.deleteBuffer(buffer))
+    this.#ownedBuffers = []
+    this.BufferRefs = []
   }
 }

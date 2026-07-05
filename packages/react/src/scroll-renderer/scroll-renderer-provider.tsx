@@ -18,7 +18,7 @@ export interface ScrollRendererProviderProps {
    * Props forwarded to the underlying `Renderer`. `canvas` is always the
    * provider's own canvas element and cannot be overridden.
    *
-   * Captured once on mount — changing this prop after mount has no effect.
+   * Captured once on mount - changing this prop after mount has no effect.
    */
   rendererProps?: Omit<
     NonNullable<ScrollRendererOptions['rendererProps']>,
@@ -36,7 +36,7 @@ export interface ScrollRendererProviderProps {
   playing?: boolean
   /**
    * Class applied to the canvas element. When set, the default
-   * fixed-fullscreen inline styles are *not* applied — the class is expected
+   * fixed-fullscreen inline styles are *not* applied - the class is expected
    * to position the canvas itself.
    */
   className?: string
@@ -60,7 +60,7 @@ const defaultCanvasStyle: CSSProperties = {
  * descendant components with {@link useScrollScene} / {@link useScrollImage}.
  *
  * The renderer is created in an effect after first paint, so descendants
- * receive `null` from {@link useScrollRenderer} on the first render pass —
+ * receive `null` from {@link useScrollRenderer} on the first render pass -
  * scene hooks handle this by waiting for the renderer before registering.
  *
  * @example

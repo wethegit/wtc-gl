@@ -284,9 +284,6 @@ export class Geometry {
       this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(<any>window).transformFeedbacks = this.transformFeedbacks
-
     if (this.transformFeedbacks) {
       this.bindTransformFeedbacks()
       this.gl.beginTransformFeedback(mode)

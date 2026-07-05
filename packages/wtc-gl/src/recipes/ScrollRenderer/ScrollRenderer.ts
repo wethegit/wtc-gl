@@ -77,12 +77,15 @@ export class ScrollRenderer {
   #scenes: ScrollScene[] = []
   #lastTime: number = 0
   #playing: boolean = false
+  #ownsCanvas: boolean
+  #cleared: boolean = false
 
   constructor({
     rendererProps = {},
     onBeforeRender = () => {},
     onAfterRender = () => {}
   }: ScrollRendererOptions = {}) {
+    this.#ownsCanvas = !rendererProps.canvas
     this.renderer = new Renderer({
       alpha: true,
       ...rendererProps,
@@ -159,6 +162,20 @@ export class ScrollRenderer {
     if (this.#playing) requestAnimationFrame(this.render)
 
     this.onBeforeRender(delta)
+
+    // With no scenes registered, clear once so the last frame doesn't
+    // linger, then idle — the loop keeps ticking but does no GL work.
+    if (this.#scenes.length === 0) {
+      if (!this.#cleared) {
+        this.renderer.bindFramebuffer()
+        this.gl.clearColor(0, 0, 0, 0)
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+        this.#cleared = true
+      }
+      this.onAfterRender(delta)
+      return
+    }
+    this.#cleared = false
 
     const { gl } = this
     const { dpr } = this.renderer
@@ -254,10 +271,18 @@ export class ScrollRenderer {
    * Stops the render loop, removes the resize listener, and destroys all
    * registered scenes (disconnecting their `IntersectionObserver`s).
    *
+   * When the renderer created its own canvas, the WebGL context is also
+   * released immediately (via `WEBGL_lose_context`) rather than lingering
+   * until garbage collection — browsers cap the number of live contexts per
+   * page and drop the oldest when the cap is hit. A caller-supplied canvas
+   * (via `rendererProps.canvas`) is left untouched: a canvas can only ever
+   * hold one context, so losing it would break callers that keep the element
+   * and construct a new `ScrollRenderer` against it (React StrictMode does
+   * exactly this).
+   *
    * Returns the underlying `<canvas>` element so callers can remove it from
-   * the DOM if they own it. When using a React-managed canvas (passed via
-   * `rendererProps.canvas`) you don't need the return value — React will
-   * remove the element itself on unmount.
+   * the DOM if they own it. When using a React-managed canvas you don't need
+   * the return value — React will remove the element itself on unmount.
    *
    * @returns The canvas element.
    */
@@ -265,6 +290,9 @@ export class ScrollRenderer {
     this.playing = false
     window.removeEventListener('resize', this.resize)
     this.#scenes.forEach((s) => s.destroy())
+    this.#scenes = []
+    if (this.#ownsCanvas)
+      this.gl.getExtension('WEBGL_lose_context')?.loseContext()
     return this.canvas
   }
 }

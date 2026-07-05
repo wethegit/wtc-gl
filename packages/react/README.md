@@ -28,15 +28,21 @@ function HeroSection() {
   const ref = useRef<HTMLDivElement>(null)
 
   useScrollScene(ref, ({ gl, scrollScene }) => {
+    const geometry = new Triangle(gl)
     const program = new Program(gl, {
       vertex,
       fragment,
       // u_time, u_resolution and u_origin, auto-updated every frame
       uniforms: { ...scrollScene.uniforms }
     })
-    new Mesh(gl, { geometry: new Triangle(gl), program }).setParent(
-      scrollScene.scene
-    )
+    new Mesh(gl, { geometry, program }).setParent(scrollScene.scene)
+
+    // Free GL resources when the section unmounts - the provider (and its
+    // WebGL context) may outlive any one scene.
+    return () => {
+      geometry.remove()
+      program.remove()
+    }
   })
 
   return <div ref={ref} className="hero" />
@@ -51,7 +57,7 @@ export default function Page() {
 }
 ```
 
-The setup function runs once when the scene is created and, like a `useEffect` callback, may return a cleanup function for any GL resources it created.
+The setup function runs once when the scene is created and, like a `useEffect` callback, may return a cleanup function. Always free the GL resources setup created there (`program.remove()`, `geometry.remove()`, `transformFeedback.remove()`) - with a long-lived provider (e.g. mounted in a layout), anything you don't free accumulates in the WebGL context as scenes mount and unmount across navigations.
 
 For image-based scenes (`u_image` / `u_imageSize` uniforms) use `useScrollImage` with a ref to an `<img>`:
 
@@ -65,20 +71,20 @@ return <img ref={ref} src={src} alt="" />
 
 ## API
 
-- `<ScrollRendererProvider rendererProps? onBeforeRender? onAfterRender? playing? className? style?>` — creates the `ScrollRenderer` and canvas.
-- `useScrollRenderer()` — the nearest provider's `ScrollRenderer` (or `null` while it initializes).
-- `useScrollScene(elementRef, setup?, options?)` — registers a `ScrollScene`; returns a ref to it.
-- `useScrollImage(elementRef, setup?, options?)` — registers a `ScrollImage`; returns a ref to it.
+- `<ScrollRendererProvider rendererProps? onBeforeRender? onAfterRender? playing? className? style?>` - creates the `ScrollRenderer` and canvas.
+- `useScrollRenderer()` - the nearest provider's `ScrollRenderer` (or `null` while it initializes).
+- `useScrollScene(elementRef, setup?, options?)` - registers a `ScrollScene`; returns a ref to it.
+- `useScrollImage(elementRef, setup?, options?)` - registers a `ScrollImage`; returns a ref to it.
 
 `options` accepts everything the underlying `ScrollScene` / `ScrollImage` constructors do (`camera`, `useViewport`, `clipToViewport`, `clearOnRender`, `elementSpace`, `margin`, `initializedClass`, per-frame callbacks, …).
 
 ## Gotchas
 
-**React 18 StrictMode** mounts every component twice in development (mount → unmount → mount). The scene hooks handle this: the effect cleanup removes and destroys the scene between the two mounts, and the second mount recreates it. If scenes flicker or disappear in dev but not production, the likely culprit is the cleanup function returned by your setup — make sure it only frees resources that setup itself created.
+**React 18 StrictMode** mounts every component twice in development (mount → unmount → mount). The scene hooks handle this: the effect cleanup removes and destroys the scene between the two mounts, and the second mount recreates it. If scenes flicker or disappear in dev but not production, the likely culprit is the cleanup function returned by your setup - make sure it only frees resources that setup itself created.
 
-**Two-render cycle.** The provider creates the renderer in an effect, which runs after the first paint, so `useScrollRenderer()` returns `null` on the first render pass and scene hooks register on the second. This is normal — nothing is visible in the gap because the canvas is transparent.
+**Two-render cycle.** The provider creates the renderer in an effect, which runs after the first paint, so `useScrollRenderer()` returns `null` on the first render pass and scene hooks register on the second. This is normal - nothing is visible in the gap because the canvas is transparent.
 
-**Setup runs once.** The setup function is called when the scene is created (once the renderer and element are available) and never again — changing it between renders has no effect until the component remounts. The per-frame `onBeforeRender` / `onAfterRender` options are the exception: the latest ones are always called, so inline arrows capturing fresh props or state are fine there.
+**Setup runs once.** The setup function is called when the scene is created (once the renderer and element are available) and never again - changing it between renders has no effect until the component remounts. The per-frame `onBeforeRender` / `onAfterRender` options are the exception: the latest ones are always called, so inline arrows capturing fresh props or state are fine there.
 
 **Scene ordering.** Scenes render in registration order, which is mount order. If you composite scenes with `clearOnRender: false`, be aware that Suspense boundaries or conditional rendering can change mount order between dev and prod builds.
 
@@ -94,7 +100,7 @@ The main leak risk is a `ScrollScene` whose `IntersectionObserver` is never disc
 2. Mount a component that registers a scene, interact with it, then unmount it.
 3. Click **Collect garbage** (the bin icon), then take a second snapshot.
 4. Switch to **Comparison** view between the two snapshots.
-5. Filter by `IntersectionObserver` and `ScrollScene`. Neither should show a positive delta — if they do, the scene is not being destroyed on unmount.
+5. Filter by `IntersectionObserver` and `ScrollScene`. Neither should show a positive delta - if they do, the scene is not being destroyed on unmount.
 
 Repeat with StrictMode enabled to ensure the double-invoke cycle leaves no residue.
 
