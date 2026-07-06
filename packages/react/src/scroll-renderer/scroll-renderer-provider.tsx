@@ -24,9 +24,7 @@ export interface ScrollRendererProviderProps {
     NonNullable<ScrollRendererOptions['rendererProps']>,
     'canvas'
   >
-  /** Called once per frame before any scenes are rendered. May change freely between renders. */
   onBeforeRender?: (delta: number) => void
-  /** Called once per frame after all scenes are rendered. May change freely between renders. */
   onAfterRender?: (delta: number) => void
   /**
    * Whether the render loop runs.

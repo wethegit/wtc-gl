@@ -11,7 +11,7 @@ import { useScrollRenderer } from './scroll-renderer-provider'
 
 /** Context passed to a {@link ScrollSceneSetup} function. */
 export interface ScrollSceneSetupContext<S extends ScrollScene = ScrollScene> {
-  /** The GL rendering context. */
+  /** WebGL context. */
   gl: WTCGLRenderingContext
   /** The renderer from the nearest {@link ScrollRendererProvider}. */
   renderer: ScrollRenderer
