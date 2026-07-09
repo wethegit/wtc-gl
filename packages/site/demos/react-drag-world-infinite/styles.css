@@ -1,0 +1,125 @@
+/* Builds on ../react-drag-world/styles.css — paper theme, poi frames,
+   labels, hub card, hint, map chips, coords. This file adds the toroidal
+   layer/item plumbing and the compass. */
+
+/* ── layers ─────────────────────────────────────────────────────────────────
+   Same sandwich as the bounded demo:
+     z0  .layer--floor    endless dot grid + wrapping decorations
+     z1  provider canvas  shader regions (set inline on the provider)
+     z2  .layer--drag     pointer target, region frames + labels */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.layer--floor {
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    rgba(38, 34, 27, 0.18) 1px,
+    transparent 1.5px
+  );
+  background-size: 56px 56px;
+  background-position: 28px 28px;
+}
+
+.layer--drag {
+  z-index: 2;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.layer--drag.is-grabbing {
+  cursor: grabbing;
+}
+
+/* ── wrapping items ──
+   Anchored to the viewport centre; useInfiniteDragWorld writes
+   `translate(calc(<x>px - 50%), calc(<y>px - 50%))` per frame. */
+
+.witem {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+/* ── floor decoration ── */
+
+.floor-glow {
+  width: 1100px;
+  height: 1100px;
+  border-radius: 50%;
+}
+
+.floor-axis {
+  background: rgba(38, 34, 27, 0.1);
+}
+
+.floor-axis--v {
+  width: 1px;
+  height: 100vh;
+}
+
+.floor-axis--h {
+  width: 100vw;
+  height: 1px;
+}
+
+.floor-ring {
+  width: 1400px;
+  height: 1400px;
+  border-radius: 50%;
+  border: 1px solid rgba(38, 34, 27, 0.09);
+}
+
+/* ── compass ── */
+
+.compass {
+  position: fixed;
+  top: 4.5em;
+  right: 1.5rem;
+  z-index: 10;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+  transition: opacity 0.3s ease;
+}
+
+.compass--home {
+  opacity: 0.35;
+}
+
+.compass__needle {
+  display: inline-block;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.compass__dist {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .compass__dist {
+    display: none;
+  }
+}

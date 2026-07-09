@@ -1,0 +1,436 @@
+/* Self-contained stylesheet for the React DragWorld demo — no dependency on
+   the site-wide demos/styles.css, so it can be lifted straight into CodePen.
+   (The infinite variant layers this over the site styles, which is why a few
+   rules below explicitly neutralise site typography.) */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* ── reset ── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── paper theme ── */
+
+:root {
+  --bg: #f4efe6;
+  --bg-80: color-mix(in srgb, var(--bg) 80%, transparent);
+  --surface: rgba(42, 36, 26, 0.04);
+  --border: rgba(42, 36, 26, 0.14);
+  --text: #26221b;
+  --muted: rgba(38, 34, 27, 0.58);
+  --accent: #2456c8;
+  --mono: monospace;
+}
+
+/* ── base ── */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  color: var(--accent);
+  background: rgba(36, 86, 200, 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* No letter-spacing anywhere on this page — `normal` is also declared
+   explicitly so these win over the site styles when both are loaded. */
+h1,
+h2,
+h3 {
+  color: var(--text);
+  line-height: 1.15;
+  letter-spacing: normal;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.2em;
+}
+
+/* ── demo nav ── */
+
+.demo-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 0 2em;
+  height: 3em;
+  gap: 0.5em;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.demo-nav__brand {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.demo-nav__sep {
+  color: rgba(38, 34, 27, 0.35);
+}
+
+.demo-nav__title {
+  color: rgba(38, 34, 27, 0.7);
+}
+
+/* ── panning layers ─────────────────────────────────────────────────────────
+   Three fixed strata share the viewport:
+     z0  .world-layer--floor   decorative dots/glows (below the canvas)
+     z1  the provider canvas   shader regions (set inline on the provider)
+     z2  .world-layer--drag    pointer target, region frames + labels
+   The two .world elements receive the same translate3d from useDragWorld. */
+
+.world-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.world-layer--floor {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.world-layer--drag {
+  z-index: 2;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.world-layer--drag.is-grabbing {
+  cursor: grabbing;
+}
+
+.world {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4400px;
+  height: 3400px;
+  margin: -1700px 0 0 -2200px;
+  will-change: transform;
+}
+
+/* ── floor decoration ── */
+
+.world--floor {
+  background-image: radial-gradient(
+    rgba(38, 34, 27, 0.18) 1px,
+    transparent 1.5px
+  );
+  background-size: 56px 56px;
+  background-position: 28px 28px;
+}
+
+.world__glow {
+  position: absolute;
+  width: 1100px;
+  height: 1100px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.world__axis {
+  position: absolute;
+  background: rgba(38, 34, 27, 0.1);
+}
+
+.world__axis--x {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+}
+
+.world__axis--y {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+
+.world__rings {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1400px;
+  height: 1400px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(38, 34, 27, 0.09);
+  box-shadow:
+    inset 0 0 0 1px transparent,
+    0 0 0 350px transparent;
+  background: radial-gradient(
+    circle,
+    transparent 49.9%,
+    rgba(38, 34, 27, 0.06) 50%,
+    transparent 50.4%
+  );
+}
+
+/* ── shader regions ── */
+
+.poi {
+  position: absolute;
+  border: 1px solid rgba(38, 34, 27, 0.28);
+  transition: border-color 0.35s ease;
+}
+
+/* Corner ticks */
+.poi::before,
+.poi::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--muted);
+  transition: border-color 0.35s ease;
+}
+
+.poi::before {
+  top: -2px;
+  left: -2px;
+  border-width: 2px 0 0 2px;
+}
+
+.poi::after {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 2px 2px 0;
+}
+
+.poi--active {
+  border-color: var(--accent);
+}
+
+.poi--active::before,
+.poi--active::after {
+  border-color: var(--accent);
+}
+
+.poi__label {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 14px);
+  width: min(420px, 100%);
+  padding: 1.1rem 1.3rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  opacity: 0.55;
+  transform: translateY(6px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.poi--active .poi__label {
+  opacity: 1;
+  transform: translateY(0);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.poi__label h2 {
+  margin: 0.4rem 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.poi__label p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ── hub card ── */
+
+.hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(560px, 80vw);
+  transform: translate(-50%, -50%);
+  padding: 2rem 2.25rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.hub h1 {
+  margin: 0.5rem 0 0.75rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.hub p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.hub code {
+  font-family: var(--mono);
+}
+
+/* ── fixed UI ── */
+
+.hint {
+  position: fixed;
+  left: 50%;
+  bottom: 6.5rem;
+  z-index: 10;
+  transform: translate(-50%, 8px);
+  padding: 0.55rem 1.1rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.hint--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.hint__icon {
+  color: var(--accent);
+  animation: hint-nudge 1.6s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes hint-nudge {
+  0%,
+  100% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.map {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 10;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  max-width: calc(100vw - 2rem);
+  overflow-x: auto;
+}
+
+.map__chip {
+  padding: 0.45rem 0.95rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.map__chip:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.map__chip--active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.coords {
+  position: fixed;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .coords {
+    display: none;
+  }
+
+  .poi__label {
+    width: min(320px, 100%);
+    padding: 0.9rem 1rem;
+  }
+}

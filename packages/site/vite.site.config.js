@@ -32,6 +32,10 @@ export default defineConfig({
         reactScrollRenderer: resolvePath(
           'demos/react-scroll-renderer/index.html'
         ),
+        reactDragWorld: resolvePath('demos/react-drag-world/index.html'),
+        reactDragWorldInfinite: resolvePath(
+          'demos/react-drag-world-infinite/index.html'
+        ),
         transformFeedback: resolvePath('demos/transformFeedback/index.html'),
         videoTex: resolvePath('demos/videoTex/index.html'),
         webcamCa: resolvePath('demos/webcam-ca/index.html'),

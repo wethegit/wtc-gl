@@ -259,6 +259,88 @@
               background: linear-gradient(
                 135deg,
                 #0a0a1a 0%,
+                #1a1030 50%,
+                #0d1a2e 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(97, 218, 251, 0.5);
+                letter-spacing: 0.1em;
+              "
+              >✥ DRAG</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">ScrollRendererProvider</span>
+              <span class="demo__class">useScrollScene</span>
+            </div>
+            <h3>React DragWorld</h3>
+            <p>
+              A click-and-drag explorable world in the style of the Super
+              Mario Odyssey site: a 4,400px map panned with momentum and
+              elastic bounds, where shader regions registered with
+              <code>useScrollScene</code> light up as you approach them.
+            </p>
+            <a class="btn" href="./react-drag-world/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #f4efe6 0%,
+                #e8e0d0 50%,
+                #efe6d6 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(36, 86, 200, 0.6);
+                letter-spacing: 0.1em;
+              "
+              >✥ DRAG ∞</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">ScrollRendererProvider</span>
+              <span class="demo__class">useScrollScene</span>
+            </div>
+            <h3>React DragWorld Infinite</h3>
+            <p>
+              The drag world wrapped into a torus: no edges, no bounds — each
+              region is a single DOM element folded back around the seam
+              while off-screen, with a compass pointing the shortest way home
+              across the wrap.
+            </p>
+            <a class="btn" href="./react-drag-world-infinite/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0a0a1a 0%,
                 #0d1a2e 40%,
                 #0a1a10 100%
               );
