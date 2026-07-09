@@ -1,12 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode
-} from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { ScrollRenderer, type ScrollRendererOptions } from 'wtc-gl'
 
 const ScrollRendererContext = createContext<ScrollRenderer | null>(null)
@@ -79,8 +72,9 @@ export function ScrollRendererProvider({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [renderer, setRenderer] = useState<ScrollRenderer | null>(null)
 
-  // Keep the latest frame callbacks in refs so the renderer always calls the
-  // current ones without being torn down and recreated.
+  // Callback props change identity on every consumer render. The renderer is created once and
+  // holds stable wrappers that read these refs at call time, so each frame runs the latest
+  // callback (fresh closures) without tearing down the renderer.
   const onBeforeRenderRef = useRef(onBeforeRender)
   const onAfterRenderRef = useRef(onAfterRender)
   useEffect(() => {

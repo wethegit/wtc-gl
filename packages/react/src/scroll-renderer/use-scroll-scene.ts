@@ -1,11 +1,8 @@
-import { useEffect, useRef, type RefObject } from 'react'
-import {
-  Drawable,
-  ScrollRenderer,
-  ScrollScene,
-  type ScrollSceneOptions,
-  type WTCGLRenderingContext
-} from 'wtc-gl'
+import { useEffect, useRef } from 'react'
+import { Drawable, ScrollRenderer, ScrollScene } from 'wtc-gl'
+
+import type { RefObject } from 'react'
+import type { ScrollSceneOptions, WTCGLRenderingContext } from 'wtc-gl'
 
 import { useScrollRenderer } from './scroll-renderer-provider'
 

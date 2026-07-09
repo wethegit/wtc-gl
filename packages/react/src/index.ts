@@ -1,15 +1,14 @@
 export {
   ScrollRendererProvider,
-  useScrollRenderer,
-  type ScrollRendererProviderProps
+  useScrollRenderer
 } from './scroll-renderer/scroll-renderer-provider'
-export {
-  useScrollScene,
-  type ScrollSceneSetup,
-  type ScrollSceneSetupContext,
-  type UseScrollSceneOptions
+export { useScrollScene } from './scroll-renderer/use-scroll-scene'
+export { useScrollImage } from './scroll-renderer/use-scroll-image'
+
+export type { ScrollRendererProviderProps } from './scroll-renderer/scroll-renderer-provider'
+export type {
+  ScrollSceneSetupContext,
+  ScrollSceneSetup,
+  UseScrollSceneOptions
 } from './scroll-renderer/use-scroll-scene'
-export {
-  useScrollImage,
-  type UseScrollImageOptions
-} from './scroll-renderer/use-scroll-image'
+export type { UseScrollImageOptions } from './scroll-renderer/use-scroll-image'
