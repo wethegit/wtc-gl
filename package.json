@@ -1,35 +1,18 @@
 {
-  "name": "wtc-gl",
-  "version": "1.2.3",
-  "description": "Typescript simple Web GL library.",
+  "name": "wtc-gl-monorepo",
+  "private": true,
   "type": "module",
-  "files": [
-    "dist"
-  ],
-  "types": "./dist/index.d.ts",
-  "main": "./dist/wtc-gl.umd.cjs",
-  "module": "./dist/wtc-gl.js",
-  "exports": {
-    "import": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/wtc-gl.js"
-    },
-    "require": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/wtc-gl.umd.cjs"
-    }
-  },
+  "packageManager": "pnpm@10.13.1",
   "scripts": {
     "prepare": "husky",
-    "dev": "vite",
-    "build": "rm -rf dist; tsc && vite build",
-    "lint": "eslint --fix --ext .ts --ignore-path .gitignore ./src/**/*",
-    "preview": "vite preview",
-    "document": "npx typedoc --entryPointStrategy Expand",
-    "build:site": "npm run document && npx vite build --config vite.site.config.js && cp -r docs dist-site/demos/docs"
+    "dev": "pnpm --filter wtc-gl-site run dev",
+    "build": "pnpm -r run build",
+    "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/*",
+    "preview": "pnpm --filter wtc-gl-site run preview",
+    "document": "typedoc --entryPointStrategy Expand",
+    "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs"
   },
   "devDependencies": {
-    "@types/webgl2": "0.0.11",
     "@typescript-eslint/eslint-plugin": "~7.18.0",
     "@typescript-eslint/parser": "~7.18.0",
     "eslint": "^8.38.0",
@@ -38,35 +21,10 @@
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "typedoc": "~0.28.19",
-    "typescript": "~6.0.3",
-    "vite": "^8.0.0",
-    "vite-plugin-dts": "~5.0.0",
-    "vite-plugin-glsl": "~1.6.0"
-  },
-  "dependencies": {
-    "wtc-math": "^1.3.0"
-  },
-  "peerDependencies": {
-    "wtc-math": "^1.3.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/wethegit/wtc-gl.git"
-  },
-  "keywords": [],
-  "homepage": "https://github.com/wethegit/wtc-gl#readme",
-  "author": "Liam Egan <liam@wethecollective.com> (http://wethecollective.com)",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "typescript": "~6.0.3"
   },
   "lint-staged": {
-    "src/**/*.{ts,js}": "eslint --fix",
-    "src/**/*": "prettier -w -u"
+    "packages/*/src/**/*.{ts,tsx,js}": "eslint --fix",
+    "packages/*/src/**/*": "prettier -w -u"
   }
 }

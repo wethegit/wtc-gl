@@ -1,0 +1,68 @@
+/* Card behind each section's text so it stays readable over the shaders */
+.scene__label {
+  max-width: 620px;
+  padding: 2rem 2.25rem;
+  background: var(--bg-80);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+
+/* Keep the hero title inside its card */
+.scene__label h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+}
+
+/* ── demo-code section ── */
+.scene--code {
+  min-height: auto;
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+.scene__label--wide {
+  max-width: 72ch;
+  width: 100%;
+}
+
+.scene--code pre {
+  margin-top: 1.75rem;
+  padding: 1.5rem 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.scene--code code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: inherit;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.playpause {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+  padding: 0.6em 1.4em;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.playpause:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
