@@ -16,9 +16,11 @@ import source from './main.tsx?raw'
 /** Source of scene N: the lines between its banner comment and the next. */
 function sceneSource(n: number): string {
   const lines = source.split('\n')
-  const title = lines.findIndex((l) => l.startsWith(`// Scene ${n}`))
+  const title = lines.findIndex((l: string) => l.startsWith(`// Scene ${n}`))
   if (title === -1) return ''
-  const end = lines.findIndex((l, i) => i > title + 1 && l.startsWith('// ---'))
+  const end = lines.findIndex(
+    (l: string, i: number) => i > title + 1 && l.startsWith('// ---')
+  )
   return lines
     .slice(title + 2, end === -1 ? undefined : end)
     .join('\n')
@@ -74,10 +76,7 @@ void main() {
 }
 `
 
-// ---------------------------------------------------------------------------
 // Scene 1 — defaults and ref-driven animation
-// ---------------------------------------------------------------------------
-
 function DefaultsScene() {
   const handle = useRef<PlaneHandle>(null)
 
@@ -131,10 +130,7 @@ function DefaultsScene() {
   )
 }
 
-// ---------------------------------------------------------------------------
 // Scene 2 — stacking and lifecycle
-// ---------------------------------------------------------------------------
-
 function StackingScene() {
   const [blueVisible, setBlueVisible] = useState(true)
   const [goldMounted, setGoldMounted] = useState(true)
@@ -198,10 +194,7 @@ function StackingScene() {
   )
 }
 
-// ---------------------------------------------------------------------------
 // Scene 3 — cameras
-// ---------------------------------------------------------------------------
-
 type CameraMode = 'dolly' | 'perspective' | 'default'
 
 function CameraScene() {
@@ -268,7 +261,165 @@ function CameraScene() {
   )
 }
 
-// ---------------------------------------------------------------------------
+// Scene 4 — stress test: CPU particle planes
+// Soft disc - alpha blending comes free with Plane's transparent default.
+const particleFrag = /* glsl */ `
+precision highp float;
+
+uniform vec3 u_color;
+
+varying vec2 v_uv;
+
+void main() {
+  float d = length(v_uv - 0.5) * 2.0;
+  gl_FragColor = vec4(u_color, smoothstep(1.0, 0.55, d));
+}
+`
+
+const PARTICLE_COUNTS = [50, 150, 300] as const
+
+// Deterministic per-particle look, stable across re-renders.
+const particleSize = (i: number) => 8 + ((i * 7919) % 23)
+const particleColor = (i: number): [number, number, number] => {
+  const t = (i * 0.618034) % 1
+  return [
+    0.5 + 0.5 * Math.sin(6.2832 * t),
+    0.5 + 0.5 * Math.sin(6.2832 * (t + 0.33)),
+    0.5 + 0.5 * Math.sin(6.2832 * (t + 0.67))
+  ]
+}
+
+interface Particle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  spin: number
+}
+
+const randomParticle = (): Particle => ({
+  x: (Math.random() - 0.5) * 400,
+  y: Math.random() * 200,
+  vx: (Math.random() - 0.5) * 300,
+  vy: (Math.random() - 0.5) * 200,
+  spin: (Math.random() - 0.5) * 5
+})
+
+function StressScene() {
+  const [count, setCount] = useState<number>(150)
+  const handles = useRef<(PlaneHandle | null)[]>([])
+  const particles = useRef<Particle[]>([])
+  const fpsRef = useRef<HTMLSpanElement>(null)
+  const fpsAvg = useRef(60)
+
+  // Seed or trim the simulation when the particle count changes; existing
+  // particles keep their motion.
+  useEffect(() => {
+    const sim = particles.current
+    while (sim.length < count) sim.push(randomParticle())
+    sim.length = count
+    handles.current.length = count
+  }, [count])
+
+  return (
+    <section>
+      <div className="section-head">
+        <h2>4. Stress test - CPU particle planes</h2>
+        <CodePopover code={sceneSource(4)} />
+      </div>
+      <p>
+        Every particle is a full <code>&lt;Plane&gt;</code> - its own mesh, its
+        own compiled program, its own draw call. That's the deliberate worst
+        case for this API. A CPU simulation in the scene's{' '}
+        <code>onBeforeRender</code> moves each one through its handle; React
+        only re-renders when the count changes, and the sim pauses when the
+        scene scrolls off screen. Instanced rendering is the planned fix - see{' '}
+        <code>FEATURE-dom-scene.md</code>.
+      </p>
+      <DOMScene
+        className="scene"
+        onBeforeRender={(delta, rect) => {
+          const dt = Math.min(delta, 50) / 1000
+          const hw = rect.width / 2
+          const hh = rect.height / 2
+          const sim = particles.current
+
+          for (let i = 0; i < sim.length; i++) {
+            const p = sim[i]
+            const handle = handles.current[i]
+            if (!handle) continue
+
+            p.vy -= 220 * dt // gravity (+Y is up)
+            p.x += p.vx * dt
+            p.y += p.vy * dt
+
+            // Elastic bounce off the element bounds.
+            const r = particleSize(i) / 2
+            if (p.x < -hw + r) {
+              p.x = -hw + r
+              p.vx = Math.abs(p.vx)
+            } else if (p.x > hw - r) {
+              p.x = hw - r
+              p.vx = -Math.abs(p.vx)
+            }
+            if (p.y < -hh + r) {
+              p.y = -hh + r
+              p.vy = Math.abs(p.vy)
+            } else if (p.y > hh - r) {
+              p.y = hh - r
+              p.vy = -Math.abs(p.vy)
+            }
+
+            handle.position?.reset(p.x, p.y, 0)
+            const rotation = handle.rotation
+            if (rotation) rotation.z += p.spin * dt
+          }
+
+          // FPS meter written straight to the DOM - no React re-renders.
+          fpsAvg.current += (1000 / Math.max(delta, 1) - fpsAvg.current) * 0.05
+          if (fpsRef.current) {
+            fpsRef.current.textContent = `${fpsAvg.current.toFixed(0)} fps · ${sim.length} planes`
+          }
+        }}
+      >
+        {Array.from({ length: count }, (_, i) => (
+          <Plane
+            key={i}
+            ref={(h) => {
+              handles.current[i] = h
+            }}
+            width={particleSize(i)}
+            height={particleSize(i)}
+            fragment={particleFrag}
+            uniforms={{ u_color: particleColor(i) }}
+          />
+        ))}
+        <div className="scene__hud">
+          {PARTICLE_COUNTS.map((n) => (
+            <button
+              key={n}
+              aria-pressed={count === n}
+              onClick={() => setCount(n)}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              // Re-randomise in place - the sim writes the new state through
+              // the handles on the next frame, no React re-render needed.
+              const sim = particles.current
+              for (let i = 0; i < sim.length; i++) sim[i] = randomParticle()
+            }}
+          >
+            reset
+          </button>
+          <span ref={fpsRef} />
+        </div>
+      </DOMScene>
+    </section>
+  )
+}
 
 function App() {
   return (
@@ -287,6 +438,7 @@ function App() {
         <DefaultsScene />
         <StackingScene />
         <CameraScene />
+        <StressScene />
       </main>
     </ScrollRendererProvider>
   )
