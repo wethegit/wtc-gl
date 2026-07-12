@@ -1,0 +1,192 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0d1017;
+  --surface: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.14);
+  --text: #e8ecf3;
+  --muted: rgba(232, 236, 243, 0.55);
+  --accent: #61dafb;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.demo-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.75em 1.25em;
+  background: rgba(13, 16, 23, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.demo-nav__brand {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.demo-nav__sep {
+  color: var(--muted);
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 6rem;
+}
+
+.intro {
+  max-width: 640px;
+  margin-bottom: 3rem;
+}
+
+.intro h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.intro p,
+section > p {
+  color: var(--muted);
+}
+
+.intro code,
+section code {
+  font-family: monospace;
+  font-size: 0.85em;
+  color: var(--accent);
+}
+
+section {
+  position: relative;
+  margin-bottom: 4rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+section h2 {
+  font-size: 1.15rem;
+  font-family: monospace;
+}
+
+.code-toggle {
+  flex: none;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3em 0.8em;
+  cursor: pointer;
+}
+
+.code-toggle:hover,
+.code-toggle[aria-expanded='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Overlays the section's scene (the section's last, bottom-anchored child). */
+.code-popover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-height: min(70vh, 100%);
+  overflow: auto;
+  background: rgba(13, 16, 23, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.code-popover pre {
+  font-family: monospace;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  color: var(--text);
+}
+
+section > p {
+  max-width: 640px;
+  margin-bottom: 1.25rem;
+}
+
+/* The DOMScene divs — the WebGL content draws in each one's bounds. */
+.scene {
+  position: relative;
+  height: 70vh;
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.scene--resizable {
+  resize: both;
+  min-width: 320px;
+  max-width: 100%;
+}
+
+.scene__hud {
+  position: absolute;
+  inset: auto auto 0.75rem 0.75rem;
+  z-index: 1;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-family: monospace;
+  font-size: 0.75em;
+  color: var(--muted);
+}
+
+.scene__hud button {
+  font: inherit;
+  color: var(--text);
+  background: rgba(13, 16, 23, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35em 0.8em;
+  cursor: pointer;
+}
+
+.scene__hud button:hover {
+  border-color: var(--accent);
+}
+
+.scene__hud button[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}

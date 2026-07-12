@@ -36,6 +36,7 @@ export default defineConfig({
         reactDragWorldInfinite: resolvePath(
           'demos/react-drag-world-infinite/index.html'
         ),
+        reactDomScene: resolvePath('demos/react-dom-scene/index.html'),
         transformFeedback: resolvePath('demos/transformFeedback/index.html'),
         videoTex: resolvePath('demos/videoTex/index.html'),
         webcamCa: resolvePath('demos/webcam-ca/index.html'),

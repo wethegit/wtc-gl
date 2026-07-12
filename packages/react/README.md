@@ -69,12 +69,42 @@ useScrollImage(ref, ({ gl, scrollScene }) => {
 return <img ref={ref} src={src} alt="" />
 ```
 
+### Declarative scenes
+
+For scenes that are mostly "some planes in a box", skip the setup callback and describe the scene as JSX. `DOMScene` renders a real `<div>` (className/style pass through) and hosts the GL content in its bounds; `Plane` children become meshes sized in **CSS pixels** (origin at the element centre, +Y up):
+
+```tsx
+const planeRef = useRef<PlaneHandle>(null)
+
+<ScrollRendererProvider>
+  <DOMScene className="hero">
+    <Plane /> {/* fills the element with a debug shader */}
+    <Plane
+      ref={planeRef}
+      width={300}
+      height={200}
+      position={[100, 0, 0]}
+      fragment={frag}
+      uniforms={{ u_mix: 0.5 }}
+    />
+  </DOMScene>
+</ScrollRendererProvider>
+```
+
+The ref exposes an imperative `PlaneHandle` for per-frame work without React re-renders: mutate `position`/`rotation`/`scale` (Euler rotations are synced to the quaternion automatically) or call `setUniform(name, value)`. `mesh`/`program`/`geometry` are there as escape hatches.
+
+An optional `<Camera>` child replaces the scene's default pixel-mapped orthographic camera - `type` is `'perspective'` (placed at the pixel-fit distance, so planes keep their CSS-px size at z=0), `'orthographic'`, or `'dolly'` (drag to orbit, wheel to zoom; handlers attach to the scene's div). Unmounting it restores the default camera. See `FEATURE-dom-scene.md` for design notes and the roadmap.
+
 ## API
 
 - `<ScrollRendererProvider rendererProps? onBeforeRender? onAfterRender? playing? className? style?>` - creates the `ScrollRenderer` and canvas.
 - `useScrollRenderer()` - the nearest provider's `ScrollRenderer` (or `null` while it initializes).
 - `useScrollScene(elementRef, setup?, options?)` - registers a `ScrollScene`; returns a ref to it.
 - `useScrollImage(elementRef, setup?, options?)` - registers a `ScrollImage`; returns a ref to it.
+- `<DOMScene {...divProps} margin? clipToViewport? clearOnRender? onBeforeRender? onAfterRender?>` - a `<div>` hosting a declarative scene.
+- `<Plane width? height? position? rotation? scale? visible? fragment? vertex? uniforms? doubleSided? renderOrder? setup? ref?>` - a mesh in the nearest `DOMScene`; ref receives a `PlaneHandle`.
+- `<Camera type? instance? fov? near? far? position? lookAt? dolly? ref?>` - replaces the scene's default camera while mounted.
+- `useDOMSceneContext()` - the nearest `DOMScene`'s internals, for custom scene children.
 
 `options` accepts everything the underlying `ScrollScene` / `ScrollImage` constructors do (`camera`, `useViewport`, `clipToViewport`, `clearOnRender`, `elementSpace`, `margin`, `initializedClass`, per-frame callbacks, …).
 
@@ -89,6 +119,12 @@ return <img ref={ref} src={src} alt="" />
 **Scene ordering.** Scenes render in registration order, which is mount order. If you composite scenes with `clearOnRender: false`, be aware that Suspense boundaries or conditional rendering can change mount order between dev and prod builds.
 
 **`u_time` resets on remount.** A remounted scene starts with `u_time = 0`. Shaders that use time as a seed (rather than just an animation offset) will restart on remount.
+
+**Reserved uniforms.** In `Plane` programs, `u_time` / `u_resolution` / `u_origin` are the scene's live uniforms, and the `u_*Matrix` / `u_cameraPosition` / `u_objectPosition` family is re-assigned by the engine every frame. Supplying your own values for these keys has no effect (a dev warning fires).
+
+**Plane structural props recreate, the rest mutate.** Changing `width`/`height`/segments or `fragment`/`vertex` rebuilds the plane's GL resources; `position`/`rotation`/`scale`/`visible` and uniform *values* update in place. New uniform *keys* after mount are unsupported - change the shader prop identity to force a rebuild.
+
+**Keep `depthTest` on for transparent planes.** The renderer's sorter silently drops meshes whose program is `transparent` with `depthTest: false`. `Plane` defaults (`transparent: true, depthTest: true, depthWrite: false`) are chosen to avoid this; override with care.
 
 ## Performance and memory testing
 
