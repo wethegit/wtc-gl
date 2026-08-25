@@ -39,7 +39,7 @@ const defaultCanvasStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
   width: '100%',
-  height: '100%',
+  height: '100lvh',
   pointerEvents: 'none',
   zIndex: 0
 }

@@ -15,5 +15,6 @@ export default defineConfig({
       '@wethegit/react-wtc-gl': resolvePath('../react/src/index.ts')
     },
     dedupe: ['react', 'react-dom']
-  }
+  },
+  server: { host: true }
 })

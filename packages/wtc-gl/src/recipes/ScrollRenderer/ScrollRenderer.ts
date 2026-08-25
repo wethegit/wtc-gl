@@ -79,6 +79,7 @@ export class ScrollRenderer {
   #playing: boolean = false
   #ownsCanvas: boolean
   #cleared: boolean = false
+  #resizeObserver: ResizeObserver | null = null
 
   constructor({
     rendererProps = {},
@@ -99,6 +100,10 @@ export class ScrollRenderer {
     this.render = this.render.bind(this)
     this.resize = this.resize.bind(this)
 
+    if (typeof ResizeObserver !== 'undefined') {
+      this.#resizeObserver = new ResizeObserver(this.resize)
+      this.#resizeObserver.observe(this.canvas)
+    }
     window.addEventListener('resize', this.resize)
     this.resize()
   }
@@ -109,19 +114,29 @@ export class ScrollRenderer {
   }
 
   /**
-   * Synchronises the GL canvas buffer size with the layout viewport.
+   * Synchronises the GL canvas buffer size with the canvas element's CSS size.
    *
-   * Uses `document.documentElement.clientWidth/clientHeight` rather than
-   * `window.innerWidth/innerHeight` because on systems with classic
-   * (non-overlay) scrollbars `innerWidth` includes the scrollbar gutter,
-   * while a `position:fixed; width:100%` canvas does not — causing every
-   * scissor rect to clip a few pixels short on the trailing edge.
+   * Measures the canvas (`clientWidth`/`clientHeight`) so the buffer
+   * can never disagree with how the element is laid out. Falls back to the
+   * document's client size when the canvas isn't in the DOM yet (or has no
+   * layout size), which also avoids the scrollbar-gutter offset that
+   * `window.innerWidth/innerHeight` would introduce.
    *
-   * Called automatically on construction and on every `resize` event.
+   * Called automatically on construction, whenever a canvas element's size
+   * changes, and on every `resize` event.
    */
   resize() {
-    const el = document.documentElement
-    this.renderer.dimensions = new Vec2(el.clientWidth, el.clientHeight)
+    const canvas = this.canvas
+    let width = canvas.clientWidth
+    let height = canvas.clientHeight
+    if (!width || !height) {
+      const el = document.documentElement
+      width = el.clientWidth
+      height = el.clientHeight
+    }
+    const current = this.renderer.dimensions
+    if (current && current.width === width && current.height === height) return
+    this.renderer.dimensions = new Vec2(width, height)
   }
 
   /**
@@ -176,6 +191,9 @@ export class ScrollRenderer {
       return
     }
     this.#cleared = false
+
+    // Catch element size changes that haven't been observed yet
+    this.resize()
 
     const { gl } = this
     const { dpr } = this.renderer
@@ -289,6 +307,8 @@ export class ScrollRenderer {
   destroy(): HTMLCanvasElement {
     this.playing = false
     window.removeEventListener('resize', this.resize)
+    this.#resizeObserver?.disconnect()
+    this.#resizeObserver = null
     this.#scenes.forEach((s) => s.destroy())
     this.#scenes = []
     if (this.#ownsCanvas)
