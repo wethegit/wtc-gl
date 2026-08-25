@@ -104,7 +104,6 @@ export class ScrollRenderer {
       this.#resizeObserver = new ResizeObserver(this.resize)
       this.#resizeObserver.observe(this.canvas)
     }
-    window.addEventListener('resize', this.resize)
     this.resize()
   }
 
@@ -122,8 +121,8 @@ export class ScrollRenderer {
    * layout size), which also avoids the scrollbar-gutter offset that
    * `window.innerWidth/innerHeight` would introduce.
    *
-   * Called automatically on construction, whenever a canvas element's size
-   * changes, and on every `resize` event.
+   * Called automatically on construction, and when canvas resizeObsever triggers
+   * and at the start of every rendered frame.
    */
   resize() {
     const canvas = this.canvas
@@ -286,7 +285,7 @@ export class ScrollRenderer {
   }
 
   /**
-   * Stops the render loop, removes the resize listener, and destroys all
+   * Stops the render loop, disconnects the resize observer, and destroys all
    * registered scenes (disconnecting their `IntersectionObserver`s).
    *
    * When the renderer created its own canvas, the WebGL context is also
@@ -306,7 +305,6 @@ export class ScrollRenderer {
    */
   destroy(): HTMLCanvasElement {
     this.playing = false
-    window.removeEventListener('resize', this.resize)
     this.#resizeObserver?.disconnect()
     this.#resizeObserver = null
     this.#scenes.forEach((s) => s.destroy())
