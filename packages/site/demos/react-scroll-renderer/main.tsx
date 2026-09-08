@@ -234,11 +234,17 @@ createRoot(root).render(
   </ScrollRendererProvider>
 )`
 
+// Append ?layout=absolute to try the compositor-synced layout (better on touch)
+const layout =
+  new URLSearchParams(location.search).get('layout') === 'absolute'
+    ? 'absolute'
+    : 'fixed'
+
 function App() {
   const [playing, setPlaying] = useState(true)
 
   return (
-    <ScrollRendererProvider>
+    <ScrollRendererProvider layout={layout}>
       <div className="content">
         <ShaderSection
           frag={heroFrag}
@@ -291,8 +297,8 @@ function App() {
                 A GPU particle system - TransformFeedback ping-pong buffers -
                 built inside a setup callback, with per-frame uniform updates
                 via the onBeforeRender option. Pause with the button below -
-                u_time freezes but the loop keeps running, so scenes still
-                track scroll.
+                u_time freezes but the loop keeps running, so scenes still track
+                scroll.
               </p>
             </div>
           </div>
@@ -304,9 +310,9 @@ function App() {
             <span className="tag">The code</span>
             <h2>A scene in ~20 lines</h2>
             <p>
-              Register a scene with useScrollScene, build your GL content in
-              the setup function, and return a cleanup that frees it - the
-              provider and its context may outlive any one section.
+              Register a scene with useScrollScene, build your GL content in the
+              setup function, and return a cleanup that frees it - the provider
+              and its context may outlive any one section.
             </p>
             <pre>
               <code>{DEMO_CODE}</code>
