@@ -21,10 +21,48 @@ export interface ScrollRendererOptions {
    * ```
    *
    * When supplying your own canvas you are responsible for positioning it
-   * (fixed, full-viewport, pointer-events: none) and for removing it from the
-   * DOM on teardown.
+   * (see {@link ScrollRendererOptions.layout} for what that means in each
+   * mode) and for removing it from the DOM on teardown.
    */
   rendererProps?: Partial<RendererOptions>
+  /**
+   * How the canvas is kept over the viewport.
+   *
+   * - `'fixed'` (default) — the canvas is `position: fixed`. Scene positions
+   *   are read from the DOM every frame. Because native scrolling runs on the
+   *   compositor thread, any scroll that lands between two animation frames
+   *   moves the page without moving the canvas contents, which shows as
+   *   scenes lagging behind their elements during momentum scrolling on
+   *   touch devices.
+   *
+   * - `'absolute'` — the canvas is `position: absolute` at the top of the
+   *   document and is translated back over the viewport every frame. Between
+   *   frames the compositor scrolls the canvas *with* the page, so scenes stay
+   *   attached to their elements. The one-frame lag instead shows at the
+   *   canvas edge, which is hidden by rendering the canvas taller than the
+   *   viewport (see {@link ScrollRendererOptions.overscan}). In this mode the
+   *   renderer owns the canvas `height` and `transform` styles; you still
+   *   position it (`position: absolute; top: 0; left: 0; width: 100%;
+   *   pointer-events: none`) and should append it to `document.body` or
+   *   another non-positioned ancestor so it is document-relative.
+   *
+   *   Avoid this mode for scenes anchored to viewport-pinned elements (e.g. a
+   *   `position: fixed` background) — those will exhibit the lag instead. To
+   *   let scenes draw into the overscan band before they enter the viewport,
+   *   set their `margin` to roughly {@link ScrollRenderer.overscanPx}.
+   *
+   * @default 'fixed'
+   */
+  layout?: 'fixed' | 'absolute'
+  /**
+   * Fraction of the viewport height added above *and* below the canvas when
+   * `layout` is `'absolute'`. Larger values hide the leading edge during
+   * faster scrolls at the cost of more pixels rendered. Ignored in `'fixed'`
+   * layout.
+   *
+   * @default 0.25
+   */
+  overscan?: number
   /** Called once per frame before any scenes are rendered. */
   onBeforeRender?: (delta: number) => void
   /** Called once per frame after all scenes are rendered. */
@@ -32,7 +70,7 @@ export interface ScrollRendererOptions {
 }
 
 /**
- * Renders multiple independent WebGL scenes on a single fixed canvas, each
+ * Renders multiple independent WebGL scenes on a single full-viewport canvas, each
  * scissor-tested to a DOM element's exact pixel bounds.
  *
  * A single `requestAnimationFrame` loop drives all registered {@link ScrollScene}
@@ -62,6 +100,16 @@ export interface ScrollRendererOptions {
  * }, [])
  * // In JSX:
  * <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+ *
+ * @example <caption>Absolute layout — compositor-synced scrolling on touch devices</caption>
+ * const renderer = new ScrollRenderer({ layout: 'absolute' })
+ * Object.assign(renderer.canvas.style, {
+ *   position: 'absolute', top: '0', left: '0', width: '100%',
+ *   pointerEvents: 'none', zIndex: '0',
+ * })
+ * // body (or another non-positioned ancestor) so the canvas is document-relative
+ * document.body.appendChild(renderer.canvas)
+ * renderer.addScene(new ScrollScene({ element, scene, margin: renderer.overscanPx }))
  */
 export class ScrollRenderer {
   /** The underlying {@link Renderer} instance. */
@@ -80,12 +128,20 @@ export class ScrollRenderer {
   #ownsCanvas: boolean
   #cleared: boolean = false
   #resizeObserver: ResizeObserver | null = null
+  #layout: 'fixed' | 'absolute'
+  #overscan: number
+  /** Viewport size in CSS px. In absolute layout this differs from `renderer.dimensions`. */
+  #viewport: Vec2 = new Vec2(0, 0)
 
   constructor({
     rendererProps = {},
+    layout = 'fixed',
+    overscan = 0.25,
     onBeforeRender = () => {},
     onAfterRender = () => {}
   }: ScrollRendererOptions = {}) {
+    this.#layout = layout
+    this.#overscan = layout === 'absolute' ? overscan : 0
     this.#ownsCanvas = !rendererProps.canvas
     this.renderer = new Renderer({
       alpha: true,
@@ -112,30 +168,77 @@ export class ScrollRenderer {
     return this.gl.canvas
   }
 
+  /** @see {@link ScrollRendererOptions.layout} */
+  get layout(): 'fixed' | 'absolute' {
+    return this.#layout
+  }
+
+  /** @see {@link ScrollRendererOptions.overscan} — always `0` in fixed layout. */
+  get overscan(): number {
+    return this.#overscan
+  }
+
   /**
-   * Synchronises the GL canvas buffer size with the canvas element's CSS size.
+   * Height of the overscan band above (and below) the viewport, in CSS px.
+   * `0` in fixed layout. Useful as a {@link ScrollScene} `margin`.
+   */
+  get overscanPx(): number {
+    return this.#viewport.height * this.#overscan
+  }
+
+  /**
+   * Synchronises the GL canvas buffer size with the viewport.
    *
-   * Measures the canvas (`clientWidth`/`clientHeight`) so the buffer
-   * can never disagree with how the element is laid out. Falls back to the
-   * document's client size when the canvas isn't in the DOM yet (or has no
-   * layout size), which also avoids the scrollbar-gutter offset that
-   * `window.innerWidth/innerHeight` would introduce.
+   * In fixed layout, measures the canvas (`clientWidth`/`clientHeight`) so
+   * the buffer can never disagree with how the element is laid out. Falls
+   * back to the document's client size when the canvas isn't in the DOM yet
+   * (or has no layout size), which also avoids the scrollbar-gutter offset
+   * that `window.innerWidth/innerHeight` would introduce.
    *
-   * Called automatically on construction, and when canvas resizeObsever triggers
-   * and at the start of every rendered frame.
+   * In absolute layout, the viewport height is read from the document and the
+   * canvas is sized to `viewport * (1 + 2 * overscan)` — the renderer sets the
+   * canvas `height` style itself.
+   *
+   * Called automatically on construction, when the canvas `ResizeObserver`
+   * triggers, and at the start of every rendered frame.
    */
   resize() {
     const canvas = this.canvas
-    let width = canvas.clientWidth
-    let height = canvas.clientHeight
-    if (!width || !height) {
-      const el = document.documentElement
-      width = el.clientWidth
-      height = el.clientHeight
+    const el = document.documentElement
+    let width: number
+    let height: number
+
+    if (this.#layout === 'absolute') {
+      width = canvas.clientWidth || el.clientWidth
+      const vh = el.clientHeight
+      if (this.#viewport.width === width && this.#viewport.height === vh) return
+      this.#viewport = new Vec2(width, vh)
+      height = Math.round(vh * (1 + 2 * this.#overscan))
+      canvas.style.height = `${height}px`
+      this.#positionCanvas()
+    } else {
+      width = canvas.clientWidth
+      height = canvas.clientHeight
+      if (!width || !height) {
+        width = el.clientWidth
+        height = el.clientHeight
+      }
+      this.#viewport = new Vec2(width, height)
     }
+
     const current = this.renderer.dimensions
     if (current && current.width === width && current.height === height) return
     this.renderer.dimensions = new Vec2(width, height)
+  }
+
+  /**
+   * Absolute layout only: translates the canvas so its overscan band sits
+   * just above the current viewport.
+   */
+  #positionCanvas() {
+    this.canvas.style.transform = `translate(${window.scrollX}px, ${
+      window.scrollY - this.overscanPx
+    }px)`
   }
 
   /**
@@ -194,6 +297,11 @@ export class ScrollRenderer {
     // Catch element size changes that haven't been observed yet
     this.resize()
 
+    // Absolute layout: slide the canvas back over the viewport. Element rects
+    // are viewport-relative, so they are offset by the overscan band above it.
+    const offsetY = this.overscanPx
+    if (this.#layout === 'absolute') this.#positionCanvas()
+
     const { gl } = this
     const { dpr } = this.renderer
     const canvasWidth = this.renderer.dimensions.width * dpr
@@ -211,7 +319,8 @@ export class ScrollRenderer {
 
       const { x, y, width, height, rect } = scrollScene.glRect(
         canvasHeight,
-        dpr
+        dpr,
+        offsetY
       )
 
       if (width <= 0 || height <= 0) continue
@@ -309,6 +418,10 @@ export class ScrollRenderer {
     this.#resizeObserver = null
     this.#scenes.forEach((s) => s.destroy())
     this.#scenes = []
+    if (this.#layout === 'absolute') {
+      this.canvas.style.transform = ''
+      this.canvas.style.height = ''
+    }
     if (this.#ownsCanvas)
       this.gl.getExtension('WEBGL_lose_context')?.loseContext()
     return this.canvas

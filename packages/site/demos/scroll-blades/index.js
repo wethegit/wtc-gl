@@ -17,7 +17,8 @@ import bgFrag from './bg.frag'
 import imageVert from './image.vert'
 import imageFrag from './image.frag'
 
-// Renderer
+// Renderer. Stays on the default fixed layout: the `.bg-scene` below is a
+// position: fixed element, which is the one case `layout: 'absolute'` makes worse.
 const renderer = new ScrollRenderer({
   rendererProps: { antialias: true, premultipliedAlpha: false }
 })

@@ -17,6 +17,27 @@ export interface ScrollRendererProviderProps {
     NonNullable<ScrollRendererOptions['rendererProps']>,
     'canvas'
   >
+  /**
+   * How the canvas is kept over the viewport. `'absolute'` avoids scene lag
+   * during momentum scrolling on touch devices by letting the compositor
+   * scroll the canvas with the page; see `ScrollRendererOptions.layout` in
+   * wtc-gl for the full trade-offs. In this mode the canvas is positioned
+   * relative to its nearest positioned ancestor, so mount the provider where
+   * that ancestor is the document (no `position: relative` wrapper between it
+   * and `<body>`).
+   *
+   * Captured once on mount.
+   *
+   * @default 'fixed'
+   */
+  layout?: ScrollRendererOptions['layout']
+  /**
+   * Overscan fraction for `layout: 'absolute'`; see
+   * `ScrollRendererOptions.overscan`. Captured once on mount.
+   *
+   * @default 0.25
+   */
+  overscan?: number
   onBeforeRender?: (delta: number) => void
   onAfterRender?: (delta: number) => void
   /**
@@ -35,11 +56,21 @@ export interface ScrollRendererProviderProps {
   style?: CSSProperties
 }
 
-const defaultCanvasStyle: CSSProperties = {
+const fixedCanvasStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
   width: '100%',
   height: '100lvh',
+  pointerEvents: 'none',
+  zIndex: 0
+}
+
+// No height: the renderer sets it (viewport + overscan) and owns `transform`.
+const absoluteCanvasStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
   pointerEvents: 'none',
   zIndex: 0
 }
@@ -63,6 +94,8 @@ const defaultCanvasStyle: CSSProperties = {
 export function ScrollRendererProvider({
   children,
   rendererProps,
+  layout = 'fixed',
+  overscan,
   onBeforeRender,
   onAfterRender,
   playing = true,
@@ -83,6 +116,8 @@ export function ScrollRendererProvider({
   })
 
   const rendererPropsRef = useRef(rendererProps)
+  const layoutRef = useRef(layout)
+  const overscanRef = useRef(overscan)
 
   useEffect(() => {
     const scrollRenderer = new ScrollRenderer({
@@ -90,6 +125,8 @@ export function ScrollRendererProvider({
         ...rendererPropsRef.current,
         canvas: canvasRef.current!
       },
+      layout: layoutRef.current,
+      overscan: overscanRef.current,
       onBeforeRender: (delta) => onBeforeRenderRef.current?.(delta),
       onAfterRender: (delta) => onAfterRenderRef.current?.(delta)
     })
@@ -110,7 +147,16 @@ export function ScrollRendererProvider({
       <canvas
         ref={canvasRef}
         className={className}
-        style={className ? style : { ...defaultCanvasStyle, ...style }}
+        style={
+          className
+            ? style
+            : {
+                ...(layoutRef.current === 'absolute'
+                  ? absoluteCanvasStyle
+                  : fixedCanvasStyle),
+                ...style
+              }
+        }
       />
       {children}
     </ScrollRendererContext.Provider>
