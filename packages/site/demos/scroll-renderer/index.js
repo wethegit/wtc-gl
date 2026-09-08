@@ -21,14 +21,21 @@ import particlesFrag from './particles.frag'
 // Renderer setup
 // ---------------------------------------------------------------------------
 
-const scrollRenderer = new ScrollRenderer()
+// Append ?layout=absolute to try the compositor-synced layout (better on touch)
+const layout =
+  new URLSearchParams(location.search).get('layout') === 'absolute'
+    ? 'absolute'
+    : 'fixed'
+
+const scrollRenderer = new ScrollRenderer({ layout })
 
 Object.assign(scrollRenderer.canvas.style, {
-  position: 'fixed',
+  position: layout,
   top: '0',
   left: '0',
   width: '100%',
-  height: '100%',
+  // In absolute layout the renderer owns the height (viewport + overscan)
+  height: layout === 'fixed' ? '100%' : '',
   pointerEvents: 'none',
   zIndex: '0'
 })

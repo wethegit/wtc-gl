@@ -2,7 +2,7 @@
 
 React components and hooks for [wtc-gl](https://github.com/wethegit/wtc-gl) recipes.
 
-Currently wraps the **ScrollRenderer** recipe: render multiple independent WebGL scenes on a single fixed canvas, each scissor-tested to a DOM element's bounds and driven by one `requestAnimationFrame` loop.
+Currently wraps the **ScrollRenderer** recipe: render multiple independent WebGL scenes on a single full-viewport canvas, each scissor-tested to a DOM element's bounds and driven by one `requestAnimationFrame` loop.
 
 ## Install
 
@@ -14,7 +14,7 @@ npm install @wethegit/react-wtc-gl wtc-gl
 
 ## Usage
 
-Mount one `ScrollRendererProvider` per page (it owns the fixed, full-viewport canvas), then register scenes from descendant components.
+Mount one `ScrollRendererProvider` per page (it owns the full-viewport canvas), then register scenes from descendant components.
 
 ```tsx
 import { useRef } from 'react'
@@ -71,7 +71,7 @@ return <img ref={ref} src={src} alt="" />
 
 ## API
 
-- `<ScrollRendererProvider rendererProps? onBeforeRender? onAfterRender? playing? className? style?>` - creates the `ScrollRenderer` and canvas.
+- `<ScrollRendererProvider rendererProps? layout? overscan? onBeforeRender? onAfterRender? playing? className? style?>` - creates the `ScrollRenderer` and canvas. `layout` is `'fixed'` (default) or `'absolute'`; use `'absolute'` when scenes lag behind their elements during momentum scrolling on touch devices - the canvas then scrolls with the page and is translated back each frame, with `overscan` (default `0.25`) controlling how much extra canvas is rendered above and below the viewport to hide the edge. Not suitable for scenes anchored to `position: fixed` elements.
 - `useScrollRenderer()` - the nearest provider's `ScrollRenderer` (or `null` while it initializes).
 - `useScrollScene(elementRef, setup?, options?)` - registers a `ScrollScene`; returns a ref to it.
 - `useScrollImage(elementRef, setup?, options?)` - registers a `ScrollImage`; returns a ref to it.
