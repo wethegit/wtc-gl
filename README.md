@@ -12,10 +12,10 @@ To test unpublished changes to `wtc-gl` or `@wethegit/react-wtc-gl` in a consumi
 2. Build and publish the package(s) you're working on:
    ```sh
    pnpm --filter wtc-gl run build
-   cd packages/wtc-gl && yalc publish
+   (cd packages/wtc-gl && yalc publish)
 
    pnpm --filter @wethegit/react-wtc-gl run build
-   cd packages/react && yalc publish
+   (cd packages/react && yalc publish)
    ```
 3. In the consuming project, link them and reinstall:
    ```sh
