@@ -80,6 +80,10 @@ export interface ScrollSceneOptions {
  * | `u_resolution` | `vec2`  | Element size in physical pixels. |
  * | `u_origin`     | `vec4`  | `.xy` — element bottom-left in physical pixels, GL canvas space (Y-up). Use with `gl_FragCoord` for element-relative fragment math. `.zw` — element centre in canvas NDC [-1, 1]. Use for vertex positioning when `useViewport` is `false`. |
  *
+ * Note that in a renderer using `layout: 'absolute'` the canvas extends
+ * `renderer.overscanPx` beyond the viewport on both ends, so "canvas space"
+ * is larger than the viewport.
+ *
  * An `IntersectionObserver` automatically pauses rendering when the element
  * leaves the viewport.
  *
@@ -205,16 +209,19 @@ export class ScrollScene {
    *
    * @param canvasHeight - Canvas height in physical pixels (`renderer.dimensions.height * dpr`).
    * @param dpr - Device pixel ratio from the renderer.
+   * @param offsetY - Distance in CSS px that the canvas top sits above the
+   *   viewport top (the overscan band in absolute layout). `0` in fixed layout.
    * @returns GL-space `x`, `y`, `width`, `height` (all in physical pixels) plus the raw `DOMRect`.
    */
   glRect(
     canvasHeight: number,
-    dpr: number
+    dpr: number,
+    offsetY: number = 0
   ): { x: number; y: number; width: number; height: number; rect: DOMRect } {
     const rect = this.element.getBoundingClientRect()
     return {
       x: Math.round(rect.left * dpr),
-      y: Math.round(canvasHeight - rect.bottom * dpr),
+      y: Math.round(canvasHeight - (rect.bottom + offsetY) * dpr),
       width: Math.round(rect.width * dpr),
       height: Math.round(rect.height * dpr),
       rect
