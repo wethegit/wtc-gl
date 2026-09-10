@@ -34,8 +34,8 @@ Object.assign(scrollRenderer.canvas.style, {
   top: '0',
   left: '0',
   width: '100%',
-  // In absolute layout the renderer owns the height (viewport + overscan)
-  height: layout === 'fixed' ? '100%' : '',
+  // In absolute layout, preserve the height set by the renderer.
+  ...(layout === 'fixed' ? { height: '100%' } : {}),
   pointerEvents: 'none',
   zIndex: '0'
 })
