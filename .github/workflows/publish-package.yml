@@ -20,6 +20,47 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm -r publish --access public --no-git-checks
+      - id: npm-access
+        run: |
+          npm whoami --registry=https://registry.npmjs.org
+          coreVersion=$(node -p "require('./packages/wtc-gl/package.json').version")
+          reactVersion=$(node -p "require('./packages/react/package.json').version")
+
+          echo "core-version=$coreVersion" >> "$GITHUB_OUTPUT"
+          echo "react-version=$reactVersion" >> "$GITHUB_OUTPUT"
+
+          if npm view "wtc-gl@$coreVersion" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "core-version-available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "core-version-available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if npm view "@wethegit/react-wtc-gl@$reactVersion" version --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "react-version-available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "react-version-available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if npm access ls-collaborators wtc-gl --json >/dev/null 2>&1; then
+            echo "can-publish-core=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Skipping wtc-gl publish because NODE_AUTH_TOKEN does not have npm collaborator access to wtc-gl."
+            echo "can-publish-core=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if npm access ls-collaborators @wethegit/react-wtc-gl --json >/dev/null 2>&1; then
+            echo "can-publish-react=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Skipping @wethegit/react-wtc-gl publish because NODE_AUTH_TOKEN does not have npm collaborator access to @wethegit/react-wtc-gl."
+            echo "can-publish-react=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - if: steps.npm-access.outputs.core-version-available != 'true' && steps.npm-access.outputs.can-publish-core == 'true'
+        run: pnpm --filter wtc-gl publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - if: steps.npm-access.outputs.react-version-available != 'true' && steps.npm-access.outputs.can-publish-react == 'true' && (steps.npm-access.outputs.core-version-available == 'true' || steps.npm-access.outputs.can-publish-core == 'true')
+        run: pnpm --filter @wethegit/react-wtc-gl publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
