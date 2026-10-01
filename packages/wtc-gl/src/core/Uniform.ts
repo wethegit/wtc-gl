@@ -76,14 +76,16 @@ export class Uniform {
   ): void {
     const setValue = gl.renderer.state.uniformLocations.get(location)
 
-    if (value instanceof Array) {
+    // Typed arrays are cached by copy too, so changes made in place are seen
+    if (isArrayLike(value)) {
       if (
         setValue === undefined ||
-        (setValue instanceof Array && setValue.length !== value.length)
+        !isArrayLike(setValue) ||
+        setValue.length !== value.length
       ) {
         // clone array to store as cache
         gl.renderer.state.uniformLocations.set(location, value.slice(0))
-      } else if (setValue instanceof Array) {
+      } else {
         if (arraysEqual(setValue, value)) return
 
         // Update cached array values
@@ -101,13 +103,8 @@ export class Uniform {
     switch (type) {
       case 5126: {
         // FLOAT
-        if (val instanceof Array) {
-          return gl.uniform1fv(location, val)
-        } else if (typeof val === 'number') {
-          gl.uniform1f(location, val)
-        }
-
-        return
+        if (typeof val === 'number') return gl.uniform1f(location, val)
+        return gl.uniform1fv(location, val)
       }
       case 35664:
         // FLOAT_VEC2
@@ -204,10 +201,15 @@ export class Uniform {
   }
 }
 
-function arraysEqual(
-  a: Texture[] | number[],
-  b: Texture[] | number[]
-): boolean {
+type ArrayValue = Texture[] | number[] | Float32Array
+
+function isArrayLike(
+  value: WTCGLUniformValue | undefined
+): value is ArrayValue {
+  return Array.isArray(value) || value instanceof Float32Array
+}
+
+function arraysEqual(a: ArrayValue, b: ArrayValue): boolean {
   if (a.length !== b.length) return false
   for (let i = 0, l = a.length; i < l; i++) {
     if (a[i] !== b[i]) return false
@@ -215,7 +217,7 @@ function arraysEqual(
   return true
 }
 
-function setArray(a: Texture[] | number[], b: Texture[] | number[]): void {
+function setArray(a: ArrayValue, b: ArrayValue): void {
   for (let i = 0, l = a.length; i < l; i++) {
     a[i] = b[i]
   }

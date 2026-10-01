@@ -105,6 +105,12 @@ export class Program {
   textureUnit: number = -1
 
   /**
+   * Whether the program linked successfully. A program that failed to link
+   * draws nothing.
+   */
+  linked: boolean = false
+
+  /**
    * Create a Program
    * @param gl - The WTCGL Rendering context
    * @param __namedParameters - The parameters for the Program
@@ -150,6 +156,12 @@ export class Program {
     this.depthWrite = depthWrite
     this.depthFunc = depthFunc
     this.blendFunc = { src: 0, dst: 0 }
+    this.blendEquation = { modeRGB: gl.FUNC_ADD, modeAlpha: gl.FUNC_ADD }
+
+    // Empty until the program links, so a failed link leaves usable defaults
+    this.uniformLocations = new Map()
+    this.attributeLocations = new Map()
+    this.attributeOrder = ''
 
     // set default blendFunc if transparent flagged
     if (this.transparent && !this.blendFunc?.src) {
@@ -203,17 +215,18 @@ export class Program {
 
     // Finally, link the program and record any errors
     gl.linkProgram(this.program)
+
+    // The shaders aren't needed once linking has been attempted
+    gl.deleteShader(vertexShader)
+    gl.deleteShader(fragmentShader)
+
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       console.warn(gl.getProgramInfoLog(this.program))
       return this
     }
-
-    // Remove shader once linked
-    gl.deleteShader(vertexShader)
-    gl.deleteShader(fragmentShader)
+    this.linked = true
 
     // Get active uniform locations
-    this.uniformLocations = new Map()
     const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
       const uniform: WTCGLActiveInfo = gl.getActiveUniform(
@@ -245,7 +258,6 @@ export class Program {
     }
 
     // Get active attribute locations
-    this.attributeLocations = new Map()
     const locations = []
     const numAttribs = gl.getProgramParameter(
       this.program,
@@ -326,6 +338,16 @@ export class Program {
    */
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     this.textureUnit = -1
+
+    // useProgram ignores a program that failed to link and would leave the
+    // previous one bound, drawing this geometry with the wrong shaders.
+    // Unbind instead so the draw call does nothing.
+    if (!this.linked) {
+      this.gl.useProgram(null)
+      this.gl.renderer.currentProgram = -1
+      return
+    }
+
     const programActive = this.gl.renderer.currentProgram === this.id
 
     // Avoid gl call if program already in use
@@ -360,6 +382,8 @@ export class Program {
    * Delete the program
    */
   remove() {
+    if (this.gl.renderer.currentProgram === this.id)
+      this.gl.renderer.currentProgram = -1
     this.gl.deleteProgram(this.program)
   }
 }
