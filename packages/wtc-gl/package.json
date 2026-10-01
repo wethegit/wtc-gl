@@ -21,14 +21,16 @@
   },
   "scripts": {
     "build": "rm -rf dist; tsc && vite build",
-    "watch": "vite build --watch"
+    "watch": "vite build --watch",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/webgl2": "0.0.11",
     "typescript": "~6.0.3",
     "vite": "^8.0.0",
     "vite-plugin-dts": "~5.0.0",
-    "vite-plugin-glsl": "~1.6.0"
+    "vite-plugin-glsl": "~1.6.0",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "wtc-math": "^1.3.0"

@@ -39,9 +39,9 @@ Several classes have no way to free what they allocate. This matters most for Re
 
 ## Phase 3 — Tests and type safety
 
-- [ ] Add Vitest for the pure logic: render-list sorting, uniform caching, bounds, and the scene-graph matrices.
+- [x] Add Vitest for the pure logic: render-list sorting, uniform caching, bounds, and the scene-graph matrices.
 - [ ] Add a Playwright smoke test that loads each demo in `packages/site` and fails on any console error or WebGL warning.
-- [ ] Run tests (and lint) in the `build.yml` CI workflow.
+- [x] Run tests (and lint) in the `build.yml` CI workflow. Lint already runs in `lint.yml`.
 - [ ] Turn on `strictPropertyInitialization` and remove the `!` assertions that hide uninitialised-field bugs.
 - [ ] Check uniform kinds properly. A `Texture` passed without `kind: 'texture'` currently falls through to `gl.uniform1i` with an object.
 
