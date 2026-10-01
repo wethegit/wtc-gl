@@ -354,8 +354,10 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    const offset = attr.offset || 0
-    const stride = attr.stride || attr.size
+    // offset and stride are in bytes, as GL expects; convert to array indices
+    const bytes = array.BYTES_PER_ELEMENT
+    const offset = (attr.offset || 0) / bytes
+    const stride = (attr.stride || 0) / bytes || attr.size
 
     if (!this.bounds) {
       this.bounds = {
@@ -402,8 +404,10 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    const offset = attr.offset || 0
-    const stride = attr.stride || attr.size
+    // offset and stride are in bytes, as GL expects; convert to array indices
+    const bytes = array.BYTES_PER_ELEMENT
+    const offset = (attr.offset || 0) / bytes
+    const stride = (attr.stride || 0) / bytes || attr.size
 
     if (!this.bounds) this.computeBoundingBox(attr)
 
