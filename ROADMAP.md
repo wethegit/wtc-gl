@@ -15,8 +15,8 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 - [x] **Framebuffer tiling modes are swapped** — `ext/Framebuffer.ts` `get wrap`. `IMAGETYPE_TILING` sets `MIRRORED_REPEAT` and `IMAGETYPE_MIRROR` sets `REPEAT`.
 - [x] **Framebuffer mipmaps go to the wrong texture** — `ext/Framebuffer.ts` `render`. `generateMipmap` runs on whichever texture happens to be bound, because the line that binds the write target's texture is commented out.
 - [x] **The renderer can lose track of the bound framebuffer** — `core/RenderTarget.ts`. The constructor calls `gl.bindFramebuffer` directly, so `renderer.state.framebuffer` goes stale. If you then render into the target that was last bound, the bind is skipped and the frame goes to the canvas. Route the binds through `renderer.bindFramebuffer`.
-- [ ] **Changing a typed array in place never re-uploads** — `core/Uniform.ts` `setUniform`. A non-`Array` value (such as a `Float32Array`) is compared by reference, so editing it in place looks unchanged to the cache.
-- [ ] **Program initialisation gaps** — `core/Program.ts`:
+- [x] **Changing a typed array in place never re-uploads** — `core/Uniform.ts` `setUniform`. A non-`Array` value (such as a `Float32Array`) is compared by reference, so editing it in place looks unchanged to the cache.
+- [x] **Program initialisation gaps** — `core/Program.ts`:
   - `blendEquation` is never initialised, so calling `setBlendEquation()` throws.
   - If linking fails, the constructor returns early and leaves `uniformLocations` undefined, so `use()` throws on the next frame. Failed shaders are also never deleted.
 - [x] **Wrong initial blend state** — `core/Renderer.ts`. `state.blendEquation.modeAlpha` starts as `ONE_MINUS_SRC_ALPHA`, which is a blend factor, not a blend equation (should be `FUNC_ADD`).
@@ -32,7 +32,7 @@ Several classes have no way to free what they allocate. This matters most for Re
 - [ ] `Texture.remove()` — delete the `WebGLTexture` and clear the renderer's texture-unit cache entry.
 - [ ] `RenderTarget.remove()` — delete the framebuffer, colour textures and depth texture.
 - [ ] `Framebuffer.remove()`. `Framebuffer.resize()` creates two new render targets and never deletes the old ones, so it leaks GPU memory on every resize.
-- [ ] `Program.remove()` should reset `renderer.currentProgram` and clear its cached uniform values.
+- [ ] `Program.remove()` should clear its cached uniform values (resetting `renderer.currentProgram` is done).
 - [ ] `Renderer.dispose()`.
 - [ ] `FragmentShader.destroy()` — stop the render loop, remove the `resize` listener, and release the mesh, program and geometry.
 - [ ] Handle `webglcontextlost` / `webglcontextrestored`.

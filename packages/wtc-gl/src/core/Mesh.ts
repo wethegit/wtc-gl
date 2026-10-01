@@ -232,7 +232,10 @@ export class Mesh extends Drawable {
     )
 
     this.program.use({ flipFaces })
-    this.geometry.draw({ mode: this.mode, program: this.program })
+    // A program that failed to link has already logged why; skip the draw
+    // rather than raise a GL error every frame.
+    if (this.program.linked)
+      this.geometry.draw({ mode: this.mode, program: this.program })
     this.afterRenderCallbacks.forEach((f) => f && f({ mesh: this, camera }))
   }
 }
