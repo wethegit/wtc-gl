@@ -10,9 +10,15 @@
     "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/*",
     "preview": "pnpm --filter wtc-gl-site run preview",
     "document": "typedoc --entryPointStrategy Expand",
-    "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs"
+    "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs",
+    "check": "eslint --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/* && pnpm run build",
+    "changeset": "changeset",
+    "version": "changeset version && pnpm install --lockfile-only",
+    "release": "pnpm run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
     "@typescript-eslint/eslint-plugin": "~7.18.0",
     "@typescript-eslint/parser": "~7.18.0",
     "eslint": "^8.38.0",
