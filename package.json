@@ -2,7 +2,7 @@
   "name": "wtc-gl-monorepo",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@12.8.1",
   "scripts": {
     "prepare": "husky",
     "dev": "pnpm --filter wtc-gl-site run dev",
