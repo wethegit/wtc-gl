@@ -82,6 +82,8 @@ export class Framebuffer {
   resize(width: number, height: number) {
     this.width = width
     this.height = height
+    // Free the previous targets, otherwise every resize leaks two of them
+    this.remove()
     this.#readFB = this.createFrameBuffer()
     this.#writeFB = this.createFrameBuffer()
   }
@@ -132,6 +134,14 @@ export class Framebuffer {
     }
 
     this.swap()
+  }
+
+  /**
+   * Delete both render targets and their textures.
+   */
+  remove() {
+    this.#readFB?.remove()
+    this.#writeFB?.remove()
   }
 
   get wrap() {

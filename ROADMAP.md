@@ -29,9 +29,9 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 
 Several classes have no way to free what they allocate. This matters most for React and route changes, where these objects are created and torn down repeatedly. Follow the pattern already used by `TransformFeedback.remove()` and `ScrollRenderer.destroy()`.
 
-- [ ] `Texture.remove()` — delete the `WebGLTexture` and clear the renderer's texture-unit cache entry.
-- [ ] `RenderTarget.remove()` — delete the framebuffer, colour textures and depth texture.
-- [ ] `Framebuffer.remove()`. `Framebuffer.resize()` creates two new render targets and never deletes the old ones, so it leaks GPU memory on every resize.
+- [x] `Texture.remove()` — delete the `WebGLTexture` and clear the renderer's texture-unit cache entry.
+- [x] `RenderTarget.remove()` — delete the framebuffer, colour textures and depth texture.
+- [x] `Framebuffer.remove()`. `Framebuffer.resize()` creates two new render targets and never deletes the old ones, so it leaks GPU memory on every resize.
 - [ ] `Program.remove()` should clear its cached uniform values (resetting `renderer.currentProgram` is done).
 - [ ] `Renderer.dispose()`.
 - [ ] `FragmentShader.destroy()` — stop the render loop, remove the `resize` listener, and release the mesh, program and geometry.
