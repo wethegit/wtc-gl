@@ -108,9 +108,9 @@ export class Mesh extends Drawable {
    * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
    **/
   removeBeforeRender(f: MeshCallback) {
-    this.beforeRenderCallbacks.forEach((_f, i) => {
-      if (_f == f) this.beforeRenderCallbacks.splice(i, 1)
-    })
+    this.beforeRenderCallbacks = this.beforeRenderCallbacks.filter(
+      (_f) => _f !== f
+    )
   }
 
   /**
@@ -134,9 +134,9 @@ export class Mesh extends Drawable {
    * @param {function} f - The function to call before render. Expected shape ({ mesh: this, camera })=>void.
    **/
   removeAfterRender(f: MeshCallback) {
-    this.afterRenderCallbacks.forEach((_f, i) => {
-      if (_f == f) this.afterRenderCallbacks.splice(i, 1)
-    })
+    this.afterRenderCallbacks = this.afterRenderCallbacks.filter(
+      (_f) => _f !== f
+    )
   }
 
   /**
@@ -153,9 +153,11 @@ export class Mesh extends Drawable {
   draw({ camera }: { camera: Camera }): void {
     this.beforeRenderCallbacks.forEach((f) => f && f({ mesh: this, camera }))
 
+    const objectPosition = this.worldMatrix.translation.array
+
     if (camera) {
       // Add empty matrix uniforms to program if unset
-      if (!this.program.uniforms.modelMatrix) {
+      if (!this.program.uniforms.u_modelMatrix) {
         Object.assign(this.program.uniforms, {
           u_modelMatrix: new Uniform({
             name: 'modelMatrix',
@@ -199,16 +201,19 @@ export class Mesh extends Drawable {
       this.program.uniforms.u_projectionMatrix.value =
         camera.projectionMatrix.array
       this.program.uniforms.u_cameraPosition.value = camera.worldPosition.array
-      this.program.uniforms.u_objectPosition.value = this.position.array
+      this.program.uniforms.u_objectPosition.value = objectPosition
       this.program.uniforms.u_viewMatrix.value = camera.viewMatrix.array
       this.modelViewMatrix = camera.viewMatrix.multiplyNew(this.worldMatrix)
-      this.normalMatrix = Mat3.fromMat4(this.modelViewMatrix)
+      // fromMat4 returns null for a non-invertible matrix (e.g. a mesh scaled
+      // to zero). Nothing is visible then, so keep the previous normal matrix.
+      this.normalMatrix =
+        Mat3.fromMat4(this.modelViewMatrix) ?? this.normalMatrix
       this.program.uniforms.u_modelMatrix.value = this.worldMatrix.array
       this.program.uniforms.u_modelViewMatrix.value = this.modelViewMatrix.array
       this.program.uniforms.u_normalMatrix.value = this.normalMatrix.array
     } else {
       // Add empty matrix uniforms to program if unset
-      if (!this.program.uniforms.modelMatrix) {
+      if (!this.program.uniforms.u_objectPosition) {
         Object.assign(this.program.uniforms, {
           u_objectPosition: new Uniform({
             name: 'objectPosition',
@@ -218,7 +223,7 @@ export class Mesh extends Drawable {
         })
       }
 
-      this.program.uniforms.u_objectPosition.value = this.position.array
+      this.program.uniforms.u_objectPosition.value = objectPosition
     }
 
     // determine if faces need to be flipped - when mesh scaled negatively

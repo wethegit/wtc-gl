@@ -9,9 +9,9 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 ## Phase 1 — Bug fixes (patch release)
 
 - [x] **Some meshes are never drawn when sorting** — `core/Renderer.ts` `getRenderList`. A program with `transparent: true, depthTest: false` isn't added to any list, so it never renders when `sort: true` (the default). The `else` that should put it in `ui` is attached to `if (program)` instead. Also, `sortUI` reads `a.program.id`, so a node with no program would crash there anyway.
-- [ ] **Mesh rebuilds its matrix uniforms on every draw** — `core/Mesh.ts` `draw`. It checks `uniforms.modelMatrix` but stores the uniforms as `u_modelMatrix`. The check never passes, so every mesh creates 7 new `Uniform` objects each frame. The no-camera branch has the same problem.
-- [ ] **A mesh scaled to zero crashes when drawn with a camera** — `core/Mesh.ts` `draw`. In wtc-math, `Mat3.fromMat4` returns `null` when the matrix can't be inverted, and `.array` is then read on `null`.
-- [ ] **`u_objectPosition` uses local position** — `core/Mesh.ts`. It reads `this.position` rather than the world translation, so it's wrong for any child object.
+- [x] **Mesh rebuilds its matrix uniforms on every draw** — `core/Mesh.ts` `draw`. It checks `uniforms.modelMatrix` but stores the uniforms as `u_modelMatrix`. The check never passes, so every mesh creates 7 new `Uniform` objects each frame. The no-camera branch has the same problem.
+- [x] **A mesh scaled to zero crashes when drawn with a camera** — `core/Mesh.ts` `draw`. In wtc-math, `Mat3.fromMat4` returns `null` when the matrix can't be inverted, and `.array` is then read on `null`.
+- [x] **`u_objectPosition` uses local position** — `core/Mesh.ts`. It reads `this.position` rather than the world translation, so it's wrong for any child object.
 - [ ] **Framebuffer tiling modes are swapped** — `ext/Framebuffer.ts` `get wrap`. `IMAGETYPE_TILING` sets `MIRRORED_REPEAT` and `IMAGETYPE_MIRROR` sets `REPEAT`.
 - [ ] **Framebuffer mipmaps go to the wrong texture** — `ext/Framebuffer.ts` `render`. `generateMipmap` runs on whichever texture happens to be bound, because the line that binds the write target's texture is commented out.
 - [ ] **The renderer can lose track of the bound framebuffer** — `core/RenderTarget.ts`. The constructor calls `gl.bindFramebuffer` directly, so `renderer.state.framebuffer` goes stale. If you then render into the target that was last bound, the bind is skipped and the frame goes to the canvas. Route the binds through `renderer.bindFramebuffer`.
@@ -76,7 +76,7 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 - [ ] `Renderer` should throw when it can't get a context, rather than logging an error and returning a half-built object.
 - [ ] Add a clear-colour API on `Renderer` instead of raw `gl.clearColor` calls.
 - [ ] `Geometry.computeBoundingBox` should handle 2D positions (`size: 2`); there's already a TODO.
-- [ ] `Mesh.removeBeforeRender` / `removeAfterRender` remove items while iterating, so the item right after a removed one is skipped.
+- [x] `Mesh.removeBeforeRender` / `removeAfterRender` remove items while iterating, so the item right after a removed one is skipped.
 
 ---
 
