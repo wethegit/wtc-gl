@@ -37,11 +37,8 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: 'pnpm'
 
-      # Trusted publishing requires npm >= 11.5.1. pnpm 10 hands the packed
-      # tarball to the npm CLI to publish, so this is the npm that authenticates.
-      - name: Update npm
-        run: npm install -g npm@latest
-
+      # No npm step: pnpm (11+) publishes natively and handles the trusted
+      # publishing (OIDC) token exchange itself, so the npm CLI isn't involved.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
