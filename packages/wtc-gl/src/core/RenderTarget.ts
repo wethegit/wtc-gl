@@ -212,4 +212,16 @@ export class RenderTarget {
   get texture() {
     return this.textures[0]
   }
+
+  /**
+   * Delete the framebuffer along with its colour and depth textures. If the
+   * target is currently bound, the canvas is bound in its place.
+   */
+  remove() {
+    if (this.gl.renderer.state.framebuffer === this.buffer)
+      this.gl.renderer.bindFramebuffer({ target: this.target })
+    this.gl.deleteFramebuffer(this.buffer)
+    this.textures.forEach((texture) => texture.remove())
+    this.depthTexture?.remove()
+  }
 }

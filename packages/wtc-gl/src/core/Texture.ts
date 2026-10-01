@@ -461,4 +461,16 @@ export class Texture {
     }
     this.store.image = this.image
   }
+
+  /**
+   * Delete the WebGL texture and clear it from the renderer's texture-unit
+   * cache. The texture can't be used after this.
+   */
+  remove() {
+    const { textureUnits } = this.gl.renderer.state
+    for (let i = 0; i < textureUnits.length; i++) {
+      if (textureUnits[i] === this.id) textureUnits[i] = -1
+    }
+    this.gl.deleteTexture(this.texture)
+  }
 }
