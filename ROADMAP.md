@@ -32,9 +32,9 @@ Several classes have no way to free what they allocate. This matters most for Re
 - [x] `Texture.remove()` — delete the `WebGLTexture` and clear the renderer's texture-unit cache entry.
 - [x] `RenderTarget.remove()` — delete the framebuffer, colour textures and depth texture.
 - [x] `Framebuffer.remove()`. `Framebuffer.resize()` creates two new render targets and never deletes the old ones, so it leaks GPU memory on every resize.
-- [ ] `Program.remove()` should clear its cached uniform values (resetting `renderer.currentProgram` is done).
-- [ ] `Renderer.dispose()`.
-- [ ] `FragmentShader.destroy()` — stop the render loop, remove the `resize` listener, and release the mesh, program and geometry.
+- [x] `Program.remove()` should clear its cached uniform values (resetting `renderer.currentProgram` is done).
+- [x] `Renderer.dispose()`.
+- [x] `FragmentShader.destroy()` — stop the render loop, remove the `resize` listener, and release the mesh, program and geometry.
 - [ ] Handle `webglcontextlost` / `webglcontextrestored`.
 
 ## Phase 3 — Tests and type safety

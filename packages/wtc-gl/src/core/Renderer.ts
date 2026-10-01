@@ -154,6 +154,8 @@ export class Renderer {
   // Allows programs to optimise by determine if they're the currently rendering program and skipping some steps
   currentProgram: number
 
+  #ownsCanvas: boolean
+
   /**
    * create a renderer
    * @param __namedParameters - The parameters to initialise the renderer.
@@ -171,7 +173,7 @@ export class Renderer {
    * @param webgl - The webGL version to try to use - 1, or 2
    */
   constructor({
-    canvas = document.createElement('canvas'),
+    canvas,
     width = 300,
     height = 150,
     dpr = Math.min(window.devicePixelRatio, 2),
@@ -194,6 +196,9 @@ export class Renderer {
       preserveDrawingBuffer,
       powerPreference
     }
+    this.#ownsCanvas = !canvas
+    canvas ??= document.createElement('canvas')
+
     this.dpr = dpr
     this.alpha = alpha
     this.colour = true
@@ -307,6 +312,26 @@ export class Renderer {
           )
         : 0
     }
+  }
+
+  /**
+   * Clear the renderer's state caches. If the renderer created its own
+   * canvas, the WebGL context is also released straight away (via
+   * `WEBGL_lose_context`) rather than when it's garbage collected, as
+   * browsers cap the number of live contexts per page. A canvas passed in
+   * through the `canvas` option is left alone, because a canvas only ever
+   * holds one context and losing it would stop a new renderer using it.
+   *
+   * Programs, geometry and textures aren't tracked by the renderer, so call
+   * `remove()` on them first if the context is being kept.
+   */
+  dispose() {
+    this.state.uniformLocations.clear()
+    this.state.textureUnits = []
+    this.currentProgram = -1
+    this.currentGeometry = ''
+    if (this.#ownsCanvas)
+      this.gl.getExtension('WEBGL_lose_context')?.loseContext()
   }
 
   set dimensions(v: Vec2) {

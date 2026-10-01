@@ -379,11 +379,15 @@ export class Program {
   }
 
   /**
-   * Delete the program
+   * Delete the program and drop its uniform values from the renderer's cache
    */
   remove() {
     if (this.gl.renderer.currentProgram === this.id)
       this.gl.renderer.currentProgram = -1
+    this.uniformLocations.forEach((location) =>
+      this.gl.renderer.state.uniformLocations.delete(location)
+    )
+    this.uniformLocations.clear()
     this.gl.deleteProgram(this.program)
   }
 }
