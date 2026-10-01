@@ -127,7 +127,11 @@ export class RenderTarget {
     this.depth = depth
     this.buffer = this.gl.createFramebuffer()!
     this.target = target
-    this.gl.bindFramebuffer(this.target, this.buffer)
+    // Bind through the renderer so its cached framebuffer state stays in sync
+    this.gl.renderer.bindFramebuffer({
+      target: this.target,
+      buffer: this.buffer
+    })
 
     const e = gl.getExtension('OES_texture_half_float')
     if (type === e?.HALF_FLOAT_OES || type === this.gl.HALF_FLOAT) {
@@ -199,7 +203,7 @@ export class RenderTarget {
       )
     }
 
-    this.gl.bindFramebuffer(this.target, null)
+    this.gl.renderer.bindFramebuffer({ target: this.target })
   }
 
   /**
