@@ -20,10 +20,10 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
   - `blendEquation` is never initialised, so calling `setBlendEquation()` throws.
   - If linking fails, the constructor returns early and leaves `uniformLocations` undefined, so `use()` throws on the next frame. Failed shaders are also never deleted.
 - [x] **Wrong initial blend state** — `core/Renderer.ts`. `state.blendEquation.modeAlpha` starts as `ONE_MINUS_SRC_ALPHA`, which is a blend factor, not a blend equation (should be `FUNC_ADD`).
-- [ ] **Debug code left in** — `geometry/Geometry.ts` `bindTransformFeedbacks`. `window.feedbk = feedbk` writes to the global object on every transform-feedback draw.
-- [ ] **Indexed draw ranges only work with 16-bit indices** — `geometry/Geometry.ts` `draw`. The offset is `drawRange.start * 2`, so a `drawRange` on `Uint32` indices points at the wrong place. Use the index type's byte size.
-- [ ] **`getPosition()` throws without a position attribute** — `geometry/Geometry.ts`. It reads `.data` on `undefined` before it gets to the warning.
-- [ ] **`Sphere` isn't exported** — `geometry/Sphere.ts` exists but `index.ts` doesn't export it.
+- [x] **Debug code left in** — `geometry/Geometry.ts` `bindTransformFeedbacks`. `window.feedbk = feedbk` writes to the global object on every transform-feedback draw.
+- [x] **Indexed draw ranges only work with 16-bit indices** — `geometry/Geometry.ts` `draw`. The offset is `drawRange.start * 2`, so a `drawRange` on `Uint32` indices points at the wrong place. Use the index type's byte size.
+- [x] **`getPosition()` throws without a position attribute** — `geometry/Geometry.ts`. It reads `.data` on `undefined` before it gets to the warning.
+- [x] **`Sphere` isn't exported** — `geometry/Sphere.ts` exists but `index.ts` doesn't export it.
 
 ## Phase 2 — Resource lifecycle and disposal
 
