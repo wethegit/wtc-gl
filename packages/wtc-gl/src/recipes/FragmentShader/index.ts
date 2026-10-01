@@ -2,7 +2,7 @@ import { Vec2 } from 'wtc-math'
 
 import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
 import type { Framebuffer } from '../../ext/Framebuffer'
-import { Renderer } from '../../core/Renderer'
+import { Renderer, type RendererOptions } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
 import { Triangle } from '../../geometry/Triangle'
@@ -21,7 +21,7 @@ export interface FragmentShaderOptions {
   onInit: (renderer: Renderer) => void
   onBeforeRender: (delta: number) => void
   onAfterRender: (delta: number) => void
-  rendererProps: object
+  rendererProps: Partial<RendererOptions>
 }
 
 const hasWindow = typeof window !== 'undefined'
@@ -42,6 +42,9 @@ export class FragmentShader {
   mesh: Mesh
 
   lastTime: number = 0
+
+  #ownsCanvas: boolean
+  #frame: number = 0
 
   constructor({
     vertex = defaultShaderV,
@@ -77,6 +80,7 @@ export class FragmentShader {
       u_resolution: this.u_resolution
     })
 
+    this.#ownsCanvas = !rendererProps.canvas
     this.renderer = new Renderer(rendererProps)
     onInit(this.renderer)
     this.gl = this.renderer.gl
@@ -124,7 +128,7 @@ export class FragmentShader {
     this.lastTime = t
 
     if (this.playing) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
     }
 
     const v: number = this.u_time.value as number
@@ -138,6 +142,28 @@ export class FragmentShader {
     this.onAfterRender(t)
   }
 
+  /**
+   * Stop the render loop, remove the resize listener, and delete the mesh's
+   * geometry and program. A canvas the renderer created is removed from the
+   * DOM and its WebGL context released (see `Renderer.dispose()`). A canvas
+   * passed in through `rendererProps.canvas` stays where it is.
+   *
+   * A `post` framebuffer is left alone, as it's supplied by the caller. Call
+   * its `remove()` as well if nothing else uses it.
+   *
+   * @returns The canvas element.
+   */
+  destroy(): HTMLCanvasElement {
+    this.playing = false
+    if (hasWindow) window.removeEventListener('resize', this.resize, false)
+    this.mesh.geometry.remove()
+    this.program.remove()
+    this.renderer.dispose()
+    const canvas = this.gl.canvas as HTMLCanvasElement
+    if (this.#ownsCanvas) canvas.remove()
+    return canvas
+  }
+
   #post: Framebuffer
   set post(p) {
     this.#post = p
@@ -149,9 +175,10 @@ export class FragmentShader {
   #playing: boolean = false
   set playing(v: boolean) {
     if (this.#playing !== true && v === true) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
       this.#playing = true
     } else if (v == false) {
+      cancelAnimationFrame(this.#frame)
       this.lastTime = 0
       this.#playing = false
     }

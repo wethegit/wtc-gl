@@ -125,7 +125,6 @@ export class ScrollRenderer {
   #scenes: ScrollScene[] = []
   #lastTime: number = 0
   #playing: boolean = false
-  #ownsCanvas: boolean
   #cleared: boolean = false
   #resizeObserver: ResizeObserver | null = null
   #layout: 'fixed' | 'absolute'
@@ -142,7 +141,6 @@ export class ScrollRenderer {
   }: ScrollRendererOptions = {}) {
     this.#layout = layout
     this.#overscan = layout === 'absolute' ? overscan : 0
-    this.#ownsCanvas = !rendererProps.canvas
     this.renderer = new Renderer({
       alpha: true,
       ...rendererProps,
@@ -422,8 +420,7 @@ export class ScrollRenderer {
       this.canvas.style.transform = ''
       this.canvas.style.height = ''
     }
-    if (this.#ownsCanvas)
-      this.gl.getExtension('WEBGL_lose_context')?.loseContext()
+    this.renderer.dispose()
     return this.canvas
   }
 }
