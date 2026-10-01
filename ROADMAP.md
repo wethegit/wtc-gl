@@ -8,7 +8,7 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 
 ## Phase 1 — Bug fixes (patch release)
 
-- [ ] **Some meshes are never drawn when sorting** — `core/Renderer.ts` `getRenderList`. A program with `transparent: true, depthTest: false` isn't added to any list, so it never renders when `sort: true` (the default). The `else` that should put it in `ui` is attached to `if (program)` instead. Also, `sortUI` reads `a.program.id`, so a node with no program would crash there anyway.
+- [x] **Some meshes are never drawn when sorting** — `core/Renderer.ts` `getRenderList`. A program with `transparent: true, depthTest: false` isn't added to any list, so it never renders when `sort: true` (the default). The `else` that should put it in `ui` is attached to `if (program)` instead. Also, `sortUI` reads `a.program.id`, so a node with no program would crash there anyway.
 - [ ] **Mesh rebuilds its matrix uniforms on every draw** — `core/Mesh.ts` `draw`. It checks `uniforms.modelMatrix` but stores the uniforms as `u_modelMatrix`. The check never passes, so every mesh creates 7 new `Uniform` objects each frame. The no-camera branch has the same problem.
 - [ ] **A mesh scaled to zero crashes when drawn with a camera** — `core/Mesh.ts` `draw`. In wtc-math, `Mat3.fromMat4` returns `null` when the matrix can't be inverted, and `.array` is then read on `null`.
 - [ ] **`u_objectPosition` uses local position** — `core/Mesh.ts`. It reads `this.position` rather than the world translation, so it's wrong for any child object.
@@ -19,7 +19,7 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 - [ ] **Program initialisation gaps** — `core/Program.ts`:
   - `blendEquation` is never initialised, so calling `setBlendEquation()` throws.
   - If linking fails, the constructor returns early and leaves `uniformLocations` undefined, so `use()` throws on the next frame. Failed shaders are also never deleted.
-- [ ] **Wrong initial blend state** — `core/Renderer.ts`. `state.blendEquation.modeAlpha` starts as `ONE_MINUS_SRC_ALPHA`, which is a blend factor, not a blend equation (should be `FUNC_ADD`).
+- [x] **Wrong initial blend state** — `core/Renderer.ts`. `state.blendEquation.modeAlpha` starts as `ONE_MINUS_SRC_ALPHA`, which is a blend factor, not a blend equation (should be `FUNC_ADD`).
 - [ ] **Debug code left in** — `geometry/Geometry.ts` `bindTransformFeedbacks`. `window.feedbk = feedbk` writes to the global object on every transform-feedback draw.
 - [ ] **Indexed draw ranges only work with 16-bit indices** — `geometry/Geometry.ts` `draw`. The offset is `drawRange.start * 2`, so a `drawRange` on `Uint32` indices points at the wrong place. Use the index type's byte size.
 - [ ] **`getPosition()` throws without a position attribute** — `geometry/Geometry.ts`. It reads `.data` on `undefined` before it gets to the warning.

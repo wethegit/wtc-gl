@@ -222,7 +222,7 @@ export class Renderer {
       blendFunc: { src: this.gl.ONE, dst: this.gl.ZERO },
       blendEquation: {
         modeRGB: this.gl.FUNC_ADD,
-        modeAlpha: this.gl.ONE_MINUS_SRC_ALPHA
+        modeAlpha: this.gl.FUNC_ADD
       },
       cullFace: null,
       frontFace: this.gl.CCW,
@@ -584,8 +584,8 @@ export class Renderer {
   sortUI(a: Drawable, b: Drawable) {
     if (a.renderOrder !== b.renderOrder) {
       return a.renderOrder - b.renderOrder
-    } else if (a.program.id !== b.program.id) {
-      return a.program.id - b.program.id
+    } else if (a.program?.id !== b.program?.id) {
+      return (a.program?.id ?? 0) - (b.program?.id ?? 0)
     } else {
       return b.id - a.id
     }
@@ -638,12 +638,10 @@ export class Renderer {
         // Split into the 3 render groups
         const { program } = node
 
-        if (program) {
-          if (!program.transparent) {
-            opaque.push(node)
-          } else if (program.depthTest) {
-            transparent.push(node)
-          }
+        if (program && !program.transparent) {
+          opaque.push(node)
+        } else if (program?.depthTest) {
+          transparent.push(node)
         } else {
           ui.push(node)
         }

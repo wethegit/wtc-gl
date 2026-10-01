@@ -16,6 +16,7 @@ import ringsFrag from '../scroll-renderer/mid.frag'
 import gridFrag from '../scroll-renderer/end.frag'
 import wavesFrag from '../scroll-renderer-homepage/scenes/waves/waves.frag'
 import voronoiFrag from './voronoi.frag'
+import hudFrag from './hud.frag'
 
 import { useDragWorld } from './use-drag-world'
 
@@ -41,6 +42,11 @@ interface Poi {
   w: number
   h: number
   frag: string
+  /**
+   * Optional second shader drawn on top by its own mesh, using a
+   * `transparent: true, depthTest: false` program (the renderer's UI group).
+   */
+  overlay?: string
   /** Tint colour for the decorative glow on the floor layer. */
   glow: string
 }
@@ -115,6 +121,21 @@ const POIS: Poi[] = [
     h: 420,
     frag: gridFrag,
     glow: 'rgba(60, 255, 170, 0.3)'
+  },
+  {
+    id: 'hud',
+    label: 'HUD',
+    tag: 'region 06 — hud',
+    title: 'Render groups',
+    blurb:
+      'Two meshes share this scene. The HUD’s program is transparent with depthTest off, so the renderer sorts it into the UI group and draws it last, over the plasma.',
+    x: 0,
+    y: -1150,
+    w: 600,
+    h: 400,
+    frag: plasmaFrag,
+    overlay: hudFrag,
+    glow: 'rgba(80, 220, 200, 0.3)'
   }
 ]
 
@@ -145,9 +166,24 @@ function WorldScene({
       })
       new Mesh(gl, { geometry, program }).setParent(scrollScene.scene)
 
+      const overlayProgram = poi.overlay
+        ? new Program(gl, {
+            vertex: vert,
+            fragment: poi.overlay,
+            uniforms: { ...scrollScene.uniforms },
+            transparent: true,
+            depthTest: false
+          })
+        : null
+      if (overlayProgram)
+        new Mesh(gl, { geometry, program: overlayProgram }).setParent(
+          scrollScene.scene
+        )
+
       return () => {
         geometry.remove()
         program.remove()
+        overlayProgram?.remove()
       }
     },
     // Wake scenes a little before they enter the viewport so fast pans don't
