@@ -17,6 +17,7 @@ export * from './geometry/GeometryAttribute'
 export * from './geometry/Triangle'
 export * from './geometry/Plane'
 export * from './geometry/Box'
+export * from './geometry/Sphere'
 export * from './geometry/PointCloud'
 
 export * from './ext/Framebuffer'
