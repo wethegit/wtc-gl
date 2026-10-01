@@ -102,7 +102,8 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
           : window.WebGLRenderingContext.UNSIGNED_INT)
     this.normalized = normalized
 
-    this.count = count || stride ? data.byteLength / stride : data.length / size
+    this.count =
+      count || (stride ? data.byteLength / stride : data.length / size)
     this.divisor = instanced || 0
   }
   /**

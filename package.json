@@ -7,11 +7,12 @@
     "prepare": "husky",
     "dev": "pnpm --filter wtc-gl-site run dev",
     "build": "pnpm -r run build",
-    "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/*",
+    "test": "pnpm -r run test",
+    "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/* ./packages/*/test/**/*",
     "preview": "pnpm --filter wtc-gl-site run preview",
     "document": "typedoc --entryPointStrategy Expand",
     "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs",
-    "check": "eslint --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/* && pnpm run build",
+    "check": "eslint --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src/**/* ./packages/*/test/**/* && pnpm run build",
     "changeset": "changeset",
     "version": "changeset version && pnpm install --lockfile-only",
     "release": "pnpm run build && changeset publish"
@@ -30,7 +31,7 @@
     "typescript": "~6.0.3"
   },
   "lint-staged": {
-    "packages/*/src/**/*.{ts,tsx,js}": "eslint --fix",
-    "packages/*/src/**/*": "prettier -w -u"
+    "packages/*/{src,test}/**/*.{ts,tsx,js}": "eslint --fix",
+    "packages/*/{src,test}/**/*": "prettier -w -u"
   }
 }

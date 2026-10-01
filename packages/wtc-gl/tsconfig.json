@@ -18,5 +18,5 @@
     "noFallthroughCasesInSwitch": true,
     "strictPropertyInitialization": false
   },
-  "include": ["src", "types"]
+  "include": ["src", "types", "test"]
 }
