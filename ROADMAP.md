@@ -12,9 +12,9 @@ Coverage: Renderer, Program, Mesh, Uniform, Texture, Geometry, RenderTarget, Fra
 - [x] **Mesh rebuilds its matrix uniforms on every draw** — `core/Mesh.ts` `draw`. It checks `uniforms.modelMatrix` but stores the uniforms as `u_modelMatrix`. The check never passes, so every mesh creates 7 new `Uniform` objects each frame. The no-camera branch has the same problem.
 - [x] **A mesh scaled to zero crashes when drawn with a camera** — `core/Mesh.ts` `draw`. In wtc-math, `Mat3.fromMat4` returns `null` when the matrix can't be inverted, and `.array` is then read on `null`.
 - [x] **`u_objectPosition` uses local position** — `core/Mesh.ts`. It reads `this.position` rather than the world translation, so it's wrong for any child object.
-- [ ] **Framebuffer tiling modes are swapped** — `ext/Framebuffer.ts` `get wrap`. `IMAGETYPE_TILING` sets `MIRRORED_REPEAT` and `IMAGETYPE_MIRROR` sets `REPEAT`.
-- [ ] **Framebuffer mipmaps go to the wrong texture** — `ext/Framebuffer.ts` `render`. `generateMipmap` runs on whichever texture happens to be bound, because the line that binds the write target's texture is commented out.
-- [ ] **The renderer can lose track of the bound framebuffer** — `core/RenderTarget.ts`. The constructor calls `gl.bindFramebuffer` directly, so `renderer.state.framebuffer` goes stale. If you then render into the target that was last bound, the bind is skipped and the frame goes to the canvas. Route the binds through `renderer.bindFramebuffer`.
+- [x] **Framebuffer tiling modes are swapped** — `ext/Framebuffer.ts` `get wrap`. `IMAGETYPE_TILING` sets `MIRRORED_REPEAT` and `IMAGETYPE_MIRROR` sets `REPEAT`.
+- [x] **Framebuffer mipmaps go to the wrong texture** — `ext/Framebuffer.ts` `render`. `generateMipmap` runs on whichever texture happens to be bound, because the line that binds the write target's texture is commented out.
+- [x] **The renderer can lose track of the bound framebuffer** — `core/RenderTarget.ts`. The constructor calls `gl.bindFramebuffer` directly, so `renderer.state.framebuffer` goes stale. If you then render into the target that was last bound, the bind is skipped and the frame goes to the canvas. Route the binds through `renderer.bindFramebuffer`.
 - [ ] **Changing a typed array in place never re-uploads** — `core/Uniform.ts` `setUniform`. A non-`Array` value (such as a `Float32Array`) is compared by reference, so editing it in place looks unchanged to the cache.
 - [ ] **Program initialisation gaps** — `core/Program.ts`:
   - `blendEquation` is never initialised, so calling `setBlendEquation()` throws.

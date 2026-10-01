@@ -126,7 +126,8 @@ export class Framebuffer {
       viewport
     })
     if (this.generateMipmaps) {
-      // this.gl.bindTexture(this.gl.TEXTURE_2D, this.#writeFB.texture)
+      // generateMipmap acts on the bound texture, so bind the one just written
+      this.#writeFB.texture.bind()
       this.gl.generateMipmap(this.gl.TEXTURE_2D)
     }
 
@@ -138,9 +139,9 @@ export class Framebuffer {
       case Framebuffer.IMAGETYPE_REGULAR:
         return this.gl.CLAMP_TO_EDGE
       case Framebuffer.IMAGETYPE_TILING:
-        return this.gl.MIRRORED_REPEAT
-      case Framebuffer.IMAGETYPE_MIRROR:
         return this.gl.REPEAT
+      case Framebuffer.IMAGETYPE_MIRROR:
+        return this.gl.MIRRORED_REPEAT
     }
   }
 
