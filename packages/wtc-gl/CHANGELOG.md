@@ -1,5 +1,32 @@
 # wtc-gl
 
+## 1.5.0
+
+### Minor Changes
+
+- [#164](https://github.com/wethegit/wtc-gl/pull/164) [`b2485ef`](https://github.com/wethegit/wtc-gl/commit/b2485ef40074cfd1fb683aac8019fce3b849aacd) Thanks [@liamegan](https://github.com/liamegan)! - Add teardown for renderers and fragment shaders:
+
+  - `Renderer.dispose()` clears the renderer's state caches. If the renderer created its own canvas, it also releases the WebGL context straight away. A canvas passed in through the `canvas` option keeps its context, so a new renderer can still use it.
+  - `FragmentShader.destroy()` stops the render loop, removes the `resize` listener, deletes the geometry and program, and disposes the renderer. A canvas the renderer created is removed from the DOM; it's returned either way. A `post` framebuffer is left for the caller to remove.
+  - `FragmentShader.playing = false` now cancels the pending animation frame, so one more frame no longer renders after pausing.
+  - `Program.remove()` now drops its uniform values from the renderer's cache.
+  - `ScrollRenderer.destroy()` now calls `Renderer.dispose()`.
+  - `FragmentShader`'s `rendererProps` option is now typed as `Partial<RendererOptions>` instead of `object`.
+
+- [#162](https://github.com/wethegit/wtc-gl/pull/162) [`9eb5a54`](https://github.com/wethegit/wtc-gl/commit/9eb5a54d7c7d83bb6c24a58d8e5acefd556d7633) Thanks [@liamegan](https://github.com/liamegan)! - Add disposal for textures and render targets, and fix a GPU memory leak in `Framebuffer`:
+
+  - `Texture.remove()` deletes the WebGL texture and clears it from the renderer's texture-unit cache.
+  - `RenderTarget.remove()` deletes the framebuffer and its colour and depth textures. If the target is bound, the canvas is bound in its place.
+  - `Framebuffer.remove()` deletes both ping-pong targets.
+  - `Framebuffer.resize()` now frees the previous targets. It used to create two new ones on every resize and never delete the old ones. If you keep a reference to `fbo.read.texture` across a resize, read it again after resizing.
+
+### Patch Changes
+
+- [#165](https://github.com/wethegit/wtc-gl/pull/165) [`5e6b33a`](https://github.com/wethegit/wtc-gl/commit/5e6b33a500e796c9ab86f71e3a9d8855f7a9f565) Thanks [@liamegan](https://github.com/liamegan)! - Fix `GeometryAttribute` counts and bounds for interleaved attributes:
+
+  - An explicit `count` is now used as given. Without a `stride` it used to become `Infinity`, and with a `stride` it was ignored.
+  - `computeBoundingBox` / `computeBoundingSphere` now treat `stride` and `offset` as bytes, matching what's passed to `vertexAttribPointer`. They used them as array indices, so bounds for interleaved attributes were read from the wrong values.
+
 ## 1.4.1
 
 ### Patch Changes
