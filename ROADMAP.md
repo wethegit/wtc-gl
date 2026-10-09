@@ -73,16 +73,81 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 - [ ] `Texture` should accept `Uint8Array`/`Uint16Array`/`Int32Array` data, `ImageBitmap` and `OffscreenCanvas`.
 - [ ] Add a video-texture helper that sets `needsUpdate` via `requestVideoFrameCallback`.
 - [ ] `RenderTarget` should honour the `stencil` and `depthTexture` options (both are currently ignored).
+- [ ] `RenderTarget` creates its depth texture as `DEPTH_COMPONENT16` (inherited from OGL), which z-fights on coplanar faces. Default to `DEPTH_COMPONENT24` or add a `depthFormat` option. The manifold-divider demo's `scene-target.ts` swaps in a 24-bit renderbuffer to work around this.
 - [ ] `Renderer` should throw when it can't get a context, rather than logging an error and returning a half-built object.
 - [ ] Add a clear-colour API on `Renderer` instead of raw `gl.clearColor` calls.
 - [ ] `Geometry.computeBoundingBox` should handle 2D positions (`size: 2`); there's already a TODO.
 - [x] `Mesh.removeBeforeRender` / `removeAfterRender` remove items while iterating, so the item right after a removed one is skipped.
 
+## Phase 6 — 3D modelling
+
+wtc-gl already has a scene graph, cameras, indexed and instanced geometry, and `Box`/`Sphere`/`Plane`. What's missing is the layer for building and shading models in code. The manifold-divider demo works around most of these gaps by hand (a `Builder` class that offsets and merges boxes, hand-written normals, a sweep done in `helix.vert`, per-demo lighting).
+
+Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep its licence notice), which wtc-gl's core is descended from. Items marked *new* have no OGL equivalent.
+
+### Building geometry
+
+- [ ] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. *New.*
+- [ ] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. *New.*
+- [ ] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. *New.*
+- [ ] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. *New.*
+- [ ] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
+- [ ] Vitest coverage for all of the above. They're pure array work.
+
+### Primitives and generators
+
+- [ ] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
+- [ ] `Capsule`. *New.*
+- [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
+- [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
+- [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
+- [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). *New.*
+- [ ] Optional CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves.
+
+### Lines (MeshLine equivalent)
+
+A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±1, prev/next attributes, extruded in screen space with mitred corners), extended with what three.js MeshLine adds.
+
+- [ ] `Line extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
+- [ ] Width in pixels or world units (`sizeAttenuation`).
+- [ ] Per-vertex width from a callback (`t => 1 - t`) for tapers and trails.
+- [ ] Dashes: `dashArray`, `dashOffset`, `dashRatio`. Measure along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
+- [ ] Texture `map` with repeat along the line, `alphaTest`, `opacity`.
+- [ ] Closed loops and a mitre limit.
+- [ ] `setPoints()` that reuses buffers when the count is unchanged, plus a trail mode that pushes a new head point and drops the tail.
+- [ ] Export the extrusion as a GLSL function so custom shaders can reuse it.
+- [ ] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance) and a demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
+- Known limits, same as MeshLine: mitred joins only (no round joins or caps), and self-overlapping transparent lines double up unless depth writes are off or `alphaTest` is used.
+
+### Shading and viewing
+
+- [ ] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. Ship the lighting as GLSL snippets alongside the `#include` work in Future features item 2. *New.*
+- [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
+- [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
+
+### Core additions this depends on
+
+- [ ] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL).
+- [ ] `Camera.frustumIntersectsMesh(node, worldMatrix)` — the `worldMatrix` override is what allows per-instance culling (OGL).
+- [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
+- [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
+
+### Interaction
+
+- [ ] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9.
+- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
+
+### Later
+
+- [ ] `Shadow` — shadow-map pass from a light camera (OGL).
+- [ ] OBJ/STL/GLB export, if models need to leave the browser. *New.*
+- glTF import stays under Future features item 6.
+
 ---
 
 ## Future features
 
-These come after Phases 1–5. They build on what wtc-gl is already good at: shader-driven effects in agency sites, synced to DOM elements and scroll. It doesn't need to compete with three.js as a general 3D engine.
+These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-gl is already good at: shader-driven effects in agency sites, synced to DOM elements and scroll. Phase 6 adds basic 3D modelling, but wtc-gl still doesn't need to compete with three.js as a general 3D engine.
 
 ### Priority
 
@@ -119,8 +184,8 @@ These come after Phases 1–5. They build on what wtc-gl is already good at: sha
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
    - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
-8. **Instancing helpers.** An `InstancedMesh` with per-instance matrix and colour attributes. `Geometry` already supports divisors, so this is mostly ergonomics.
-9. **Picking.** Ray casting against bounds, or a GPU ID-buffer pass, for clickable 3D elements.
+8. **Instancing helpers.** Moved to Phase 6 (Interaction).
+9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
 10. **React parity.** `packages/react` only covers ScrollRenderer. Add:
     - [ ] `useFragmentShader`
     - [ ] `useUniform`, for reactive uniform values without React re-renders
