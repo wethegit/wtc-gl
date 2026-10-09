@@ -26,6 +26,9 @@ export function createMockGL(overrides: Record<string, unknown> = {}): MockGL {
     FLOAT_VEC4: 35666,
     FLOAT_MAT4: 35676,
     SAMPLER_2D: 35678,
+    SAMPLER_3D: 35679,
+    SAMPLER_CUBE: 35680,
+    SAMPLER_2D_ARRAY: 36289,
     LINK_STATUS: 35714
   }
   let nextConstant = 0x10000
