@@ -47,7 +47,7 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
   /**
    * The WebGL buffer containing the static attribute data
    */
-  buffer: WebGLBuffer
+  buffer: WebGLBuffer | null = null
 
   /**
    * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others
@@ -56,7 +56,7 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
   /**
    * gl.ELEMENT_ARRAY_BUFFER or gl.ARRAY_BUFFER depending on whether this is an index attribute or not
    */
-  target: GLenum
+  target: GLenum = 34962 // ARRAY_BUFFER
 
   /**
    * whether integer data values should be normalized into a certain range when being cast to a float.
@@ -111,6 +111,9 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
    * @param {WTCGLRenderingContext} gl - The WTCGL rendering context.
    */
   updateAttribute(gl: WTCGLRenderingContext): void {
+    // Not added to a geometry yet, so there's nothing to upload to
+    if (!this.buffer) return
+
     if (gl.renderer.state.boundBuffer !== this.buffer) {
       gl.bindBuffer(this.target, this.buffer)
       gl.renderer.state.boundBuffer = this.buffer

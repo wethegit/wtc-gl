@@ -51,7 +51,7 @@ export class Renderer {
   /**
    * The dimensions of the renderer
    */
-  #dimensions: Vec2
+  #dimensions = new Vec2()
 
   /**
    * Whether to render an alpha channel. This property is passed to the rendering context.
@@ -108,7 +108,7 @@ export class Renderer {
   /**
    * Stores the current geometry being rendered. Used to otimise geo rendering.
    */
-  currentGeometry: string
+  currentGeometry = ''
 
   /**
    * The WebGL2RenderingContext.vertexAttribDivisor() method of the WebGL 2 API modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives with
@@ -152,7 +152,7 @@ export class Renderer {
   drawBuffers: (buffers: GLenum[]) => void
 
   // Allows programs to optimise by determine if they're the currently rendering program and skipping some steps
-  currentProgram: number
+  currentProgram = -1
 
   #ownsCanvas: boolean
 
@@ -207,17 +207,15 @@ export class Renderer {
     this.premultipliedAlpha = premultipliedAlpha
     this.autoClear = autoClear
 
-    if (webgl === 2)
-      this.gl = canvas.getContext('webgl2', attributes) as WTCGLRenderingContext
-    this.isWebgl2 = !!this.gl
-    if (!this.gl) {
-      this.gl = canvas.getContext('webgl', attributes) as WTCGLRenderingContext
-    }
-    if (!this.gl) {
-      console.error('unable to create webgl context')
-      return this
-    }
+    let gl =
+      webgl === 2
+        ? (canvas.getContext('webgl2', attributes) as WTCGLRenderingContext)
+        : null
+    this.isWebgl2 = !!gl
+    gl ??= canvas.getContext('webgl', attributes) as WTCGLRenderingContext
+    if (!gl) throw new Error('Unable to create a WebGL context')
 
+    this.gl = gl
     this.gl.renderer = this
 
     // initialise size values
@@ -574,8 +572,8 @@ export class Renderer {
   sortOpaque(a: Drawable, b: Drawable) {
     if (a.renderOrder !== b.renderOrder) {
       return a.renderOrder - b.renderOrder
-    } else if (a.program.id !== b.program.id) {
-      return a.program.id - b.program.id
+    } else if (a.program?.id !== b.program?.id) {
+      return (a.program?.id ?? 0) - (b.program?.id ?? 0)
     } else if (a.zDepth !== b.zDepth) {
       return a.zDepth - b.zDepth
     } else {

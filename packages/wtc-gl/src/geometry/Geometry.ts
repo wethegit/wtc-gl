@@ -1,7 +1,6 @@
 import { Vec3 } from 'wtc-math'
 
 import type {
-  WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLGeometryAttributeCollection,
   WTCGLGeometryAttribute,
@@ -48,7 +47,7 @@ export class Geometry {
   /**
    * Any supplied transform feedback objects
    */
-  transformFeedbacks: TransformFeedback
+  transformFeedbacks?: TransformFeedback
   transformFeedbackIndex: number = 0
 
   /**
@@ -63,16 +62,11 @@ export class Geometry {
   /**
    * A boolean indicating whether the geometry is an instanced geometry or not.
    */
-  isInstanced: boolean
+  isInstanced = false
   /**
    * An object defining the boundary of the geometry
    */
-  bounds: WTCGLBounds
-
-  /**
-   * An object defining all of the rendering state properties.
-   */
-  glState: WTCGLRendererState
+  bounds?: WTCGLBounds
 
   /**
    * Create a geometry object.
@@ -125,7 +119,7 @@ export class Geometry {
     attr.needsUpdate = false
 
     if (!attr.buffer) {
-      attr.buffer = this.gl.createBuffer()!
+      attr.buffer = this.gl.createBuffer()
 
       // Push data to the buffer
       attr.updateAttribute(this.gl)
@@ -238,11 +232,14 @@ export class Geometry {
   }
 
   bindTransformFeedbacks(): void {
+    const transformFeedbacks = this.transformFeedbacks
+    if (!transformFeedbacks) return
+
     const i = (this.transformFeedbackIndex + 1) % 2
-    const source = this.transformFeedbacks.VAOs[this.transformFeedbackIndex]
-    // const dest = this.transformFeedbacks.VAOs[i]
-    const feedbk = this.transformFeedbacks.TFBs[i]
-    const buffer = this.transformFeedbacks.BufferRefs[i]
+    const source = transformFeedbacks.VAOs[this.transformFeedbackIndex]
+    // const dest = transformFeedbacks.VAOs[i]
+    const feedbk = transformFeedbacks.TFBs[i]
+    const buffer = transformFeedbacks.BufferRefs[i]
 
     // this.readTFB = source
     // this.writeTFB = dest
@@ -350,7 +347,7 @@ export class Geometry {
    * Computes the bounding box of the geometry. If no attribute is provided to compue with, try to use the position attribute array by default.
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
-  computeBoundingBox(attr?: WTCGLGeometryAttribute): void {
+  computeBoundingBox(attr?: WTCGLGeometryAttribute): WTCGLBounds | undefined {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
@@ -359,20 +356,18 @@ export class Geometry {
     const offset = (attr.offset || 0) / bytes
     const stride = (attr.stride || 0) / bytes || attr.size
 
-    if (!this.bounds) {
-      this.bounds = {
-        min: new Vec3(),
-        max: new Vec3(),
-        center: new Vec3(),
-        scale: new Vec3(),
-        radius: Infinity
-      }
-    }
+    const bounds = (this.bounds ??= {
+      min: new Vec3(),
+      max: new Vec3(),
+      center: new Vec3(),
+      scale: new Vec3(),
+      radius: Infinity
+    })
 
-    const min = this.bounds.min
-    const max = this.bounds.max
-    const center = this.bounds.center
-    const scale = this.bounds.scale
+    const min = bounds.min
+    const max = bounds.max
+    const center = bounds.center
+    const scale = bounds.scale
 
     min.reset(Infinity, Infinity, Infinity)
     max.reset(-Infinity, -Infinity, -Infinity)
@@ -394,6 +389,8 @@ export class Geometry {
 
     scale.resetToVector(max.subtractNew(min))
     center.resetToVector(min.addNew(max).scale(0.5))
+
+    return bounds
   }
 
   /**
@@ -409,18 +406,19 @@ export class Geometry {
     const offset = (attr.offset || 0) / bytes
     const stride = (attr.stride || 0) / bytes || attr.size
 
-    if (!this.bounds) this.computeBoundingBox(attr)
+    const bounds = this.bounds ?? this.computeBoundingBox(attr)
+    if (!bounds) return
 
     let maxRadiusSq = 0
     for (let i = offset, l = array.length; i < l; i += stride) {
       const point = originArrayToVec3(array, i)
       maxRadiusSq = Math.max(
         maxRadiusSq,
-        this.bounds.center.subtractNew(point).lengthSquared
+        bounds.center.subtractNew(point).lengthSquared
       )
     }
 
-    this.bounds.radius = Math.sqrt(maxRadiusSq)
+    bounds.radius = Math.sqrt(maxRadiusSq)
   }
 
   /**

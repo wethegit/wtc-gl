@@ -1,8 +1,4 @@
-import type {
-  WTCGLRendererState,
-  WTCGLTextureState,
-  WTCGLRenderingContext
-} from '../types'
+import type { WTCGLTextureState, WTCGLRenderingContext } from '../types'
 
 const emptyPixel = new Uint8Array(4)
 
@@ -52,8 +48,8 @@ export class Texture {
   /**
    * The image element representing the texture. Can be an HTML image, video, or canvas
    */
-  image: ImageTypes | ImageTypes[]
-  data: Float32Array | null
+  image?: ImageTypes | ImageTypes[]
+  data: Float32Array | null = null
 
   /**
    * The WebGL texture object containing the data and state for WebGL
@@ -61,13 +57,13 @@ export class Texture {
   texture: WebGLTexture
 
   /**
-   * The width of the texture.
+   * The width of the texture. 0 until known.
    */
-  width: number
+  width = 0
   /**
-   * The height of the texture.
+   * The height of the texture. 0 until known.
    */
-  height: number
+  height = 0
 
   /**
    * The binding point for the texture.
@@ -144,10 +140,6 @@ export class Texture {
   store: {
     image?: ImageTypes | ImageTypes[]
   }
-  /**
-   * A local reference to the renderer state
-   */
-  glState: WTCGLRendererState
   /**
    * Texture state, contains the basic texture properties.
    */
@@ -385,7 +377,7 @@ export class Texture {
           this.type,
           this.data
         )
-      } else if (!Array.isArray(this.image)) {
+      } else if (this.image && !Array.isArray(this.image)) {
         // Regular texture
         this.gl.texImage2D(
           this.target,

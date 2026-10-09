@@ -164,12 +164,12 @@ export class FragmentShader {
     return canvas
   }
 
-  #post: Framebuffer
+  #post: Framebuffer | null = null
   set post(p) {
     this.#post = p
   }
   get post() {
-    return this.#post || null
+    return this.#post
   }
 
   #playing: boolean = false

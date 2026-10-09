@@ -265,7 +265,7 @@ export interface WTCGLGeometryAttribute {
   /**
    * The WebGL buffer containing the static attribute data.
    */
-  buffer: WebGLBuffer
+  buffer: WebGLBuffer | null
 
   /**
    * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others.

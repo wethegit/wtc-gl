@@ -52,7 +52,7 @@ export class ParticleSimulation {
 
   references: Float32Array
 
-  cloud: PointCloud
+  cloud?: PointCloud
 
   lastTime = 0
 
@@ -121,6 +121,9 @@ export class ParticleSimulation {
       fragment,
       uniforms: this.uniforms
     })
+
+    if (!this.cloud)
+      throw new Error('createGeometry must set this.cloud to a PointCloud')
 
     this.mesh = new Mesh(this.gl, {
       mode: this.gl.POINTS,
@@ -206,12 +209,12 @@ export class ParticleSimulation {
     this.renderer.dimensions = this.dimensions
   }
 
-  #post: Framebuffer
+  #post: Framebuffer | null = null
   set post(p) {
     this.#post = p
   }
   get post() {
-    return this.#post || null
+    return this.#post
   }
 
   #playing = false

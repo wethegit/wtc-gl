@@ -56,7 +56,7 @@ export class DollyCamera extends Camera {
   spherical: Vec3
   panDelta: Vec3
 
-  offset: Vec3
+  offset = new Vec3()
 
   rotateStart: Vec2
   panStart: Vec2

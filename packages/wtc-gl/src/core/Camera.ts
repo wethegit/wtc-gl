@@ -102,7 +102,14 @@ export class Camera extends Obj {
    */
   type: 'orthographic' | 'perspective'
 
-  frustum: { [key: string]: { pos: Vec3; constant: number } }
+  frustum: { [key: string]: { pos: Vec3; constant: number } } = {
+    xNeg: { pos: new Vec3(), constant: 0 },
+    xPos: { pos: new Vec3(), constant: 0 },
+    yNeg: { pos: new Vec3(), constant: 0 },
+    yPos: { pos: new Vec3(), constant: 0 },
+    zNeg: { pos: new Vec3(), constant: 0 },
+    zPos: { pos: new Vec3(), constant: 0 }
+  }
 
   /**
    * Create a camera object
@@ -248,17 +255,6 @@ export class Camera extends Obj {
    * Update the frustum parameters based on the prejection view matrix
    */
   updateFrustum(): void {
-    if (!this.frustum) {
-      this.frustum = {
-        xNeg: { pos: new Vec3(), constant: 0 },
-        xPos: { pos: new Vec3(), constant: 0 },
-        yNeg: { pos: new Vec3(), constant: 0 },
-        yPos: { pos: new Vec3(), constant: 0 },
-        zNeg: { pos: new Vec3(), constant: 0 },
-        zPos: { pos: new Vec3(), constant: 0 }
-      }
-    }
-
     /*
     a11 a12 a13 a14
     0   1   2   3

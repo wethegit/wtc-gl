@@ -29,6 +29,10 @@ export class Mesh extends Drawable {
    * The geometry to render.
    */
   geometry: Geometry
+  /**
+   * The program that renders the geometry.
+   */
+  declare program: Program
 
   /**
    * The mode to use to draw this mesh. Can be one of:

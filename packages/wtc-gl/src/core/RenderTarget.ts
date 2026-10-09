@@ -40,21 +40,9 @@ export class RenderTarget {
    */
   textures: Texture[]
   /**
-   * The depth buffer.
-   */
-  depthBuffer: WebGLFramebuffer
-  /**
-   * The stencil buffer.
-   */
-  stencilBuffer: WebGLFramebuffer
-  /**
-   * The depth-stencil buffer.
-   */
-  depthStencilBuffer: WebGLFramebuffer
-  /**
    * The depth texture.
    */
-  depthTexture: Texture | null
+  depthTexture: Texture | null = null
 
   /**
    * The width of the target.
@@ -70,9 +58,9 @@ export class RenderTarget {
    */
   depth: boolean
   /**
-   * Whether to render a stencil buffer.
+   * Whether to render a stencil buffer. Not supported yet.
    */
-  stencil: boolean
+  stencil = false
 
   /**
    * A GLEnum representing the binding point for the texture / buffer.

@@ -33,12 +33,12 @@ export class Framebuffer {
 
   #readFB: RenderTarget
   #writeFB: RenderTarget
-  #width: number
-  #height: number
-  #pxRatio: number
+  #width = 512
+  #height = 512
+  #pxRatio = 1
   #tiling: number = Framebuffer.IMAGETYPE_REGULAR
   #texdepth: number = Framebuffer.TEXTYPE_UNSIGNED_BYTE
-  #data: Float32Array | null
+  #data: Float32Array | null = null
 
   minFilter
   magFilter
@@ -77,7 +77,10 @@ export class Framebuffer {
 
     this.generateMipmaps = generateMipmaps
 
-    this.resize(width, height)
+    this.width = width
+    this.height = height
+    this.#readFB = this.createFrameBuffer()
+    this.#writeFB = this.createFrameBuffer()
   }
   resize(width: number, height: number) {
     this.width = width
