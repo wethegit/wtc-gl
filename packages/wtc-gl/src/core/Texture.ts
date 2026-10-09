@@ -150,6 +150,9 @@ export class Texture {
    */
   needsUpdate: boolean
 
+  // The context generation this texture was created for
+  #contextVersion: number
+
   /**
    * Create a render target object.
    * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
@@ -230,14 +233,25 @@ export class Texture {
     }
 
     // State store to avoid redundant calls for per-texture state
-    this.state = {
-      minFilter: this.gl.NEAREST_MIPMAP_LINEAR,
-      magFilter: this.gl.LINEAR,
-      wrapS: this.gl.REPEAT,
-      wrapT: this.gl.REPEAT,
-      anisotropy: 0
-    }
+    this.state = defaultTextureState(gl)
 
+    this.needsUpdate = true
+
+    this.#contextVersion = gl.renderer.contextVersion
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Recreate the WebGL texture after the context has been restored and
+   * re-upload the image or data on next use. Called by the renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    this.texture = this.gl.createTexture()!
+    this.store.image = undefined
+    this.state = defaultTextureState(this.gl)
     this.needsUpdate = true
   }
 
@@ -464,5 +478,19 @@ export class Texture {
       if (textureUnits[i] === this.id) textureUnits[i] = -1
     }
     this.gl.deleteTexture(this.texture)
+    this.gl.renderer.untrack(this)
+  }
+}
+
+/**
+ * The parameters of a newly created WebGL texture.
+ */
+function defaultTextureState(gl: WTCGLRenderingContext): WTCGLTextureState {
+  return {
+    minFilter: gl.NEAREST_MIPMAP_LINEAR,
+    magFilter: gl.LINEAR,
+    wrapS: gl.REPEAT,
+    wrapT: gl.REPEAT,
+    anisotropy: 0
   }
 }

@@ -35,14 +35,14 @@ Several classes have no way to free what they allocate. This matters most for Re
 - [x] `Program.remove()` should clear its cached uniform values (resetting `renderer.currentProgram` is done).
 - [x] `Renderer.dispose()`.
 - [x] `FragmentShader.destroy()` — stop the render loop, remove the `resize` listener, and release the mesh, program and geometry.
-- [ ] Handle `webglcontextlost` / `webglcontextrestored`.
+- [x] Handle `webglcontextlost` / `webglcontextrestored`.
 
 ## Phase 3 — Tests and type safety
 
 - [x] Add Vitest for the pure logic: render-list sorting, uniform caching, bounds, and the scene-graph matrices.
-- [ ] Add a Playwright smoke test that loads each demo in `packages/site` and fails on any console error or WebGL warning.
+- [x] Add a Playwright smoke test that loads each demo in `packages/site` and fails on any console error or WebGL warning.
 - [x] Run tests (and lint) in the `build.yml` CI workflow. Lint already runs in `lint.yml`.
-- [ ] Turn on `strictPropertyInitialization` and remove the `!` assertions that hide uninitialised-field bugs.
+- [x] Turn on `strictPropertyInitialization` and remove the `!` assertions that hide uninitialised-field bugs.
 - [x] Check uniform kinds properly. A `Texture` passed without `kind: 'texture'` currently falls through to `gl.uniform1i` with an object.
 
 ## Phase 4 — v2.0: WebGL2 only and fewer allocations
@@ -53,7 +53,7 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 - `Texture.update` uses the 9-argument `texImage2D(…, image)` form, which only exists in WebGL2, so WebGL1 would throw.
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
-- [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks.
+- [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
 - [ ] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, and `uint`/`uvec*`.
 - [ ] Support `INTERLEAVED_ATTRIBS` transform feedback (there's already a TODO in `Program.ts`).
 - [ ] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`).

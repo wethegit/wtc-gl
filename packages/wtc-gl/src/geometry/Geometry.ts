@@ -21,6 +21,9 @@ const originArrayToVec3 = function (
   return new Vec3(a[o], a[o + 1], a[o + 2])
 }
 
+// The context generation each attribute's buffer was last rebuilt for
+const restoredAttributes = new WeakMap<WTCGLGeometryAttribute, number>()
+
 /**
  * Class representing some Geometry.
  **/
@@ -49,6 +52,9 @@ export class Geometry {
    */
   transformFeedbacks?: TransformFeedback
   transformFeedbackIndex: number = 0
+
+  // The context generation this geometry's buffers were created for
+  #contextVersion: number
 
   /**
    * The range of supplied elements to draw.
@@ -98,6 +104,34 @@ export class Geometry {
     for (const key in attributes) {
       this.addAttribute(key, attributes[key])
     }
+
+    this.#contextVersion = gl.renderer.contextVersion
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Recreate the buffers and vertex arrays after the WebGL context has been
+   * restored. Called by the renderer.
+   */
+  restoreContext(): void {
+    const version = this.gl.renderer.contextVersion
+    if (this.#contextVersion === version) return
+    this.#contextVersion = version
+
+    // The old VAOs belonged to the lost context; they're recreated on draw
+    this.VAOs = {}
+
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      // Attributes can be shared between geometries; only rebuild once
+      if (restoredAttributes.get(attr) === version) continue
+      restoredAttributes.set(attr, version)
+
+      attr.buffer = this.gl.createBuffer()
+      attr.updateAttribute(this.gl)
+    }
+
+    this.transformFeedbacks?.restoreContext()
   }
 
   /**
@@ -433,5 +467,6 @@ export class Geometry {
       this.gl.deleteBuffer(this.attributes[key].buffer)
       delete this.attributes[key]
     }
+    this.gl.renderer.untrack(this)
   }
 }

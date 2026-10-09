@@ -149,18 +149,31 @@ document.querySelectorAll('.blade-img').forEach((imgEl) => {
     }
   })
 
-  // a_restPos is constant, add it to both TF VAOs at layout location 2
-  const restPosBuf = gl.createBuffer()
-  gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
-  gl.bufferData(gl.ARRAY_BUFFER, restPositions, gl.STATIC_DRAW)
-  tf.VAOs.forEach((vao) => {
-    gl.bindVertexArray(vao)
-    gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
-    gl.enableVertexAttribArray(2)
-    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0)
-  })
-  gl.bindVertexArray(null)
-  gl.bindBuffer(gl.ARRAY_BUFFER, null)
+  // a_restPos is constant, add it to both TF VAOs at layout location 2. It
+  // isn't part of the TransformFeedback, so it's registered with the renderer
+  // to be added again if the WebGL context is lost and restored.
+  const restPos = {
+    restoreContext() {
+      // Make sure the feedback's VAOs have been rebuilt first
+      tf.restoreContext()
+
+      const restPosBuf = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
+      gl.bufferData(gl.ARRAY_BUFFER, restPositions, gl.STATIC_DRAW)
+      tf.VAOs.forEach((vao) => {
+        gl.bindVertexArray(vao)
+        gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
+        gl.enableVertexAttribArray(2)
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0)
+      })
+      gl.bindVertexArray(null)
+      gl.bindBuffer(gl.ARRAY_BUFFER, null)
+    }
+  }
+  restPos.restoreContext()
+  gl.renderer.track(restPos)
+  // The renderer only holds tracked resources weakly, so keep a reference
+  scene.restPos = restPos
 
   // Create the custom plane geo
   const geometry = new Geometry(

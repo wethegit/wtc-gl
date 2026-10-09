@@ -30,7 +30,11 @@ export interface TransformFeedbackAttribute {
 }
 
 export interface TransformFeedbackOptions {
-  program: Program
+  /**
+   * The program whose varyings are captured. Pass the `Program` rather than
+   * its `WebGLProgram` so the feedback can be rebuilt after context loss.
+   */
+  program: Program | WebGLProgram
   transformFeedbacks: {
     [key: string]: TransformFeedbackAttribute
   }
@@ -54,17 +58,44 @@ export class TransformFeedback {
   // so remove() only deletes what it owns.
   #ownedBuffers: WebGLBuffer[] = []
 
-  constructor(
-    gl: WTCGLRenderingContext,
-    { program, transformFeedbacks }: TransformFeedbackOptions
-  ) {
+  #options: TransformFeedbackOptions
+  // The context generation this feedback was created for
+  #contextVersion: number
+
+  constructor(gl: WTCGLRenderingContext, options: TransformFeedbackOptions) {
     this.gl = gl
-    this.VAOs = [gl.createVertexArray(), gl.createVertexArray()]
-    this.TFBs = [gl.createTransformFeedback()!, gl.createTransformFeedback()!]
-    this.BufferRefs = []
+    this.#options = options
+    this.#contextVersion = gl.renderer.contextVersion
+    ;[this.VAOs, this.TFBs, this.BufferRefs] = this.#create()
+
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Create the vertex arrays, transform feedback objects and buffers. Buffers
+   * are filled from each attribute's `data`, so after a context restore the
+   * simulation starts again from its initial state.
+   */
+  #create(
+    restoring = false
+  ): [TransformFeedback['VAOs'], TransformFeedback['TFBs'], BufferRecord[]] {
+    const { gl } = this
+    const { program, transformFeedbacks } = this.#options
+    // A raw WebGLProgram from before a context loss can't be used any more
+    const glProgram =
+      program instanceof Program ? program.program : restoring ? null : program
+    const VAOs: TransformFeedback['VAOs'] = [
+      gl.createVertexArray(),
+      gl.createVertexArray()
+    ]
+    const TFBs: TransformFeedback['TFBs'] = [
+      gl.createTransformFeedback()!,
+      gl.createTransformFeedback()!
+    ]
+    const BufferRefs: BufferRecord[] = []
     const names = Object.keys(transformFeedbacks)
 
-    this.VAOs.forEach((vao: WebGLVertexArrayObject, i: number) => {
+    VAOs.forEach((vao: WebGLVertexArrayObject, i: number) => {
       gl.bindVertexArray(vao)
 
       const buffers: (WebGLBuffer | null)[] = []
@@ -93,7 +124,7 @@ export class TransformFeedback {
 
         bufferRef[names[i]] = { i, buffer }
 
-        gl.bindAttribLocation(program, i, names[i])
+        if (glProgram) gl.bindAttribLocation(glProgram, i, names[i])
         gl.enableVertexAttribArray(i)
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
         gl.vertexAttribPointer(i, size, type, normalize, stride, offset)
@@ -104,7 +135,7 @@ export class TransformFeedback {
       gl.bindBuffer(gl.ARRAY_BUFFER, null)
 
       // TO DO Try putting these inside the loop
-      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TFBs[i])
+      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, TFBs[i])
 
       buffers.forEach((b, i) => {
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, i, b)
@@ -112,8 +143,32 @@ export class TransformFeedback {
 
       gl.bindVertexArray(null)
 
-      this.BufferRefs.push(bufferRef)
+      BufferRefs.push(bufferRef)
     })
+
+    return [VAOs, TFBs, BufferRefs]
+  }
+
+  /**
+   * Rebuild after the WebGL context has been restored. Called by the
+   * renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    const { program, transformFeedbacks } = this.#options
+    // The varyings are bound to the program, so it has to be relinked first
+    if (program instanceof Program) program.restoreContext()
+    if (Object.values(transformFeedbacks).some((tf) => tf.buffer)) {
+      console.warn(
+        'TransformFeedback buffers passed in with the `buffer` option are lost with the context and must be recreated by the caller.'
+      )
+    }
+
+    // Everything from the old context is already gone, so nothing to delete
+    this.#ownedBuffers = []
+    ;[this.VAOs, this.TFBs, this.BufferRefs] = this.#create(true)
   }
 
   /**
@@ -129,5 +184,6 @@ export class TransformFeedback {
     this.#ownedBuffers.forEach((buffer) => gl.deleteBuffer(buffer))
     this.#ownedBuffers = []
     this.BufferRefs = []
+    gl.renderer.untrack(this)
   }
 }

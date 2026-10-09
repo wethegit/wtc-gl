@@ -110,6 +110,12 @@ export class Program {
    */
   linked: boolean = false
 
+  #vertex: string
+  #fragment: string
+  #transformFeedbackVaryings?: string[]
+  // The context generation this program was compiled for
+  #contextVersion: number
+
   /**
    * Create a Program
    * @param gl - The WTCGL Rendering context
@@ -170,6 +176,26 @@ export class Program {
       else this.setBlendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
     }
 
+    this.#vertex = vertex
+    this.#fragment = fragment
+    this.#transformFeedbackVaryings = transformFeedbackVaryings
+    this.#contextVersion = gl.renderer.contextVersion
+    this.program = this.#compile()
+
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Compile and link the shaders, then read the active uniforms and
+   * attributes. Returns the program even if linking failed, in which case
+   * `linked` stays false.
+   */
+  #compile(): WebGLProgram {
+    const gl = this.gl
+    const vertex = this.#vertex
+    const fragment = this.#fragment
+    const transformFeedbackVaryings = this.#transformFeedbackVaryings
+
     // compile vertex shader and log errors
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)
 
@@ -200,43 +226,40 @@ export class Program {
     }
 
     // compile program and log errors
-    this.program = gl.createProgram()!
-    if (vertexShader) gl.attachShader(this.program, vertexShader)
-    if (fragmentShader) gl.attachShader(this.program, fragmentShader)
+    const program = gl.createProgram()!
+    if (vertexShader) gl.attachShader(program, vertexShader)
+    if (fragmentShader) gl.attachShader(program, fragmentShader)
 
     // If we have transformFeedbackVaryings, bind them
     // TO DO: allow for INTERLEAVED_ATTRIBS as well
     if (transformFeedbackVaryings)
       gl.transformFeedbackVaryings?.(
-        this.program,
+        program,
         transformFeedbackVaryings,
         gl.SEPARATE_ATTRIBS
       )
 
     // Finally, link the program and record any errors
-    gl.linkProgram(this.program)
+    gl.linkProgram(program)
 
     // The shaders aren't needed once linking has been attempted
     gl.deleteShader(vertexShader)
     gl.deleteShader(fragmentShader)
 
-    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-      console.warn(gl.getProgramInfoLog(this.program))
-      return this
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn(gl.getProgramInfoLog(program))
+      return program
     }
     this.linked = true
 
     // Get active uniform locations
-    const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
+    const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
-      const uniform: WTCGLActiveInfo = gl.getActiveUniform(
-        this.program,
-        uIndex
-      )!
+      const uniform: WTCGLActiveInfo = gl.getActiveUniform(program, uIndex)!
 
       this.uniformLocations.set(
         uniform,
-        gl.getUniformLocation(this.program, uniform.name)!
+        gl.getUniformLocation(program, uniform.name)!
       )
 
       // split uniforms' names to separate array and struct declarations
@@ -259,17 +282,31 @@ export class Program {
 
     // Get active attribute locations
     const locations = []
-    const numAttribs = gl.getProgramParameter(
-      this.program,
-      gl.ACTIVE_ATTRIBUTES
-    )
+    const numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES)
     for (let aIndex = 0; aIndex < numAttribs; aIndex++) {
-      const attribute = gl.getActiveAttrib(this.program, aIndex)!
-      const location = gl.getAttribLocation(this.program, attribute.name)
+      const attribute = gl.getActiveAttrib(program, aIndex)!
+      const location = gl.getAttribLocation(program, attribute.name)
       locations[location] = attribute.name
       this.attributeLocations.set(attribute, location)
     }
     this.attributeOrder = locations.join('')
+
+    return program
+  }
+
+  /**
+   * Recompile the program after the WebGL context has been restored.
+   * Called by the renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    this.linked = false
+    this.uniformLocations = new Map()
+    this.attributeLocations = new Map()
+    this.attributeOrder = ''
+    this.program = this.#compile()
   }
 
   /**
@@ -389,6 +426,7 @@ export class Program {
     )
     this.uniformLocations.clear()
     this.gl.deleteProgram(this.program)
+    this.gl.renderer.untrack(this)
   }
 }
 

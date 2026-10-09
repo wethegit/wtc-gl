@@ -44,6 +44,9 @@ export class RenderTarget {
    */
   depthTexture: Texture | null = null
 
+  // The context generation this target was created for
+  #contextVersion: number
+
   /**
    * The width of the target.
    */
@@ -115,11 +118,6 @@ export class RenderTarget {
     this.depth = depth
     this.buffer = this.gl.createFramebuffer()!
     this.target = target
-    // Bind through the renderer so its cached framebuffer state stays in sync
-    this.gl.renderer.bindFramebuffer({
-      target: this.target,
-      buffer: this.buffer
-    })
 
     const e = gl.getExtension('OES_texture_half_float')
     if (type === e?.HALF_FLOAT_OES || type === this.gl.HALF_FLOAT) {
@@ -129,9 +127,8 @@ export class RenderTarget {
     }
 
     this.textures = []
-    const drawBuffers = []
 
-    // create and attach required num of color textures
+    // create required num of color textures
     for (let i = 0; i < colour; i++) {
       this.textures.push(
         new Texture(gl, {
@@ -151,19 +148,7 @@ export class RenderTarget {
           generateMipmaps
         })
       )
-      this.textures[i].update()
-      this.gl.framebufferTexture2D(
-        this.target,
-        this.gl.COLOR_ATTACHMENT0 + i,
-        this.gl.TEXTURE_2D,
-        this.textures[i].texture,
-        0 /* level */
-      )
-      drawBuffers.push(this.gl.COLOR_ATTACHMENT0 + i)
     }
-
-    // For multi-render targets shader access
-    if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
 
     if (
       depth &&
@@ -181,6 +166,41 @@ export class RenderTarget {
           : this.gl.DEPTH_COMPONENT,
         type: this.gl.UNSIGNED_INT
       })
+    }
+
+    this.#attach()
+
+    this.#contextVersion = gl.renderer.contextVersion
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Upload the textures and attach them to the framebuffer.
+   */
+  #attach() {
+    // Bind through the renderer so its cached framebuffer state stays in sync
+    this.gl.renderer.bindFramebuffer({
+      target: this.target,
+      buffer: this.buffer
+    })
+
+    const drawBuffers: GLenum[] = []
+    this.textures.forEach((texture, i) => {
+      texture.update()
+      this.gl.framebufferTexture2D(
+        this.target,
+        this.gl.COLOR_ATTACHMENT0 + i,
+        this.gl.TEXTURE_2D,
+        texture.texture,
+        0 /* level */
+      )
+      drawBuffers.push(this.gl.COLOR_ATTACHMENT0 + i)
+    })
+
+    // For multi-render targets shader access
+    if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
+
+    if (this.depthTexture) {
       this.depthTexture.update()
       this.gl.framebufferTexture2D(
         this.target,
@@ -192,6 +212,20 @@ export class RenderTarget {
     }
 
     this.gl.renderer.bindFramebuffer({ target: this.target })
+  }
+
+  /**
+   * Recreate the framebuffer and its textures after the WebGL context has
+   * been restored. The contents are lost. Called by the renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    this.textures.forEach((texture) => texture.restoreContext())
+    this.depthTexture?.restoreContext()
+    this.buffer = this.gl.createFramebuffer()!
+    this.#attach()
   }
 
   /**
@@ -211,5 +245,6 @@ export class RenderTarget {
     this.gl.deleteFramebuffer(this.buffer)
     this.textures.forEach((texture) => texture.remove())
     this.depthTexture?.remove()
+    this.gl.renderer.untrack(this)
   }
 }

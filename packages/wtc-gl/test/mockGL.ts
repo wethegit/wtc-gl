@@ -33,7 +33,12 @@ export function createMockGL(overrides: Record<string, unknown> = {}): MockGL {
   }
   let nextConstant = 0x10000
 
-  const canvas = { width: 300, height: 150, style: {} }
+  // An EventTarget so tests can dispatch webglcontextlost / restored
+  const canvas = Object.assign(new EventTarget(), {
+    width: 300,
+    height: 150,
+    style: {}
+  })
   const target: Record<string | symbol, unknown> = {
     canvas,
     getShaderInfoLog: vi.fn(() => ''),

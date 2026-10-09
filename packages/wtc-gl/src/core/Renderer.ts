@@ -4,7 +4,8 @@ import type {
   WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLExtensions,
-  WTCGLRendererParams
+  WTCGLRendererParams,
+  WTCGLRestorable
 } from '../types'
 
 import { Camera } from './Camera'
@@ -157,6 +158,30 @@ export class Renderer {
   #ownsCanvas: boolean
 
   /**
+   * Whether the WebGL context is currently lost. Rendering is skipped until
+   * the browser restores it.
+   */
+  contextLost = false
+  /**
+   * Incremented each time the context is restored. Resources compare it with
+   * their own, so each one is only rebuilt once per restore.
+   */
+  contextVersion = 0
+  /**
+   * Called when the WebGL context is lost, e.g. after a GPU reset or when the
+   * browser reclaims contexts. A good place to show a fallback.
+   */
+  onContextLost?: () => void
+  /**
+   * Called once the context has been restored and every tracked resource has
+   * been rebuilt.
+   */
+  onContextRestored?: () => void
+
+  #resources = new Set<WeakRef<WTCGLRestorable>>()
+  #resourceRefs = new WeakMap<WTCGLRestorable, WeakRef<WTCGLRestorable>>()
+
+  /**
    * create a renderer
    * @param __namedParameters - The parameters to initialise the renderer.
    * @param canvas - The canvas HTML element to render to.
@@ -221,7 +246,30 @@ export class Renderer {
     // initialise size values
     this.dimensions = new Vec2(width, height)
 
-    this.state = {
+    this.state = this.#createState()
+
+    // store requested extensions
+    this.extensions = {}
+    const extensionFunctions = this.#enableExtensions()
+    this.vertexAttribDivisor = extensionFunctions.vertexAttribDivisor
+    this.drawArraysInstanced = extensionFunctions.drawArraysInstanced
+    this.drawElementsInstanced = extensionFunctions.drawElementsInstanced
+    this.createVertexArray = extensionFunctions.createVertexArray
+    this.bindVertexArray = extensionFunctions.bindVertexArray
+    this.deleteVertexArray = extensionFunctions.deleteVertexArray
+    this.drawBuffers = extensionFunctions.drawBuffers
+
+    this.parameters = this.#getParameters()
+
+    canvas.addEventListener('webglcontextlost', this.#handleContextLost)
+    canvas.addEventListener('webglcontextrestored', this.#handleContextRestored)
+  }
+
+  /**
+   * The initial state cache, matching a fresh WebGL context.
+   */
+  #createState(): WTCGLRendererState {
+    return {
       blendFunc: { src: this.gl.ONE, dst: this.gl.ZERO },
       blendEquation: {
         modeRGB: this.gl.FUNC_ADD,
@@ -241,10 +289,16 @@ export class Renderer {
       boundBuffer: null,
       uniformLocations: new Map()
     }
+  }
 
-    // store requested extensions
-    this.extensions = {}
-
+  /**
+   * Enable the extensions the library relies on, and look up the functions
+   * that are native in WebGL2 but come from extensions in WebGL1.
+   *
+   * Most of this, and the alias copying in the constructor and context
+   * restore, goes away once WebGL1 support is dropped (see ROADMAP Phase 4).
+   */
+  #enableExtensions() {
     // Initialise extra format types
     if (this.isWebgl2) {
       this.getExtension('EXT_color_buffer_float')
@@ -263,43 +317,47 @@ export class Renderer {
     }
 
     // Create method aliases using extension (WebGL1) or native if available (WebGL2)
-    this.vertexAttribDivisor = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'vertexAttribDivisor',
-      'vertexAttribDivisorANGLE'
-    )
-    this.drawArraysInstanced = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'drawArraysInstanced',
-      'drawArraysInstancedANGLE'
-    )
-    this.drawElementsInstanced = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'drawElementsInstanced',
-      'drawElementsInstancedANGLE'
-    )
-    this.createVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'createVertexArray',
-      'createVertexArrayOES'
-    )
-    this.bindVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'bindVertexArray',
-      'bindVertexArrayOES'
-    )
-    this.deleteVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'deleteVertexArray',
-      'deleteVertexArrayOES'
-    )
-    this.drawBuffers = this.getExtension(
-      'WEBGL_draw_buffers',
-      'drawBuffers',
-      'drawBuffersWEBGL'
-    )
+    return {
+      vertexAttribDivisor: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'vertexAttribDivisor',
+        'vertexAttribDivisorANGLE'
+      ),
+      drawArraysInstanced: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'drawArraysInstanced',
+        'drawArraysInstancedANGLE'
+      ),
+      drawElementsInstanced: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'drawElementsInstanced',
+        'drawElementsInstancedANGLE'
+      ),
+      createVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'createVertexArray',
+        'createVertexArrayOES'
+      ),
+      bindVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'bindVertexArray',
+        'bindVertexArrayOES'
+      ),
+      deleteVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'deleteVertexArray',
+        'deleteVertexArrayOES'
+      ),
+      drawBuffers: this.getExtension(
+        'WEBGL_draw_buffers',
+        'drawBuffers',
+        'drawBuffersWEBGL'
+      )
+    }
+  }
 
-    this.parameters = {
+  #getParameters(): WTCGLRendererParams {
+    return {
       maxTextureUnits: this.gl.getParameter(
         this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS
       ),
@@ -310,6 +368,61 @@ export class Renderer {
           )
         : 0
     }
+  }
+
+  #handleContextLost = (event: Event) => {
+    // Without preventDefault the browser won't try to restore the context
+    event.preventDefault()
+    this.contextLost = true
+    this.onContextLost?.()
+  }
+
+  #handleContextRestored = () => {
+    // A restored context starts from scratch, so reset every cache and
+    // re-request the extensions before rebuilding resources
+    this.state = this.#createState()
+    this.extensions = {}
+    Object.assign(this, this.#enableExtensions())
+    this.parameters = this.#getParameters()
+    this.currentProgram = -1
+    this.currentGeometry = ''
+
+    this.contextVersion++
+    this.contextLost = false
+
+    for (const ref of this.#resources) {
+      const resource = ref.deref()
+      if (resource) resource.restoreContext()
+      else this.#resources.delete(ref)
+    }
+
+    this.onContextRestored?.()
+  }
+
+  /**
+   * Register a resource to be rebuilt when the WebGL context is restored.
+   * Programs, geometry, textures, render targets and transform feedbacks
+   * register themselves when created; call this for your own resources.
+   * Only a weak reference is kept, so tracking doesn't stop garbage collection;
+   * keep your own reference to anything you track.
+   * @param resource - An object with a `restoreContext()` method.
+   */
+  track(resource: WTCGLRestorable): void {
+    if (this.#resourceRefs.has(resource)) return
+    const ref = new WeakRef(resource)
+    this.#resourceRefs.set(resource, ref)
+    this.#resources.add(ref)
+  }
+
+  /**
+   * Stop rebuilding a resource on context restore. Called by `remove()`.
+   * @param resource - A resource previously passed to `track`.
+   */
+  untrack(resource: WTCGLRestorable): void {
+    const ref = this.#resourceRefs.get(resource)
+    if (!ref) return
+    this.#resources.delete(ref)
+    this.#resourceRefs.delete(resource)
   }
 
   /**
@@ -324,6 +437,13 @@ export class Renderer {
    * `remove()` on them first if the context is being kept.
    */
   dispose() {
+    const canvas = this.gl.canvas as HTMLCanvasElement
+    canvas.removeEventListener('webglcontextlost', this.#handleContextLost)
+    canvas.removeEventListener(
+      'webglcontextrestored',
+      this.#handleContextRestored
+    )
+    this.#resources.clear()
     this.state.uniformLocations.clear()
     this.state.textureUnits = []
     this.currentProgram = -1
@@ -710,6 +830,9 @@ export class Renderer {
     clear,
     viewport
   }: RenderOptions) {
+    // Nothing can be drawn until the browser restores the context
+    if (this.contextLost) return
+
     if (target === null) {
       // make sure no render target bound so draws to canvas
       this.bindFramebuffer()
