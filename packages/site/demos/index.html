@@ -113,7 +113,7 @@
         <div class="demo">
           <div class="demo__preview">
             <img
-              src="./screenshots/videoTex.png"
+              src="./screenshots/video-texture.png"
               alt="Video texture demo"
               loading="lazy"
             />
@@ -130,14 +130,14 @@
               <code>onBeforeRender</code> hook marks the texture dirty so the
               GPU always sees the current video frame.
             </p>
-            <a class="btn" href="./videoTex/">Open demo →</a>
+            <a class="btn" href="./video-texture/">Open demo →</a>
           </div>
         </div>
 
         <div class="demo">
           <div class="demo__preview">
             <img
-              src="./screenshots/transformFeedback.png"
+              src="./screenshots/transform-feedback.png"
               alt="Transform feedback particles demo"
               loading="lazy"
             />
@@ -155,7 +155,7 @@
               computed in a vertex shader and fed back as position attributes
               each frame - zero CPU involvement per particle.
             </p>
-            <a class="btn" href="./transformFeedback/">Open demo →</a>
+            <a class="btn" href="./transform-feedback/">Open demo →</a>
           </div>
         </div>
 
@@ -449,6 +449,49 @@
               chromatic aberration — all on one shared WebGL context.
             </p>
             <a class="btn" href="./scroll-blades/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0d0f1a 0%,
+                #2a1630 50%,
+                #0d1a2e 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(255, 210, 140, 0.5);
+                letter-spacing: 0.1em;
+              "
+              >PORTAL</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">Renderer</span>
+            </div>
+            <h3>Stencil &amp; depth texture</h3>
+            <p>
+              A portal into another world, drawn with a
+              <code>RenderTarget</code> whose depth and stencil share one
+              texture. The stencil limits the second world to the portal, and
+              a post pass samples the depth texture for fog and outlines.
+              Switch views to see the depth and stencil on their own.
+            </p>
+            <a class="btn" href="./stencil-depth/">Open demo →</a>
           </div>
         </div>
       </section>

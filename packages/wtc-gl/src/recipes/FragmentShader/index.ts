@@ -15,7 +15,11 @@ export interface FragmentShaderOptions {
   vertex: string
   fragment: string
   dimensions: Vec2
-  container: HTMLElement
+  /**
+   * The element the canvas is appended to. Defaults to `document.body`, or
+   * `null` (don't append) when there's no document.
+   */
+  container: HTMLElement | null
   autoResize: boolean
   uniforms: WTCGLUniformArray
   onInit: (renderer: Renderer) => void
@@ -25,6 +29,7 @@ export interface FragmentShaderOptions {
 }
 
 const hasWindow = typeof window !== 'undefined'
+const hasDocument = typeof document !== 'undefined'
 
 export class FragmentShader {
   uniforms: WTCGLUniformArray
@@ -52,7 +57,7 @@ export class FragmentShader {
     dimensions = hasWindow
       ? new Vec2(window.innerWidth, window.innerHeight)
       : new Vec2(500, 500),
-    container = document.body,
+    container = hasDocument ? document.body : null,
     autoResize = true,
     uniforms = {},
     onInit = () => {},
@@ -81,11 +86,13 @@ export class FragmentShader {
     })
 
     this.#ownsCanvas = !rendererProps.canvas
-    this.renderer = new Renderer(rendererProps)
+    this.renderer = new Renderer({
+      clearColour: [1, 1, 1, 1],
+      ...rendererProps
+    })
     onInit(this.renderer)
     this.gl = this.renderer.gl
-    container.appendChild(this.gl.canvas)
-    this.gl.clearColor(1, 1, 1, 1)
+    container?.appendChild(this.gl.canvas)
 
     if (this.autoResize && hasWindow) {
       window.addEventListener('resize', this.resize, false)

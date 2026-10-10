@@ -25,6 +25,12 @@ export function createMockGL(overrides: Record<string, unknown> = {}): MockGL {
     FLOAT_VEC3: 35665,
     FLOAT_VEC4: 35666,
     FLOAT_MAT4: 35676,
+    FLOAT_MAT2x3: 35685,
+    FLOAT_MAT4x3: 35690,
+    UNSIGNED_INT: 5125,
+    UNSIGNED_INT_VEC2: 36294,
+    UNSIGNED_INT_VEC3: 36295,
+    UNSIGNED_INT_VEC4: 36296,
     SAMPLER_2D: 35678,
     SAMPLER_3D: 35679,
     SAMPLER_CUBE: 35680,
@@ -57,7 +63,8 @@ export function createMockGL(overrides: Record<string, unknown> = {}): MockGL {
       if (prop in t) return t[prop]
       // Don't look like a promise if something awaits the context
       if (typeof prop !== 'string' || prop === 'then') return undefined
-      if (/^[A-Z][A-Z0-9_]*$/.test(prop)) {
+      // Non-square matrix types have a lower-case x (FLOAT_MAT2x3)
+      if (/^[A-Z][A-Z0-9_x]*$/.test(prop)) {
         constants[prop] ??= nextConstant++
         return constants[prop]
       }

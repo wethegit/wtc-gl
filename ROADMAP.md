@@ -54,7 +54,7 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
 - [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
-- [ ] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, and `uint`/`uvec*`.
+- [x] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, `uint`/`uvec*` and the non-square matrices.
 - [ ] Support `INTERLEAVED_ATTRIBS` transform feedback (there's already a TODO in `Program.ts`).
 - [ ] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`).
 
@@ -69,14 +69,14 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 
 ## Phase 5 — Smaller improvements
 
-- [ ] The `FragmentShader` default `container = document.body` runs even when there's no `window`, so it breaks server-side rendering despite the `hasWindow` guard.
-- [ ] `Texture` should accept `Uint8Array`/`Uint16Array`/`Int32Array` data, `ImageBitmap` and `OffscreenCanvas`.
-- [ ] Add a video-texture helper that sets `needsUpdate` via `requestVideoFrameCallback`.
-- [ ] `RenderTarget` should honour the `stencil` and `depthTexture` options (both are currently ignored).
-- [ ] `RenderTarget` creates its depth texture as `DEPTH_COMPONENT16` (inherited from OGL), which z-fights on coplanar faces. Default to `DEPTH_COMPONENT24` or add a `depthFormat` option. The manifold-divider demo's `scene-target.ts` swaps in a 24-bit renderbuffer to work around this.
-- [ ] `Renderer` should throw when it can't get a context, rather than logging an error and returning a half-built object.
-- [ ] Add a clear-colour API on `Renderer` instead of raw `gl.clearColor` calls.
-- [ ] `Geometry.computeBoundingBox` should handle 2D positions (`size: 2`); there's already a TODO.
+- [x] The `FragmentShader` default `container = document.body` runs even when there's no `window`, so it breaks server-side rendering despite the `hasWindow` guard.
+- [x] `Texture` should accept `Uint8Array`/`Uint16Array`/`Int32Array` data, `ImageBitmap` and `OffscreenCanvas`.
+- [x] Add a video-texture helper that sets `needsUpdate` via `requestVideoFrameCallback`.
+- [x] `RenderTarget` should honour the `stencil` and `depthTexture` options (both are currently ignored).
+- [x] `RenderTarget` creates its depth texture as `DEPTH_COMPONENT16` (inherited from OGL), which z-fights on coplanar faces. Default to `DEPTH_COMPONENT24` or add a `depthFormat` option. The manifold-divider demo's `scene-target.ts` swaps in a 24-bit renderbuffer to work around this.
+- [x] `Renderer` should throw when it can't get a context, rather than logging an error and returning a half-built object.
+- [x] Add a clear-colour API on `Renderer` instead of raw `gl.clearColor` calls.
+- [x] `Geometry.computeBoundingBox` should handle 2D positions (`size: 2`); there's already a TODO.
 - [x] `Mesh.removeBeforeRender` / `removeAfterRender` remove items while iterating, so the item right after a removed one is skipped.
 
 ## Phase 6 — 3D modelling

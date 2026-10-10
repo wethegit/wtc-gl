@@ -92,6 +92,59 @@ describe('Uniform caching', () => {
     expect(gl.uniform1i).toHaveBeenCalledTimes(3)
   })
 
+  it('sends uints and uint vectors to the unsigned setters', () => {
+    const loc = {}
+    new Uniform({ value: 7, kind: 'uint' }).setUniform(gl, gl.UNSIGNED_INT, loc)
+    expect(gl.uniform1ui).toHaveBeenCalledWith(loc, 7)
+
+    new Uniform({ value: [1, 2], kind: 'uint' }).setUniform(
+      gl,
+      gl.UNSIGNED_INT,
+      {}
+    )
+    expect(gl.uniform1uiv).toHaveBeenCalledTimes(1)
+
+    const setters = [
+      [gl.UNSIGNED_INT_VEC2, gl.uniform2uiv, [1, 2]],
+      [gl.UNSIGNED_INT_VEC3, gl.uniform3uiv, [1, 2, 3]],
+      [gl.UNSIGNED_INT_VEC4, gl.uniform4uiv, [1, 2, 3, 4]]
+    ] as const
+    for (const [type, setter, value] of setters) {
+      const l = {}
+      new Uniform({ value: [...value], kind: 'uint_vec2' }).setUniform(
+        gl,
+        type,
+        l
+      )
+      expect(setter).toHaveBeenCalledWith(l, value)
+    }
+  })
+
+  it('sends non-square matrices to their setters', () => {
+    const a = {}
+    const b = {}
+    new Uniform({ value: new Float32Array(6), kind: 'mat2x3' }).setUniform(
+      gl,
+      gl.FLOAT_MAT2x3,
+      a
+    )
+    new Uniform({ value: new Float32Array(12), kind: 'mat4x3' }).setUniform(
+      gl,
+      gl.FLOAT_MAT4x3,
+      b
+    )
+    expect(gl.uniformMatrix2x3fv).toHaveBeenCalledWith(
+      a,
+      false,
+      expect.any(Float32Array)
+    )
+    expect(gl.uniformMatrix4x3fv).toHaveBeenCalledWith(
+      b,
+      false,
+      expect.any(Float32Array)
+    )
+  })
+
   it('removes a program’s entries from the cache, leaving others', () => {
     const vertex = 'void main(){}'
     const fragment = 'void main(){}'

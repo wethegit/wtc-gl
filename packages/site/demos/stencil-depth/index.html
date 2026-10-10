@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Stencil &amp; depth texture</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .modes {
+        margin-left: auto;
+        display: flex;
+        gap: 0.25em;
+      }
+      .modes button {
+        font: inherit;
+        color: rgba(221, 224, 238, 0.7);
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        padding: 0.25em 0.75em;
+        cursor: pointer;
+      }
+      .modes button[aria-pressed='true'] {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Stencil &amp; depth texture</span>
+      <div class="modes" role="group" aria-label="View">
+        <button data-mode="0" aria-pressed="true">1 Final</button>
+        <button data-mode="1" aria-pressed="false">2 Depth</button>
+        <button data-mode="2" aria-pressed="false">3 Stencil</button>
+      </div>
+    </nav>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

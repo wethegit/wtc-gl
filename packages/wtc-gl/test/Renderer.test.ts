@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Obj } from '../src/core/Object'
 import { Mesh } from '../src/core/Mesh'
 import { Program, type ProgramOptions } from '../src/core/Program'
 import { Geometry } from '../src/geometry/Geometry'
-import type { Renderer } from '../src/core/Renderer'
+import { RenderTarget } from '../src/core/RenderTarget'
+import { Renderer } from '../src/core/Renderer'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 describe('Renderer.getRenderList', () => {
@@ -97,5 +98,58 @@ describe('Renderer.getRenderList', () => {
     const opaque = mesh(program())
 
     expect(list(false)).toEqual([ui, opaque])
+  })
+})
+
+describe('Renderer clearing', () => {
+  let gl: MockGL
+  let renderer: Renderer
+
+  beforeEach(() => {
+    // Real bit values, so the clear mask can be checked
+    ;({ gl, renderer } = createMockRenderer({
+      COLOR_BUFFER_BIT: 0x4000,
+      DEPTH_BUFFER_BIT: 0x100,
+      STENCIL_BUFFER_BIT: 0x400
+    }))
+  })
+
+  it('sets the clear colour and keeps it across context loss', () => {
+    renderer.clearColour = [0.1, 0.2, 0.3, 1]
+    expect(gl.clearColor).toHaveBeenLastCalledWith(0.1, 0.2, 0.3, 1)
+    expect(renderer.clearColour).toEqual([0.1, 0.2, 0.3, 1])
+
+    vi.mocked(gl.clearColor).mockClear()
+    const canvas = gl.canvas as unknown as EventTarget
+    canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true }))
+    canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(gl.clearColor).toHaveBeenCalledWith(0.1, 0.2, 0.3, 1)
+  })
+
+  it('takes the clear colour as an option', () => {
+    ;({ gl, renderer } = createMockRenderer())
+    expect(renderer.clearColour).toEqual([0, 0, 0, 0])
+
+    const canvas = gl.canvas as unknown as Record<string, unknown>
+    const other = new Renderer({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      clearColour: [1, 0, 0, 1]
+    })
+    expect(other.clearColour).toEqual([1, 0, 0, 1])
+    expect(gl.clearColor).toHaveBeenLastCalledWith(1, 0, 0, 1)
+  })
+
+  it("clears a render target's own depth and stencil buffers", () => {
+    const target = new RenderTarget(gl, { stencil: true })
+    renderer.render({ scene: new Obj(), target })
+    expect(gl.clear).toHaveBeenLastCalledWith(0x4000 | 0x100 | 0x400)
+
+    const flat = new RenderTarget(gl, { depth: false })
+    renderer.render({ scene: new Obj(), target: flat })
+    expect(gl.clear).toHaveBeenLastCalledWith(0x4000)
+
+    // The canvas uses the renderer's settings (depth on, stencil off)
+    renderer.render({ scene: new Obj() })
+    expect(gl.clear).toHaveBeenLastCalledWith(0x4000 | 0x100)
   })
 })

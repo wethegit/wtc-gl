@@ -8,11 +8,38 @@ function isPowerOf2(value: number) {
 
 let ID = 1
 
-type ImageTypes = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+/**
+ * Sources that can be uploaded as an image. `ImageBitmap` ignores `flipY` and
+ * `premultiplyAlpha`; set `imageOrientation` and `premultiplyAlpha` in
+ * `createImageBitmap` instead.
+ */
+export type TextureImage =
+  | HTMLImageElement
+  | HTMLVideoElement
+  | HTMLCanvasElement
+  | ImageBitmap
+  | OffscreenCanvas
+
+/**
+ * Typed arrays that can be uploaded as texture data. The array type has to
+ * match `type`, e.g. `Uint8Array` with `gl.UNSIGNED_BYTE`, `Float32Array`
+ * with `gl.FLOAT`, `Uint16Array` with `gl.HALF_FLOAT` or `gl.UNSIGNED_SHORT`.
+ */
+export type TextureData =
+  | Float32Array
+  | Uint8Array
+  | Uint8ClampedArray
+  | Int8Array
+  | Uint16Array
+  | Int16Array
+  | Uint32Array
+  | Int32Array
+
+type ImageTypes = TextureImage
 
 export interface TextureOptions {
   image: ImageTypes | ImageTypes[]
-  data: Float32Array | null
+  data: TextureData | null
   target: GLenum
   type: GLenum
   format: GLenum
@@ -46,10 +73,14 @@ export class Texture {
   gl: WTCGLRenderingContext
 
   /**
-   * The image element representing the texture. Can be an HTML image, video, or canvas
+   * The image representing the texture. Can be an HTML image, video or
+   * canvas, an `ImageBitmap` or an `OffscreenCanvas`.
    */
   image?: ImageTypes | ImageTypes[]
-  data: Float32Array | null = null
+  /**
+   * Typed array data for a data texture. Needs `width` and `height`.
+   */
+  data: TextureData | null = null
 
   /**
    * The WebGL texture object containing the data and state for WebGL
@@ -350,17 +381,22 @@ export class Texture {
     }
 
     if (this.image || this.data) {
-      if (this.image instanceof HTMLVideoElement) {
-        this.width = this.image.videoWidth
-        this.height = this.image.videoHeight
-      } else if (this.image instanceof HTMLImageElement) {
-        // `.width`/`.height` on HTMLImageElement reflect layout/CSS sizing, not
-        // the source bitmap. Use natural dimensions so the full image uploads.
-        this.width = this.image.naturalWidth
-        this.height = this.image.naturalHeight
-      } else if (this.image instanceof HTMLCanvasElement) {
-        this.width = this.image.width
-        this.height = this.image.height
+      // Checked by property rather than instanceof, because the HTML element
+      // classes don't exist in workers
+      const image = this.image
+      if (image && !Array.isArray(image)) {
+        if ('videoWidth' in image) {
+          this.width = image.videoWidth
+          this.height = image.videoHeight
+        } else if ('naturalWidth' in image) {
+          // `.width`/`.height` on HTMLImageElement reflect layout/CSS sizing, not
+          // the source bitmap. Use natural dimensions so the full image uploads.
+          this.width = image.naturalWidth
+          this.height = image.naturalHeight
+        } else {
+          this.width = image.width
+          this.height = image.height
+        }
       }
 
       if (

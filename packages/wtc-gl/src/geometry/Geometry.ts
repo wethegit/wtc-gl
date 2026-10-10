@@ -14,11 +14,13 @@ let ID = 1
 // To stop inifinite warnings
 let isBoundsWarned = false
 
+// Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
   a: number[] | Float32Array | Float64Array | Uint16Array | Uint32Array,
-  o: number = 0
+  o: number = 0,
+  size: number = 3
 ): Vec3 {
-  return new Vec3(a[o], a[o + 1], a[o + 2])
+  return new Vec3(a[o], size > 1 ? a[o + 1] : 0, size > 2 ? a[o + 2] : 0)
 }
 
 // The context generation each attribute's buffer was last rebuilt for
@@ -406,11 +408,12 @@ export class Geometry {
     min.reset(Infinity, Infinity, Infinity)
     max.reset(-Infinity, -Infinity, -Infinity)
 
-    // TODO: check size of position (eg triangle with Vec2)
+    // 2D positions (size 2) have z = 0
+    const size = attr.size
     for (let i = offset, l = array.length; i < l; i += stride) {
       const x = array[i]
-      const y = array[i + 1]
-      const z = array[i + 2]
+      const y = size > 1 ? array[i + 1] : 0
+      const z = size > 2 ? array[i + 2] : 0
 
       min.x = Math.min(x, min.x)
       min.y = Math.min(y, min.y)
@@ -445,7 +448,7 @@ export class Geometry {
 
     let maxRadiusSq = 0
     for (let i = offset, l = array.length; i < l; i += stride) {
-      const point = originArrayToVec3(array, i)
+      const point = originArrayToVec3(array, i, attr.size)
       maxRadiusSq = Math.max(
         maxRadiusSq,
         bounds.center.subtractNew(point).lengthSquared

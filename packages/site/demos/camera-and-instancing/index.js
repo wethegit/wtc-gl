@@ -108,7 +108,7 @@ const initWebgl = () => {
   const renderer = new Renderer(rendererProps)
   const gl = renderer.gl
   document.body.appendChild(gl.canvas)
-  gl.clearColor(0.1, 0.15, 0.2, 1)
+  renderer.clearColour = [0.1, 0.15, 0.2, 1]
   gl.enable(gl.BLEND)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
   gl.colorMask(true, true, true, false)

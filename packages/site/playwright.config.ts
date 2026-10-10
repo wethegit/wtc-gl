@@ -7,7 +7,7 @@ const port = 5199
 export default defineConfig({
   testDir: './e2e',
   // WebGL runs in software (SwiftShader), which is slow and uses several
-  // threads per page. Heavy demos like Camera-and-instancing time out when
+  // threads per page. Heavy demos like camera-and-instancing time out when
   // too many run at once, so keep the worker count down and allow more time.
   timeout: 60_000,
   workers: 6,

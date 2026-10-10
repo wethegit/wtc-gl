@@ -93,13 +93,14 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
     this.offset = offset
     this.instanced = instanced
     this.data = data
+    // GL enum literals, so this works without a window (workers, SSR, tests)
     this.type =
       type ||
       (this.data.constructor === Float32Array
-        ? window.WebGLRenderingContext.FLOAT
+        ? 5126 // FLOAT
         : this.data.constructor === Uint16Array
-          ? window.WebGLRenderingContext.UNSIGNED_SHORT
-          : window.WebGLRenderingContext.UNSIGNED_INT)
+          ? 5123 // UNSIGNED_SHORT
+          : 5125) // UNSIGNED_INT
     this.normalized = normalized
 
     this.count =

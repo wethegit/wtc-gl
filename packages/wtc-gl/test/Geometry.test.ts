@@ -31,6 +31,20 @@ describe('Geometry bounds', () => {
     expect([scale.x, scale.y, scale.z]).toEqual([4, 4, 4])
   })
 
+  it('treats 2D positions as z = 0', () => {
+    const geometry = new Geometry(gl, {
+      position: position([-1, -2, 3, 4, 0, 6], 2)
+    })
+    geometry.computeBoundingSphere()
+
+    const { min, max, center, radius } = geometry.bounds!
+    expect([min.x, min.y, min.z]).toEqual([-1, -2, 0])
+    expect([max.x, max.y, max.z]).toEqual([3, 6, 0])
+    expect([center.x, center.y, center.z]).toEqual([1, 2, 0])
+    // Furthest point is (-1, -2) or (3, 6), both sqrt(20) from the centre
+    expect(radius).toBeCloseTo(Math.sqrt(20))
+  })
+
   it('computes the bounding sphere around the box centre', () => {
     const geometry = new Geometry(gl, {
       position: position([2, 0, 0, 4, 0, 0, 3, 0.5, 0, 3, -0.5, 0])

@@ -26,8 +26,14 @@ export interface RendererOptions {
   preserveDrawingBuffer: boolean
   powerPreference: string
   autoClear: boolean
+  clearColour: WTCGLColour
   webgl: number
 }
+
+/**
+ * A colour as `[r, g, b, a]`, each from 0 to 1.
+ */
+export type WTCGLColour = [number, number, number, number]
 
 export interface RenderOptions {
   scene: Obj
@@ -84,6 +90,7 @@ export class Renderer {
    * @default true
    */
   autoClear: boolean
+  #clearColour: WTCGLColour = [0, 0, 0, 0]
   /**
    * Whether the context we've retrieved is webGL2 or not.
    */
@@ -195,13 +202,14 @@ export class Renderer {
    * @param preserveDrawingBuffer - Preserve the drawing buffer between calls. Useful for when downloading the canvas to an image.
    * @param powerPreference - WebGL power preference.
    * @param autoClear - Whether to clear the canvas between draw.
+   * @param clearColour - The colour to clear to, as `[r, g, b, a]`.
    * @param webgl - The webGL version to try to use - 1, or 2
    */
   constructor({
     canvas,
     width = 300,
     height = 150,
-    dpr = Math.min(window.devicePixelRatio, 2),
+    dpr = Math.min(globalThis.devicePixelRatio ?? 1, 2),
     alpha = false,
     depth = true,
     stencil = false,
@@ -210,6 +218,7 @@ export class Renderer {
     preserveDrawingBuffer = false,
     powerPreference = 'default',
     autoClear = true,
+    clearColour,
     webgl = 2
   }: Partial<RendererOptions> = {}) {
     const attributes = {
@@ -260,6 +269,8 @@ export class Renderer {
     this.drawBuffers = extensionFunctions.drawBuffers
 
     this.parameters = this.#getParameters()
+
+    if (clearColour) this.clearColour = clearColour
 
     canvas.addEventListener('webglcontextlost', this.#handleContextLost)
     canvas.addEventListener('webglcontextrestored', this.#handleContextRestored)
@@ -386,6 +397,7 @@ export class Renderer {
     this.parameters = this.#getParameters()
     this.currentProgram = -1
     this.currentGeometry = ''
+    this.clearColour = this.#clearColour
 
     this.contextVersion++
     this.contextLost = false
@@ -587,6 +599,20 @@ export class Renderer {
   }
   get frontFace(): GLenum | null {
     return this.state.frontFace
+  }
+
+  /**
+   * The colour the canvas and render targets are cleared to, as
+   * `[r, g, b, a]` from 0 to 1. Kept across context loss, unlike a colour set
+   * with `gl.clearColor` directly.
+   * @default [0, 0, 0, 0]
+   */
+  set clearColour(value: WTCGLColour) {
+    this.#clearColour = [value[0], value[1], value[2], value[3]]
+    this.gl.clearColor(value[0], value[1], value[2], value[3])
+  }
+  get clearColour(): WTCGLColour {
+    return [...this.#clearColour]
   }
 
   /**
@@ -848,15 +874,18 @@ export class Renderer {
     }
 
     if (clear || (this.autoClear && clear !== false)) {
+      // A render target has its own depth and stencil buffers
+      const depth = target ? target.depth : this.depth
+      const stencil = target ? target.stencil : this.stencil
       // Ensure depth buffer writing is enabled so it can be cleared
-      if (this.depth && (!target || target.depth)) {
+      if (depth) {
         this.enable(this.gl.DEPTH_TEST)
         this.depthMask = true
       }
       this.gl.clear(
         (this.colour ? this.gl.COLOR_BUFFER_BIT : 0) |
-          (this.depth ? this.gl.DEPTH_BUFFER_BIT : 0) |
-          (this.stencil ? this.gl.STENCIL_BUFFER_BIT : 0)
+          (depth ? this.gl.DEPTH_BUFFER_BIT : 0) |
+          (stencil ? this.gl.STENCIL_BUFFER_BIT : 0)
       )
     }
 

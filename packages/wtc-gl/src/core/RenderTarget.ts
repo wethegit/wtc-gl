@@ -1,9 +1,9 @@
 import type { WTCGLRenderingContext } from '../types'
 
-import { Texture } from './Texture'
+import { Texture, type TextureData } from './Texture'
 
 export interface RenderTargetOptions {
-  data: Float32Array | null
+  data: TextureData | null
   width: number
   height: number
   target: GLenum
@@ -11,6 +11,7 @@ export interface RenderTargetOptions {
   depth: boolean
   stencil: boolean
   depthTexture: Texture | null | boolean
+  depthFormat: GLenum
   wrapS: GLenum
   wrapT: GLenum
   minFilter: GLenum
@@ -40,12 +41,22 @@ export class RenderTarget {
    */
   textures: Texture[]
   /**
-   * The depth texture.
+   * The depth (or depth-stencil) texture, if the depth buffer is a texture.
    */
   depthTexture: Texture | null = null
+  /**
+   * The depth and/or stencil renderbuffer, used when the depth buffer isn't a
+   * texture or there's only a stencil buffer.
+   */
+  depthBuffer: WebGLRenderbuffer | null = null
 
   // The context generation this target was created for
   #contextVersion: number
+  // The internal format and attachment point of `depthBuffer`
+  #depthBufferFormat: GLenum = 0
+  #depthAttachment: GLenum = 0
+  // Whether the depth texture was created here, so is deleted by `remove`
+  #ownsDepthTexture = false
 
   /**
    * The width of the target.
@@ -61,9 +72,9 @@ export class RenderTarget {
    */
   depth: boolean
   /**
-   * Whether to render a stencil buffer. Not supported yet.
+   * Whether to render a stencil buffer.
    */
-  stencil = false
+  stencil: boolean
 
   /**
    * A GLEnum representing the binding point for the texture / buffer.
@@ -80,7 +91,14 @@ export class RenderTarget {
    * @param target - The binding point for the frame buffers.
    * @param colour - The number of colour attachments to create.
    * @param depth - Whether to create a depth buffer
-   * @param stencil - Whether to create a stencil buffer
+   * @param stencil - Whether to create a stencil buffer. With `depth`, the
+   * two share a `DEPTH24_STENCIL8` texture or renderbuffer.
+   * @param depthTexture - Whether the depth buffer is a texture you can
+   * sample (`true`), a renderbuffer (`false`), or a `Texture` to use. A
+   * stencil buffer on its own is always a renderbuffer, as is depth-stencil
+   * under WebGL1.
+   * @param depthFormat - The depth buffer's internal format. Defaults to
+   * `DEPTH_COMPONENT24` (`DEPTH24_STENCIL8` with `stencil`) under WebGL2.
    * @param wrapS - Wrapping
    * @param wrapT - Wrapping
    * @param minFilter - The filter to use when rendering smaller
@@ -100,6 +118,9 @@ export class RenderTarget {
       target = gl.FRAMEBUFFER,
       colour = 1,
       depth = true,
+      stencil = false,
+      depthTexture = true,
+      depthFormat,
       wrapS = gl.CLAMP_TO_EDGE,
       wrapT = gl.CLAMP_TO_EDGE,
       minFilter = gl.LINEAR,
@@ -116,6 +137,7 @@ export class RenderTarget {
     this.width = width
     this.height = height
     this.depth = depth
+    this.stencil = stencil
     this.buffer = this.gl.createFramebuffer()!
     this.target = target
 
@@ -150,22 +172,51 @@ export class RenderTarget {
       )
     }
 
-    if (
+    const isWebgl2 = gl.renderer.isWebgl2
+    this.#depthAttachment =
+      depth && stencil
+        ? gl.DEPTH_STENCIL_ATTACHMENT
+        : depth
+          ? gl.DEPTH_ATTACHMENT
+          : gl.STENCIL_ATTACHMENT
+
+    if (depthTexture instanceof Texture) {
+      this.depthTexture = depthTexture
+    } else if (
       depth &&
-      (this.gl.renderer.isWebgl2 ||
-        this.gl.renderer.getExtension('WEBGL_depth_texture'))
+      depthTexture &&
+      (isWebgl2 ||
+        (!stencil && gl.renderer.getExtension('WEBGL_depth_texture')))
     ) {
+      const internalFormat =
+        depthFormat ??
+        (isWebgl2
+          ? stencil
+            ? gl.DEPTH24_STENCIL8
+            : gl.DEPTH_COMPONENT24
+          : gl.DEPTH_COMPONENT)
       this.depthTexture = new Texture(gl, {
         width,
         height,
-        minFilter: this.gl.NEAREST,
-        magFilter: this.gl.NEAREST,
-        format: this.gl.DEPTH_COMPONENT,
-        internalFormat: gl.renderer.isWebgl2
-          ? this.gl.DEPTH_COMPONENT16
-          : this.gl.DEPTH_COMPONENT,
-        type: this.gl.UNSIGNED_INT
+        minFilter: gl.NEAREST,
+        magFilter: gl.NEAREST,
+        generateMipmaps: false,
+        format: stencil ? gl.DEPTH_STENCIL : gl.DEPTH_COMPONENT,
+        internalFormat,
+        type: getDepthType(gl, internalFormat, stencil)
       })
+      this.#ownsDepthTexture = true
+    } else if (depth || stencil) {
+      this.#depthBufferFormat = !depth
+        ? gl.STENCIL_INDEX8
+        : (depthFormat ??
+          (stencil
+            ? isWebgl2
+              ? gl.DEPTH24_STENCIL8
+              : gl.DEPTH_STENCIL
+            : isWebgl2
+              ? gl.DEPTH_COMPONENT24
+              : gl.DEPTH_COMPONENT16))
     }
 
     this.#attach()
@@ -204,11 +255,28 @@ export class RenderTarget {
       this.depthTexture.update()
       this.gl.framebufferTexture2D(
         this.target,
-        this.gl.DEPTH_ATTACHMENT,
+        this.#depthAttachment,
         this.gl.TEXTURE_2D,
         this.depthTexture.texture,
         0 /* level */
       )
+    } else if (this.#depthBufferFormat) {
+      const gl = this.gl
+      this.depthBuffer = gl.createRenderbuffer()!
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.depthBuffer)
+      gl.renderbufferStorage(
+        gl.RENDERBUFFER,
+        this.#depthBufferFormat,
+        this.width,
+        this.height
+      )
+      gl.framebufferRenderbuffer(
+        this.target,
+        this.#depthAttachment,
+        gl.RENDERBUFFER,
+        this.depthBuffer
+      )
+      gl.bindRenderbuffer(gl.RENDERBUFFER, null)
     }
 
     this.gl.renderer.bindFramebuffer({ target: this.target })
@@ -236,7 +304,8 @@ export class RenderTarget {
   }
 
   /**
-   * Delete the framebuffer along with its colour and depth textures. If the
+   * Delete the framebuffer along with its colour textures and depth buffer. A
+   * depth texture passed in through `depthTexture` is left alone. If the
    * target is currently bound, the canvas is bound in its place.
    */
   remove() {
@@ -244,7 +313,27 @@ export class RenderTarget {
       this.gl.renderer.bindFramebuffer({ target: this.target })
     this.gl.deleteFramebuffer(this.buffer)
     this.textures.forEach((texture) => texture.remove())
-    this.depthTexture?.remove()
+    if (this.#ownsDepthTexture) this.depthTexture?.remove()
+    if (this.depthBuffer) this.gl.deleteRenderbuffer(this.depthBuffer)
     this.gl.renderer.untrack(this)
   }
+}
+
+/**
+ * The texture type a depth internal format needs.
+ */
+function getDepthType(
+  gl: WTCGLRenderingContext,
+  internalFormat: GLenum,
+  stencil: boolean
+): GLenum {
+  switch (internalFormat) {
+    case gl.DEPTH_COMPONENT32F:
+      return gl.FLOAT
+    case gl.DEPTH32F_STENCIL8:
+      return gl.FLOAT_32_UNSIGNED_INT_24_8_REV
+    case gl.DEPTH24_STENCIL8:
+      return gl.UNSIGNED_INT_24_8
+  }
+  return stencil ? gl.UNSIGNED_INT_24_8 : gl.UNSIGNED_INT
 }

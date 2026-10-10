@@ -51,7 +51,7 @@ export class Framebuffer {
       name = 'FBO',
       width = 512,
       height = 512,
-      dpr = Math.min(window.devicePixelRatio, 2),
+      dpr = Math.min(globalThis.devicePixelRatio ?? 1, 2),
       tiling = Framebuffer.IMAGETYPE_REGULAR,
       texdepth = Framebuffer.TEXTYPE_UNSIGNED_BYTE,
       minFilter = gl.LINEAR,

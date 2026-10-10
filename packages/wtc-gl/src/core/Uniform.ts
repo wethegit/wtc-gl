@@ -19,9 +19,19 @@ type Kind =
   | 'int_vec2'
   | 'int_vec3'
   | 'int_vec4'
+  | 'uint'
+  | 'uint_vec2'
+  | 'uint_vec3'
+  | 'uint_vec4'
   | 'mat2'
   | 'mat3'
   | 'mat4'
+  | 'mat2x3'
+  | 'mat2x4'
+  | 'mat3x2'
+  | 'mat3x4'
+  | 'mat4x2'
+  | 'mat4x3'
 
 export interface UniformOptions {
   name: string
@@ -153,6 +163,20 @@ export class Uniform {
       case 35669:
         // INT_VEC4
         return gl.uniform4iv(location, val)
+      case 5125:
+        // UNSIGNED_INT
+        return val?.length
+          ? gl.uniform1uiv(location, val)
+          : gl.uniform1ui(location, val as unknown as number)
+      case 36294:
+        // UNSIGNED_INT_VEC2
+        return gl.uniform2uiv(location, val)
+      case 36295:
+        // UNSIGNED_INT_VEC3
+        return gl.uniform3uiv(location, val)
+      case 36296:
+        // UNSIGNED_INT_VEC4
+        return gl.uniform4uiv(location, val)
       case 35674:
         // FLOAT_MAT2
         return gl.uniformMatrix2fv(location, false, val)
@@ -163,6 +187,24 @@ export class Uniform {
         if (val === null) return
         // FLOAT_MAT4
         return gl.uniformMatrix4fv(location, false, val)
+      case 35685:
+        // FLOAT_MAT2x3
+        return gl.uniformMatrix2x3fv(location, false, val)
+      case 35686:
+        // FLOAT_MAT2x4
+        return gl.uniformMatrix2x4fv(location, false, val)
+      case 35687:
+        // FLOAT_MAT3x2
+        return gl.uniformMatrix3x2fv(location, false, val)
+      case 35688:
+        // FLOAT_MAT3x4
+        return gl.uniformMatrix3x4fv(location, false, val)
+      case 35689:
+        // FLOAT_MAT4x2
+        return gl.uniformMatrix4x2fv(location, false, val)
+      case 35690:
+        // FLOAT_MAT4x3
+        return gl.uniformMatrix4x3fv(location, false, val)
     }
   }
   /**
