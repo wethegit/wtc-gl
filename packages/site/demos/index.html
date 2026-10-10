@@ -494,6 +494,50 @@
             <a class="btn" href="./stencil-depth/">Open demo →</a>
           </div>
         </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0a0a1a 0%,
+                #261a3a 50%,
+                #10183a 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(240, 150, 190, 0.5);
+                letter-spacing: 0.1em;
+              "
+              >6,000 MESHES</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Mesh</span>
+              <span class="demo__class">Renderer</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">Camera</span>
+            </div>
+            <h3>Many meshes</h3>
+            <p>
+              A spiral galaxy of up to 6,000 separate meshes, each moved and
+              rotated every frame. One pane is the camera you control; the
+              other watches it from above, showing its frustum and only the
+              meshes it didn't cull. Matrices, uniforms and render lists are
+              updated in place, so the render loop makes almost no garbage.
+            </p>
+            <a class="btn" href="./many-meshes/">Open demo →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Getting started -->

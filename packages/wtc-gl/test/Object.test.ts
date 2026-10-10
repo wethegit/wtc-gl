@@ -25,6 +25,26 @@ describe('Obj scene graph', () => {
     expect(translationOf(child)).toEqual([3, 4, 0])
   })
 
+  it('updates matrices and the quaternion in place', () => {
+    const parent = new Obj()
+    const child = new Obj()
+    parent.addChild(child)
+    const { matrix, worldMatrix, quaternion } = child
+
+    child.position.x = 2
+    child.rotation.y = Math.PI / 2
+    child.updateRotation()
+    parent.position.y = 3
+    parent.updateMatrixWorld()
+
+    expect(child.matrix).toBe(matrix)
+    expect(child.worldMatrix).toBe(worldMatrix)
+    expect(child.quaternion).toBe(quaternion)
+    expect(translationOf(child)).toEqual([2, 3, 0])
+    // A quarter turn about y maps x to -z
+    expect(child.worldMatrix.a13).toBeCloseTo(-1)
+  })
+
   it('updates children when only the parent moves', () => {
     const parent = new Obj()
     const child = new Obj()

@@ -1,6 +1,7 @@
 import { Vec3, Mat4 } from 'wtc-math'
 
 import { Obj } from './Object'
+import { invertMat4, multiplyMat4 } from './matrix'
 import { Mesh } from './Mesh'
 import { Drawable } from './Drawable'
 
@@ -228,11 +229,16 @@ export class Camera extends Obj {
    */
   updateMatrixWorld(): Camera {
     super.updateMatrixWorld()
-    this.viewMatrix = this.worldMatrix.invertNew()
-    this.worldPosition = this.worldMatrix.translation
+    // Updated in place, so this doesn't allocate every frame
+    invertMat4(this.viewMatrix, this.worldMatrix)
+    this.worldPosition.x = this.worldMatrix.a41
+    this.worldPosition.y = this.worldMatrix.a42
+    this.worldPosition.z = this.worldMatrix.a43
 
     // used for sorting
-    this.projectionViewMatrix = this.projectionMatrix.multiplyNew(
+    multiplyMat4(
+      this.projectionViewMatrix,
+      this.projectionMatrix,
       this.viewMatrix
     )
 
@@ -266,60 +272,19 @@ export class Camera extends Obj {
     12  13  14  15
     */
 
-    //  this.frustum[0].set(m[3] - m[0], m[7] - m[4], m[11] - m[8]).constant = m[15] - m[12]; // -x
+    // Each plane is (a14 ± a1n, a24 ± a2n, a34 ± a3n) with constant
+    // a44 ± a4n, normalised. Written into the existing vectors so this
+    // doesn't allocate every frame.
     const m = this.projectionViewMatrix
-    this.frustum.xNeg.pos = new Vec3(
-      m.a14 - m.a11,
-      m.a24 - m.a21,
-      m.a34 - m.a31
-    )
-    this.frustum.xNeg.constant = m.a44 - m.a41
-
-    //  this.frustum[1].set(m[3] + m[0], m[7] + m[4], m[11] + m[8]).constant = m[15] + m[12]; // +x
-    this.frustum.xPos.pos = new Vec3(
-      m.a14 + m.a11,
-      m.a24 + m.a21,
-      m.a34 + m.a31
-    )
-    this.frustum.xPos.constant = m.a44 + m.a41
-
-    //  this.frustum[2].set(m[3] + m[1], m[7] + m[5], m[11] + m[9]).constant = m[15] + m[13]; // +y
-    this.frustum.yPos.pos = new Vec3(
-      m.a14 + m.a12,
-      m.a24 + m.a22,
-      m.a34 + m.a32
-    )
-    this.frustum.yPos.constant = m.a44 + m.a42
-
-    //  this.frustum[3].set(m[3] - m[1], m[7] - m[5], m[11] - m[9]).constant = m[15] - m[13]; // -y
-    this.frustum.yNeg.pos = new Vec3(
-      m.a14 - m.a12,
-      m.a24 - m.a22,
-      m.a34 - m.a32
-    )
-    this.frustum.yNeg.constant = m.a44 - m.a42
-
-    //  this.frustum[4].set(m[3] - m[2], m[7] - m[6], m[11] - m[10]).constant = m[15] - m[14]; // +z (far)
-    this.frustum.zPos.pos = new Vec3(
-      m.a14 - m.a13,
-      m.a24 - m.a23,
-      m.a34 - m.a33
-    )
-    this.frustum.zPos.constant = m.a44 - m.a43
-
-    //  this.frustum[5].set(m[3] + m[2], m[7] + m[6], m[11] + m[10]).constant = m[15] + m[14]; // -z (near)
-    this.frustum.zNeg.pos = new Vec3(
-      m.a14 + m.a13,
-      m.a24 + m.a23,
-      m.a34 + m.a33
-    )
-    this.frustum.zNeg.constant = m.a44 + m.a43
-
-    for (const i in this.frustum) {
-      const invLen = 1.0 / this.frustum[i].pos.length
-      this.frustum[i].pos.scale(invLen)
-      this.frustum[i].constant *= invLen
-    }
+    const { xNeg, xPos, yPos, yNeg, zPos, zNeg } = this.frustum
+    setPlane(xNeg, m.a14 - m.a11, m.a24 - m.a21, m.a34 - m.a31, m.a44 - m.a41)
+    setPlane(xPos, m.a14 + m.a11, m.a24 + m.a21, m.a34 + m.a31, m.a44 + m.a41)
+    setPlane(yPos, m.a14 + m.a12, m.a24 + m.a22, m.a34 + m.a32, m.a44 + m.a42)
+    setPlane(yNeg, m.a14 - m.a12, m.a24 - m.a22, m.a34 - m.a32, m.a44 - m.a42)
+    // far
+    setPlane(zPos, m.a14 - m.a13, m.a24 - m.a23, m.a34 - m.a33, m.a44 - m.a43)
+    // near
+    setPlane(zNeg, m.a14 + m.a13, m.a24 + m.a23, m.a34 + m.a33, m.a44 + m.a43)
   }
 
   /**
@@ -337,13 +302,19 @@ export class Camera extends Obj {
 
       if (!node.geometry.bounds) return true
 
-      const center = node.geometry.bounds.center.clone()
-      center.transformByMat4(node.worldMatrix)
+      // The bounds centre in world space, as plain numbers so nothing is
+      // allocated
+      const { x, y, z } = node.geometry.bounds.center
+      const m = node.worldMatrix
+      const w = m.a14 * x + m.a24 * y + m.a34 * z + m.a44 || 1
+      const cx = (m.a11 * x + m.a21 * y + m.a31 * z + m.a41) / w
+      const cy = (m.a12 * x + m.a22 * y + m.a32 * z + m.a42) / w
+      const cz = (m.a13 * x + m.a23 * y + m.a33 * z + m.a43) / w
 
       const radius =
         node.geometry.bounds.radius * this.maxAxisScale(node.worldMatrix)
 
-      return this.frustumIntersectsSphere(center, radius)
+      return this.#intersectsSphere(cx, cy, cz, radius)
     }
 
     return false
@@ -369,12 +340,50 @@ export class Camera extends Obj {
    * @returns Boolean indicating intersection
    */
   frustumIntersectsSphere(center: Vec3, radius: number): boolean {
-    for (const i in this.frustum) {
-      const plane = this.frustum[i]
-      const dist = plane.pos.clone().dot(center) + plane.constant
-      if (dist < -radius) return false
-    }
-
-    return true
+    return this.#intersectsSphere(center.x, center.y, center.z, radius)
   }
+
+  #intersectsSphere(x: number, y: number, z: number, radius: number) {
+    const { xNeg, xPos, yPos, yNeg, zPos, zNeg } = this.frustum
+    return (
+      planeDistance(xNeg, x, y, z) >= -radius &&
+      planeDistance(xPos, x, y, z) >= -radius &&
+      planeDistance(yPos, x, y, z) >= -radius &&
+      planeDistance(yNeg, x, y, z) >= -radius &&
+      planeDistance(zPos, x, y, z) >= -radius &&
+      planeDistance(zNeg, x, y, z) >= -radius
+    )
+  }
+}
+
+type FrustumPlane = { pos: Vec3; constant: number }
+
+/**
+ * Set a frustum plane from its unnormalised coefficients.
+ */
+function setPlane(
+  plane: FrustumPlane,
+  x: number,
+  y: number,
+  z: number,
+  constant: number
+) {
+  const invLen = 1 / Math.sqrt(x * x + y * y + z * z)
+  plane.pos.x = x * invLen
+  plane.pos.y = y * invLen
+  plane.pos.z = z * invLen
+  plane.constant = constant * invLen
+}
+
+/**
+ * Signed distance from a plane to a point.
+ */
+function planeDistance(
+  plane: FrustumPlane,
+  x: number,
+  y: number,
+  z: number
+): number {
+  const n = plane.pos
+  return n.x * x + n.y * y + n.z * z + plane.constant
 }

@@ -28,12 +28,14 @@ declare module 'wtc-math' {
   }
 
   export class Mat3 {
+    constructor(...values: number[])
     array: number[]
     [key: string]: any
     static fromMat4(m: Mat4): Mat3
   }
 
   export class Mat4 {
+    constructor(...values: number[])
     array: number[]
     rotation: Quat
     [key: string]: any

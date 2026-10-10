@@ -373,6 +373,24 @@ export class Program {
    * Set up the program for use
    * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
    */
+  #bindUniform = (
+    location: WebGLUniformLocation,
+    activeUniform: WTCGLActiveInfo
+  ) => {
+    const name = activeUniform.uniformName
+
+    if (!name) return
+
+    // get supplied uniform
+    const uniform = this.uniforms[name]
+
+    if (!uniform) {
+      return warn(`Active uniform ${name} has not been supplied`)
+    }
+
+    uniform.bind(this, location, activeUniform)
+  }
+
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     this.textureUnit = -1
 
@@ -393,21 +411,9 @@ export class Program {
       this.gl.renderer.currentProgram = this.id
     }
 
-    // Set only the active uniforms found in the shader
-    this.uniformLocations.forEach((location, activeUniform) => {
-      const name = activeUniform.uniformName
-
-      if (!name) return
-
-      // get supplied uniform
-      const uniform = this.uniforms[name]
-
-      if (!uniform) {
-        return warn(`Active uniform ${name} has not been supplied`)
-      }
-
-      uniform.bind(this, location, activeUniform)
-    })
+    // Set only the active uniforms found in the shader. A stored callback,
+    // so this doesn't allocate a closure on every draw.
+    this.uniformLocations.forEach(this.#bindUniform)
 
     this.applyState()
     if (flipFaces)

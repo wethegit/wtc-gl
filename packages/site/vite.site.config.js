@@ -44,6 +44,7 @@ export default defineConfig({
         raymarchingWebgl2: resolvePath('demos/raymarching-webgl2/index.html'),
         scrollBlades: resolvePath('demos/scroll-blades/index.html'),
         stencilDepth: resolvePath('demos/stencil-depth/index.html'),
+        manyMeshes: resolvePath('demos/many-meshes/index.html'),
       }
     }
   }

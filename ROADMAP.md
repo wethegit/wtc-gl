@@ -62,10 +62,11 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 
 The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.fromMat4`) create new objects on every call. That adds up to roughly 10–20 new arrays or matrices per mesh per frame, plus a new frustum on every `updateFrustum`. That's fine for one full-screen shader, but it will cause garbage-collection stutter with many ScrollScenes.
 
-- [ ] Keep a reusable `Float32Array` per matrix and vector uniform in `Mesh.draw`.
-- [ ] Update matrices in place in `Obj.updateMatrix` / `updateMatrixWorld`.
-- [ ] Reuse the frustum planes in `Camera.updateFrustum`.
-- [ ] Stop allocating in `Renderer.render` and `ScrollRenderer.render`: the viewport `Vec2`s, the `resize()` read every frame, and the render-list arrays.
+- [x] Keep a reusable `Float32Array` per matrix and vector uniform in `Mesh.draw`.
+- [x] Update matrices in place in `Obj.updateMatrix` / `updateMatrixWorld`.
+- [x] Reuse the frustum planes in `Camera.updateFrustum`.
+- [x] Stop allocating in `Renderer.render` and `ScrollRenderer.render`: the viewport `Vec2`s, the `resize()` read every frame, and the render-list arrays. (`resize()` no longer allocates, but still reads the canvas size each frame to catch changes the ResizeObserver hasn't reported yet.)
+- [ ] Fix allocation upstream in wtc-math, then remove wtc-gl's workarounds (likely for the next major version). wtc-math's "in place" methods still allocate: `multiply` and `invert` clone first, `invert` and `determinant` build intermediate objects, and `.array`, `.translation` and `Quat.fromEuler` return new objects. Its components are also stored in private fields behind getters and setters, which makes V8 box doubles in code that isn't optimised. Once wtc-math has truly in-place operations (e.g. `multiply(a, b, out)`, `invert(out)`, `fromRotationTranslationScale(..., out)`, `toArray(out)`), replace the copied formulas in `src/core/matrix.ts` with calls to it and delete that file. `test/allocations.test.ts` should keep passing throughout.
 
 ## Phase 5 — Smaller improvements
 

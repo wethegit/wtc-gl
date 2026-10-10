@@ -780,59 +780,93 @@ export class Renderer {
     frustumCull: boolean
     sort: boolean
   }): Drawable[] {
-    let renderList: Drawable[] = []
+    // A fresh list, as callers may keep it
+    return this.#buildRenderList(scene, camera, frustumCull, sort, {
+      list: [],
+      opaque: [],
+      transparent: [],
+      ui: []
+    })
+  }
+
+  // Reused by render() so building the list doesn't allocate every frame
+  #lists: RenderLists = { list: [], opaque: [], transparent: [], ui: [] }
+  #drawProps: { camera?: Camera } = {}
+  // How many render() calls are running, as a draw callback can render too
+  #renderDepth = 0
+  #viewportSize = new Vec2()
+  #viewportPosition = new Vec2()
+
+  /**
+   * Fill `lists.list` with the visible drawables in `scene`, culled and
+   * sorted as requested. The arrays in `lists` are cleared and reused.
+   */
+  #buildRenderList(
+    scene: Obj,
+    camera: Camera | undefined,
+    frustumCull: boolean,
+    sort: boolean,
+    lists: RenderLists
+  ): Drawable[] {
+    const { list, opaque, transparent, ui } = lists
 
     if (camera && frustumCull) camera.updateFrustum()
 
-    // Get visible
-    scene.traverse((node: Obj): boolean | null => {
-      if (!node.visible) return true
-      if (!(node instanceof Drawable)) return null
+    // Arrays are filled by index and truncated afterwards, rather than
+    // emptied with `length = 0`, which would drop their storage and make
+    // them regrow every frame
+    const count = collectVisible(
+      scene,
+      frustumCull ? camera : undefined,
+      list,
+      0
+    )
+    list.length = count
 
-      if (frustumCull && node.frustumCulled && camera) {
-        if (!camera.frustumIntersects(node)) return null
+    if (!sort) return list
+
+    let o = 0
+    let t = 0
+    let u = 0
+    const m = camera?.projectionViewMatrix
+
+    for (let i = 0; i < count; i++) {
+      const node = list[i]
+      // Split into the 3 render groups
+      const { program } = node
+
+      if (program && !program.transparent) {
+        opaque[o++] = node
+      } else if (program?.depthTest) {
+        transparent[t++] = node // depthTest true
+      } else {
+        ui[u++] = node // depthTest false
       }
 
-      renderList.push(node)
+      // Only calculate z-depth if renderOrder unset and depthTest is true
+      if (node.renderOrder !== 0 || !program?.depthTest || !m) continue
 
-      return null
-    })
-
-    if (sort) {
-      const opaque: Drawable[] = []
-      const transparent: Drawable[] = [] // depthTest true
-      const ui: Drawable[] = [] // depthTest false
-
-      renderList.forEach((node) => {
-        // Split into the 3 render groups
-        const { program } = node
-
-        if (program && !program.transparent) {
-          opaque.push(node)
-        } else if (program?.depthTest) {
-          transparent.push(node)
-        } else {
-          ui.push(node)
-        }
-
-        // Only calculate z-depth if renderOrder unset and depthTest is true
-        if (node.renderOrder !== 0 || !program?.depthTest || !camera) return
-
-        // update z-depth
-        const translation = node.worldMatrix.translation
-        translation.transformByMat4(camera.projectionViewMatrix)
-
-        node.zDepth = translation.z
-      })
-
-      opaque.sort(this.sortOpaque)
-      transparent.sort(this.sortTransparent)
-      ui.sort(this.sortUI)
-
-      renderList = opaque.concat(transparent, ui)
+      // z of the object's position in clip space, computed inline rather
+      // than with .translation and transformByMat4, which allocate
+      const w = node.worldMatrix
+      const x = w.a41, y = w.a42, z = w.a43 // prettier-ignore
+      const cw = m.a14 * x + m.a24 * y + m.a34 * z + m.a44 || 1
+      node.zDepth = (m.a13 * x + m.a23 * y + m.a33 * z + m.a43) / cw
     }
+    opaque.length = o
+    transparent.length = t
+    ui.length = u
 
-    return renderList
+    opaque.sort(this.sortOpaque)
+    transparent.sort(this.sortTransparent)
+    ui.sort(this.sortUI)
+
+    let n = 0
+    for (let i = 0; i < o; i++) list[n++] = opaque[i]
+    for (let i = 0; i < t; i++) list[n++] = transparent[i]
+    for (let i = 0; i < u; i++) list[n++] = ui[i]
+
+    return list
   }
 
   /**
@@ -862,15 +896,22 @@ export class Renderer {
     if (target === null) {
       // make sure no render target bound so draws to canvas
       this.bindFramebuffer()
-      if (!viewport) viewport = [this.dimensions.scaleNew(this.dpr), new Vec2()]
-      this.setViewport(...viewport)
+      if (viewport) this.setViewport(...viewport)
+      else {
+        this.#viewportSize.x = this.dimensions.x * this.dpr
+        this.#viewportSize.y = this.dimensions.y * this.dpr
+        this.setViewport(this.#viewportSize, this.#viewportPosition)
+      }
     } else {
       // bind supplied render target and update viewport
 
       this.bindFramebuffer(target)
-      if (!viewport)
-        viewport = [new Vec2(target.width, target.height), new Vec2()]
-      this.setViewport(...viewport)
+      if (viewport) this.setViewport(...viewport)
+      else {
+        this.#viewportSize.x = target.width
+        this.#viewportSize.y = target.height
+        this.setViewport(this.#viewportSize, this.#viewportPosition)
+      }
     }
 
     if (clear || (this.autoClear && clear !== false)) {
@@ -896,10 +937,60 @@ export class Renderer {
     if (camera) camera.updateMatrixWorld()
 
     // Get render list - entails culling and sorting
-    const renderList = this.getRenderList({ scene, camera, frustumCull, sort })
+    // A render started from inside a draw (e.g. to a render target in a
+    // mesh callback) gets its own lists, so it doesn't overwrite these
+    const nested = this.#renderDepth > 0
+    const renderList = this.#buildRenderList(
+      scene,
+      camera,
+      frustumCull,
+      sort,
+      nested ? { list: [], opaque: [], transparent: [], ui: [] } : this.#lists
+    )
+    const props = nested ? { camera } : this.#drawProps
+    props.camera = camera
 
-    renderList.forEach((node) => {
-      node.draw({ camera })
-    })
+    this.#renderDepth++
+    try {
+      for (let i = 0; i < renderList.length; i++) {
+        renderList[i].draw(props as { camera: Camera })
+      }
+    } finally {
+      this.#renderDepth--
+      props.camera = undefined
+    }
   }
+}
+
+type RenderLists = {
+  list: Drawable[]
+  opaque: Drawable[]
+  transparent: Drawable[]
+  ui: Drawable[]
+}
+
+/**
+ * Write the visible drawables under `node` into `list` from index `count`,
+ * skipping invisible subtrees and, when a camera is given, drawables outside
+ * its frustum. Returns the new count. A plain recursive function, so
+ * traversal doesn't allocate a callback.
+ */
+function collectVisible(
+  node: Obj,
+  camera: Camera | undefined,
+  list: Drawable[],
+  count: number
+): number {
+  if (!node.visible) return count
+  if (
+    node instanceof Drawable &&
+    (!camera || !node.frustumCulled || camera.frustumIntersects(node))
+  ) {
+    list[count++] = node
+  }
+  const children = node.children
+  for (let i = 0; i < children.length; i++) {
+    count = collectVisible(children[i], camera, list, count)
+  }
+  return count
 }

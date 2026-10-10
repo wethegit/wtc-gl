@@ -57,6 +57,9 @@ export class Geometry {
 
   // The context generation this geometry's buffers were created for
   #contextVersion: number
+  // The renderer's currentGeometry key for each attribute order, built once
+  // rather than on every draw
+  #geometryKeys: { [attributeOrder: string]: string } = {}
 
   /**
    * The range of supplied elements to draw.
@@ -298,6 +301,11 @@ export class Geometry {
    * @param {Program} program - The Program object to draw to
    * @param {GLenum} mode - The mode to draw the object in
    */
+  #updateAttribute = (_: unknown, { name }: { name: string }) => {
+    const attr = this.attributes[name]
+    if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
+  }
+
   draw({
     program,
     mode = this.gl.TRIANGLES
@@ -305,13 +313,12 @@ export class Geometry {
     program: Program
     mode: GLenum
   }): void {
-    if (
-      this.gl.renderer.currentGeometry !==
-      `${this.id}_${program.attributeOrder}`
-    ) {
-      if (!this.VAOs[program.attributeOrder]) this.createVAO(program)
-      this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
-      this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
+    const order = program.attributeOrder
+    const key = (this.#geometryKeys[order] ??= `${this.id}_${order}`)
+    if (this.gl.renderer.currentGeometry !== key) {
+      if (!this.VAOs[order]) this.createVAO(program)
+      this.gl.renderer.bindVertexArray(this.VAOs[order])
+      this.gl.renderer.currentGeometry = key
     }
 
     if (this.transformFeedbacks) {
@@ -319,11 +326,9 @@ export class Geometry {
       this.gl.beginTransformFeedback(mode)
     }
 
-    // Check if any attributes need updating
-    program?.attributeLocations.forEach((_, { name }) => {
-      const attr = this.attributes[name]
-      if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
-    })
+    // Check if any attributes need updating. A stored callback, so this
+    // doesn't allocate a closure on every draw.
+    program?.attributeLocations.forEach(this.#updateAttribute)
 
     // drawRange.start counts indices; the draw call needs a byte offset
     const index = this.attributes.index
