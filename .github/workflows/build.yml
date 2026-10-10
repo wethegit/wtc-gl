@@ -2,13 +2,17 @@ name: Build
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    # Not `edited`: changing the PR title or description doesn't need a build
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read
   actions: read
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+# A newer run for the same branch replaces one still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
