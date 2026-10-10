@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 
-// Pass a type so the attribute doesn't reach for window.WebGLRenderingContext
+// gl.FLOAT
 const FLOAT = 5126
 
 describe('GeometryAttribute count', () => {

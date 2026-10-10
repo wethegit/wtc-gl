@@ -12,6 +12,7 @@ import { Camera } from './Camera'
 import { RenderTarget } from './RenderTarget'
 import { Obj } from './Object'
 import { Drawable } from './Drawable'
+import type { StencilOptions } from './Program'
 
 export interface RendererOptions {
   canvas: HTMLCanvasElement
@@ -52,7 +53,7 @@ export interface RenderOptions {
 export class Renderer {
   /**
    * The pixel aspect ratio of the renderer.
-   * @default window.devicePixelRatio or 2, whichever is smaller.
+   * @default devicePixelRatio, capped at 2 (1 when there is no window).
    */
   dpr: number
   /**
@@ -398,6 +399,8 @@ export class Renderer {
     this.currentProgram = -1
     this.currentGeometry = ''
     this.clearColour = this.#clearColour
+    this.#colourWrite = true
+    this.#stencilState = defaultStencilState()
 
     this.contextVersion++
     this.contextLost = false
@@ -637,6 +640,75 @@ export class Renderer {
   }
   get depthFunc(): GLenum | null {
     return this.state.depthFunc
+  }
+
+  // Colour-write and stencil state the renderer has set. Only changes the
+  // renderer makes are undone, so gl.colorMask and stencil calls made
+  // directly on the context keep working for programs that don't set these.
+  #colourWrite = true
+  #stencilState = defaultStencilState()
+
+  /**
+   * Whether colour is written. Set from each program's `colourWrite`.
+   */
+  set colourWrite(value: boolean) {
+    if (this.#colourWrite === value) return
+    this.#colourWrite = value
+    this.gl.colorMask(value, value, value, value)
+  }
+  get colourWrite(): boolean {
+    return this.#colourWrite
+  }
+
+  /**
+   * Apply a program's stencil test, or turn off a stencil test this renderer
+   * turned on. Called by `Program.applyState`.
+   * @param stencil - The resolved stencil settings, or null for none.
+   */
+  setStencil(stencil: Required<StencilOptions> | null): void {
+    const gl = this.gl
+    const current = this.#stencilState
+    if (!stencil) {
+      if (current.enabled) {
+        gl.disable(gl.STENCIL_TEST)
+        current.enabled = false
+      }
+      return
+    }
+
+    // State may have been changed directly on the context since this
+    // renderer last enabled the test, so set everything when enabling
+    const force = !current.enabled
+    if (force) {
+      gl.enable(gl.STENCIL_TEST)
+      current.enabled = true
+    }
+    if (
+      force ||
+      current.func !== stencil.func ||
+      current.ref !== stencil.ref ||
+      current.mask !== stencil.mask
+    ) {
+      gl.stencilFunc(stencil.func, stencil.ref, stencil.mask)
+      current.func = stencil.func
+      current.ref = stencil.ref
+      current.mask = stencil.mask
+    }
+    if (
+      force ||
+      current.fail !== stencil.fail ||
+      current.zfail !== stencil.zfail ||
+      current.zpass !== stencil.zpass
+    ) {
+      gl.stencilOp(stencil.fail, stencil.zfail, stencil.zpass)
+      current.fail = stencil.fail
+      current.zfail = stencil.zfail
+      current.zpass = stencil.zpass
+    }
+    if (force || current.writeMask !== stencil.writeMask) {
+      gl.stencilMask(stencil.writeMask)
+      current.writeMask = stencil.writeMask
+    }
   }
 
   /**
@@ -923,6 +995,12 @@ export class Renderer {
         this.enable(this.gl.DEPTH_TEST)
         this.depthMask = true
       }
+      // Likewise colour and stencil writes, if a program turned them off
+      if (this.colour) this.colourWrite = true
+      if (stencil && this.#stencilState.writeMask !== 0xff) {
+        this.gl.stencilMask(0xff)
+        this.#stencilState.writeMask = 0xff
+      }
       this.gl.clear(
         (this.colour ? this.gl.COLOR_BUFFER_BIT : 0) |
           (depth ? this.gl.DEPTH_BUFFER_BIT : 0) |
@@ -959,6 +1037,22 @@ export class Renderer {
       this.#renderDepth--
       props.camera = undefined
     }
+  }
+}
+
+/**
+ * The stencil state of a new context, as far as the renderer tracks it.
+ */
+function defaultStencilState() {
+  return {
+    enabled: false,
+    func: 0x0207 as GLenum, // ALWAYS
+    ref: 0,
+    mask: 0xff,
+    writeMask: 0xff,
+    fail: 0x1e00 as GLenum, // KEEP
+    zfail: 0x1e00 as GLenum,
+    zpass: 0x1e00 as GLenum
   }
 }
 

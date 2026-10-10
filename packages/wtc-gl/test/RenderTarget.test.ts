@@ -129,3 +129,59 @@ describe('RenderTarget depth and stencil', () => {
     )
   })
 })
+
+describe('RenderTarget.resize', () => {
+  let gl: MockGL
+  let renderer: Renderer
+
+  beforeEach(() => {
+    ;({ gl, renderer } = createMockRenderer())
+    renderer.isWebgl2 = true
+  })
+
+  it('reallocates the textures in place', () => {
+    const target = new RenderTarget(gl, { width: 4, height: 4 })
+    const { buffer, texture, depthTexture } = target
+    const handle = texture.texture
+    vi.mocked(gl.texImage2D).mockClear()
+
+    target.resize(8, 2)
+
+    expect([target.width, target.height]).toEqual([8, 2])
+    expect(target.buffer).toBe(buffer)
+    expect(target.texture).toBe(texture)
+    expect(target.texture.texture).toBe(handle)
+    expect(target.depthTexture).toBe(depthTexture)
+    // Colour and depth re-uploaded at the new size
+    const sizes = vi
+      .mocked(gl.texImage2D)
+      .mock.calls.map((call) => [call[3], call[4]])
+    expect(sizes).toEqual([
+      [8, 2],
+      [8, 2]
+    ])
+  })
+
+  it('resizes a depth-stencil renderbuffer', () => {
+    const target = new RenderTarget(gl, {
+      width: 4,
+      height: 4,
+      stencil: true,
+      depthTexture: false
+    })
+    target.resize(16, 9)
+    expect(gl.renderbufferStorage).toHaveBeenLastCalledWith(
+      gl.RENDERBUFFER,
+      gl.DEPTH24_STENCIL8,
+      16,
+      9
+    )
+  })
+
+  it('does nothing when the size is unchanged', () => {
+    const target = new RenderTarget(gl, { width: 4, height: 4 })
+    vi.mocked(gl.texImage2D).mockClear()
+    target.resize(4, 4)
+    expect(gl.texImage2D).not.toHaveBeenCalled()
+  })
+})

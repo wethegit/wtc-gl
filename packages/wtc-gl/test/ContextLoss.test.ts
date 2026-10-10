@@ -14,7 +14,7 @@ const attribute = () =>
   new GeometryAttribute({
     size: 3,
     data: new Float32Array(9),
-    type: 5126 // FLOAT, so the attribute doesn't reach for window
+    type: 5126 // FLOAT
   })
 
 describe('Context loss', () => {

@@ -20,7 +20,30 @@ export interface ProgramOptions {
   depthTest?: boolean
   depthWrite?: boolean
   depthFunc?: GLenum
+  stencil?: StencilOptions | null
+  colourWrite?: boolean
   transformFeedbackVaryings?: string[]
+}
+
+/**
+ * Stencil test settings for a program. Anything left out uses the WebGL
+ * default. See `gl.stencilFunc`, `gl.stencilOp` and `gl.stencilMask`.
+ */
+export interface StencilOptions {
+  /** The comparison, e.g. `gl.EQUAL`. @default gl.ALWAYS */
+  func?: GLenum
+  /** The reference value compared against and written by `gl.REPLACE`. @default 0 */
+  ref?: number
+  /** Bits compared by `func`. @default 0xff */
+  mask?: number
+  /** Bits that can be written. @default 0xff */
+  writeMask?: number
+  /** Action when the stencil test fails. @default gl.KEEP */
+  fail?: GLenum
+  /** Action when the stencil test passes but the depth test fails. @default gl.KEEP */
+  zfail?: GLenum
+  /** Action when both tests pass, e.g. `gl.REPLACE` to write `ref`. @default gl.KEEP */
+  zpass?: GLenum
 }
 
 /**
@@ -71,6 +94,36 @@ export class Program {
    * @default gl.LESS
    */
   depthFunc: GLenum
+  /**
+   * Whether to write colour. Turn off for passes that only write depth or
+   * stencil.
+   * @default true
+   */
+  colourWrite: boolean
+
+  #stencil: Required<StencilOptions> | null = null
+  /**
+   * The stencil test, or null for none. Programs without one turn the
+   * stencil test off only if another program turned it on, so stencil state
+   * set directly on the context is left alone.
+   * @default null
+   */
+  set stencil(options: StencilOptions | null) {
+    const gl = this.gl
+    this.#stencil = options && {
+      func: gl.ALWAYS,
+      ref: 0,
+      mask: 0xff,
+      writeMask: 0xff,
+      fail: gl.KEEP,
+      zfail: gl.KEEP,
+      zpass: gl.KEEP,
+      ...options
+    }
+  }
+  get stencil(): Required<StencilOptions> | null {
+    return this.#stencil
+  }
 
   /**
    * The blend function to use
@@ -129,6 +182,8 @@ export class Program {
    * @param depthTest - Whether to test the depth of a fragment against the depth buffer
    * @param depthWrite - Whether to write the depth information
    * @param depthFunc - The function to use when depth testing
+   * @param stencil - The stencil test to apply, if any
+   * @param colourWrite - Whether to write colour
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -143,6 +198,8 @@ export class Program {
       depthTest = true,
       depthWrite = true,
       depthFunc = gl.LESS,
+      stencil = null,
+      colourWrite = true,
       transformFeedbackVaryings
     }: ProgramOptions
   ) {
@@ -161,6 +218,8 @@ export class Program {
     this.depthTest = depthTest
     this.depthWrite = depthWrite
     this.depthFunc = depthFunc
+    this.stencil = stencil
+    this.colourWrite = colourWrite
     this.blendFunc = { src: 0, dst: 0 }
     this.blendEquation = { modeRGB: gl.FUNC_ADD, modeAlpha: gl.FUNC_ADD }
 
@@ -356,6 +415,8 @@ export class Program {
     this.gl.renderer.frontFace = this.frontFace
     this.gl.renderer.depthMask = this.depthWrite
     this.gl.renderer.depthFunc = this.depthFunc
+    this.gl.renderer.colourWrite = this.colourWrite
+    this.gl.renderer.setStencil(this.#stencil)
     if (this.blendFunc?.src)
       this.gl.renderer.setBlendFunc(
         this.blendFunc.src,

@@ -8,7 +8,7 @@ const position = (data: number[], size = 3) =>
   new GeometryAttribute({
     size,
     data: new Float32Array(data),
-    type: 5126 // FLOAT, so the attribute doesn't reach for window
+    type: 5126 // FLOAT
   })
 
 describe('Geometry bounds', () => {

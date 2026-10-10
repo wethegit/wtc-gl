@@ -58,6 +58,10 @@ camera.setPosition(0, 2.4, 8)
 // Shared by every program so the view buttons switch everything at once
 const u_mode = new Uniform({ name: 'mode', value: 0, kind: 'int' })
 
+// Programs carry their own stencil settings. This one only draws where the
+// portal disc has written 1 into the stencil.
+const THROUGH_PORTAL = { func: gl.EQUAL, ref: 1 }
+
 const sceneProgram = (low, high, inside, options = {}) =>
   new Program(gl, {
     vertex: sceneVert,
@@ -117,8 +121,13 @@ outside.addChild(portal)
 const maskScene = new Obj()
 const disc = new Mesh(gl, {
   geometry: portalGeometry,
-  // Tested against the outside world's depth, but doesn't write any
-  program: portalProgram(0, { depthWrite: false })
+  // Writes 1 into the stencil wherever it passes the depth test against the
+  // outside world, without writing colour or depth
+  program: portalProgram(0, {
+    depthWrite: false,
+    colourWrite: false,
+    stencil: { ref: 1, zpass: gl.REPLACE }
+  })
 })
 maskScene.addChild(disc)
 
@@ -129,6 +138,8 @@ const depthReset = new Mesh(gl, {
     vertex: screenVert,
     fragment: depthResetFrag,
     depthFunc: gl.ALWAYS,
+    colourWrite: false,
+    stencil: THROUGH_PORTAL,
     cullFace: null
   })
 })
@@ -136,7 +147,9 @@ depthReset.frustumCulled = false
 
 // ── Inside: floating spheres under a warm sky ─────────────────────────────
 const inside = new Obj()
-const sphereProgram = sceneProgram([0.9, 0.35, 0.45], [1.0, 0.8, 0.45], 1)
+const sphereProgram = sceneProgram([0.9, 0.35, 0.45], [1.0, 0.8, 0.45], 1, {
+  stencil: THROUGH_PORTAL
+})
 const sphereGeometry = new Sphere(gl, { radius: 0.5, widthSegments: 32 })
 const spheres = []
 for (let i = 0; i < 9; i++) {
@@ -151,13 +164,16 @@ const sky = new Mesh(gl, {
   geometry: new Sphere(gl, { radius: 18, widthSegments: 24 }),
   // Seen from inside, so draw the back faces
   program: sceneProgram([0.35, 0.15, 0.3], [0.95, 0.55, 0.35], 1, {
-    cullFace: gl.FRONT
+    cullFace: gl.FRONT,
+    stencil: THROUGH_PORTAL
   })
 })
 sky.setParent(inside)
 const insideFloor = new Mesh(gl, {
   geometry: new Box(gl, { width: 40, height: 0.1, depth: 40 }),
-  program: sceneProgram([0.3, 0.12, 0.2], [0.3, 0.12, 0.2], 1)
+  program: sceneProgram([0.3, 0.12, 0.2], [0.3, 0.12, 0.2], 1, {
+    stencil: THROUGH_PORTAL
+  })
 })
 insideFloor.position.reset(0, -0.05, 0)
 insideFloor.setParent(inside)
@@ -184,7 +200,10 @@ const postMesh = new Mesh(gl, {
 })
 
 // ── Render target ────────────────────────────────────────────────────────
-let target
+// Depth and stencil share one DEPTH24_STENCIL8 texture
+const target = new RenderTarget(gl, { stencil: true })
+post.u_colour.value = target.texture
+post.u_depth.value = target.depthTexture
 
 const resize = () => {
   const width = window.innerWidth
@@ -192,16 +211,8 @@ const resize = () => {
   renderer.dimensions = new Vec2(width, height)
   camera.perspective({ aspect: width / height })
 
-  // RenderTarget has no resize, so make a new one
-  target?.remove()
-  target = new RenderTarget(gl, {
-    width: width * renderer.dpr,
-    height: height * renderer.dpr,
-    // Depth and stencil share one DEPTH24_STENCIL8 texture
-    stencil: true
-  })
-  post.u_colour.value = target.texture
-  post.u_depth.value = target.depthTexture
+  // Resized in place, so the textures the post pass samples stay the same
+  target.resize(width * renderer.dpr, height * renderer.dpr)
   post.u_texel.value = [1 / target.width, 1 / target.height]
 }
 window.addEventListener('resize', resize)
@@ -243,28 +254,16 @@ const run = (t) => {
     )
   })
 
+  // Stencil and colour-write settings come from each program
   // 1. Outside world. Clears colour, depth and stencil.
-  gl.disable(gl.STENCIL_TEST)
   renderer.render({ scene: outside, camera, target })
-
   // 2. Mark the visible part of the portal in the stencil
-  gl.enable(gl.STENCIL_TEST)
-  gl.stencilFunc(gl.ALWAYS, 1, 0xff)
-  gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE)
-  gl.colorMask(false, false, false, false)
   renderer.render({ scene: maskScene, camera, target, clear: false })
-
   // 3. Reset depth inside the portal
-  gl.stencilFunc(gl.EQUAL, 1, 0xff)
-  gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP)
   renderer.render({ scene: depthReset, camera, target, clear: false })
-
   // 4. The inside world, only through the portal
-  gl.colorMask(true, true, true, true)
   renderer.render({ scene: inside, camera, target, clear: false })
-
   // 5. To the canvas
-  gl.disable(gl.STENCIL_TEST)
   renderer.render({ scene: postMesh })
 }
 requestAnimationFrame(run)

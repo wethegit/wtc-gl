@@ -283,6 +283,45 @@ export class RenderTarget {
   }
 
   /**
+   * Resize the target's textures and depth/stencil buffer in place, keeping
+   * the same framebuffer and texture objects (so uniforms that hold them stay
+   * valid). The contents are lost, and any `data` the textures were created
+   * with is dropped. A depth texture passed in through `depthTexture` is
+   * resized too, as the framebuffer needs every attachment to be one size.
+   * @param width - The new width, in pixels.
+   * @param height - The new height, in pixels.
+   */
+  resize(width: number, height: number): void {
+    if (width === this.width && height === this.height) return
+    this.width = width
+    this.height = height
+
+    const textures = this.depthTexture
+      ? [...this.textures, this.depthTexture]
+      : this.textures
+    for (const texture of textures) {
+      texture.width = width
+      texture.height = height
+      texture.data = null
+      texture.needsUpdate = true
+      // Reallocates the storage; the framebuffer attachment stays valid
+      texture.update()
+    }
+
+    if (this.depthBuffer) {
+      const gl = this.gl
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.depthBuffer)
+      gl.renderbufferStorage(
+        gl.RENDERBUFFER,
+        this.#depthBufferFormat,
+        width,
+        height
+      )
+      gl.bindRenderbuffer(gl.RENDERBUFFER, null)
+    }
+  }
+
+  /**
    * Recreate the framebuffer and its textures after the WebGL context has
    * been restored. The contents are lost. Called by the renderer.
    */
