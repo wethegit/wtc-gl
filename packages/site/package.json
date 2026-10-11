@@ -16,6 +16,7 @@
     "@wethegit/react-wtc-gl": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tweakpane": "^4.0.5",
     "vite": "^8.0.0",
     "vite-plugin-glsl": "~1.6.0",
     "wtc-gl": "workspace:*"

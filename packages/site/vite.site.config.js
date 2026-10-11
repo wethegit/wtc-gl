@@ -26,7 +26,9 @@ export default defineConfig({
         fragmentShader: resolvePath('demos/fragment-shader/index.html'),
         framebuffer: resolvePath('demos/framebuffer/index.html'),
         scrollImageCloth: resolvePath('demos/scroll-image-cloth/index.html'),
-        scrollRendererHomepage: resolvePath('demos/scroll-renderer-homepage/index.html'),
+        scrollRendererHomepage: resolvePath(
+          'demos/scroll-renderer-homepage/index.html'
+        ),
         scrollRendererBasic: resolvePath(
           'demos/scroll-renderer-basic/index.html'
         ),
@@ -48,6 +50,7 @@ export default defineConfig({
         scrollBlades: resolvePath('demos/scroll-blades/index.html'),
         stencilDepth: resolvePath('demos/stencil-depth/index.html'),
         manyMeshes: resolvePath('demos/many-meshes/index.html'),
+        manifoldMandala: resolvePath('demos/manifold-mandala/index.html')
       }
     }
   }
