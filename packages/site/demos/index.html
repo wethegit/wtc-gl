@@ -470,6 +470,32 @@
         </div>
 
         <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/progressive-render.jpg"
+              alt="A winding ribbon of motion-blurred blocks, rendered in tiles"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Framebuffer</span>
+              <span class="demo__class">Drawable</span>
+              <span class="demo__class">Renderer viewport</span>
+            </div>
+            <h3>Progressive render</h3>
+            <p>
+              A raymarcher far too heavy for one frame, rendered a tile at a
+              time. Each tile goes into one <code>Framebuffer</code> through a
+              viewport, a composition pass adds it to the image so far in
+              another, and the tile size adapts to keep frames responsive. Click
+              for a new image.
+            </p>
+            <a class="btn" href="./progressive-render/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
           <div
             class="demo__preview"
             style="
