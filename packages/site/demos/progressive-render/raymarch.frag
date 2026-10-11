@@ -29,6 +29,7 @@ uniform float u_shutter; // time between samples
 uniform float u_far;
 uniform float u_lookAhead; // how far along the path the camera aims
 uniform vec2 u_offset; // camera offset from the path
+uniform vec3 u_turn; // camera yaw, pitch and roll, in radians
 uniform float u_fov;
 uniform float u_fovWobble; // the FOV swings by this much with time
 uniform float u_aperture; // lens radius; 0 = everything sharp
@@ -229,6 +230,11 @@ vec3 lighting(Surface surface_object, vec3 cam) {
   return sceneColour;
 }
 
+// Rotate v by angle a around a unit axis (Rodrigues)
+vec3 rotate(vec3 v, vec3 axis, float a) {
+  return v * cos(a) + cross(axis, v) * sin(a) + axis * dot(axis, v) * (1. - cos(a));
+}
+
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
@@ -266,6 +272,15 @@ vec4 mainT(float time, float sampleIndex) {
   vec3 forward = normalize(lookAt - cam);
   vec3 right = normalize(vec3(forward.z, 0., -forward.x));
   vec3 up = normalize(cross(forward, right));
+
+  // Turn the camera: yaw to the right around up, pitch up around right,
+  // then roll around the new forward
+  forward = rotate(forward, up, u_turn.x);
+  right = rotate(right, up, u_turn.x);
+  forward = rotate(forward, right, -u_turn.y);
+  up = rotate(up, right, -u_turn.y);
+  right = rotate(right, forward, u_turn.z);
+  up = rotate(up, forward, u_turn.z);
 
   float FOV = u_fov + sin(u_time) * u_fovWobble;
 

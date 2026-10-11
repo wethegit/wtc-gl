@@ -58,6 +58,8 @@ const params = {
   time: -1000, // where along the path the camera is
   lookAhead: 6, // how far along the path the camera aims
   offset: { x: 0, y: 0 }, // camera offset from the path
+  turn: { x: 0, y: 0 }, // yaw and pitch, in degrees
+  roll: 0,
   fov: 3,
   fovWobble: 2,
   // lens
@@ -277,6 +279,10 @@ const lookSpec = {
   u_far: ['float', (p) => p.far],
   u_lookAhead: ['float', (p) => p.lookAhead],
   u_offset: ['float_vec2', (p) => vec2(p.offset)],
+  u_turn: [
+    'float_vec3',
+    (p) => [p.turn.x, p.turn.y, p.roll].map((deg) => (deg * Math.PI) / 180)
+  ],
   u_fov: ['float', (p) => p.fov],
   u_fovWobble: ['float', (p) => p.fovWobble],
   u_aperture: ['float', (p) => p.aperture],
@@ -667,6 +673,12 @@ scene.addBinding(params, 'offset', {
   x: { min: -6, max: 6 },
   y: { min: -6, max: 6, inverted: true }
 })
+scene.addBinding(params, 'turn', {
+  label: 'camera turn',
+  x: { min: -90, max: 90 },
+  y: { min: -90, max: 90, inverted: true }
+})
+scene.addBinding(params, 'roll', { min: -180, max: 180 })
 scene.addBinding(params, 'fov', { label: 'FOV', min: 0.5, max: 8 })
 scene.addBinding(params, 'fovWobble', { label: 'FOV wobble', min: 0, max: 4 })
 
