@@ -16,7 +16,7 @@
         <li><a href="#core">Core</a></li>
         <li><a href="./docs/">Docs</a></li>
         <li>
-          <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+          <a href="https://github.com/wethegit/wtc-gl" target="_blank"
             >GitHub ↗</a
           >
         </li>
@@ -37,7 +37,7 @@
             <span class="chip">npm install wtc-gl</span>
             <a
               class="btn"
-              href="https://github.com/wethecollective/wtc-gl"
+              href="https://github.com/wethegit/wtc-gl"
               target="_blank"
             >
               View on GitHub
@@ -244,9 +244,9 @@
             <p>
               The ScrollRenderer demo rebuilt with
               <code>@wethegit/react-wtc-gl</code>: a provider owns the canvas
-              and render loop, hooks register scenes from components, and
-              React state pauses the loop. Runs in StrictMode to exercise the
-              cleanup paths.
+              and render loop, hooks register scenes from components, and React
+              state pauses the loop. Runs in StrictMode to exercise the cleanup
+              paths.
             </p>
             <a class="btn" href="./react-scroll-renderer/">Open demo →</a>
           </div>
@@ -284,9 +284,9 @@
             </div>
             <h3>React DragWorld</h3>
             <p>
-              A click-and-drag explorable world in the style of the Super
-              Mario Odyssey site: a 4,400px map panned with momentum and
-              elastic bounds, where shader regions registered with
+              A click-and-drag explorable world in the style of the Super Mario
+              Odyssey site: a 4,400px map panned with momentum and elastic
+              bounds, where shader regions registered with
               <code>useScrollScene</code> light up as you approach them.
             </p>
             <a class="btn" href="./react-drag-world/">Open demo →</a>
@@ -326,9 +326,9 @@
             <h3>React DragWorld Infinite</h3>
             <p>
               The drag world wrapped into a torus: no edges, no bounds — each
-              region is a single DOM element folded back around the seam
-              while off-screen, with a compass pointing the shortest way home
-              across the wrap.
+              region is a single DOM element folded back around the seam while
+              off-screen, with a compass pointing the shortest way home across
+              the wrap.
             </p>
             <a class="btn" href="./react-drag-world-infinite/">Open demo →</a>
           </div>
@@ -377,8 +377,29 @@
         </div>
 
         <div class="demo">
-          <div class="demo__preview" style="background:linear-gradient(135deg,#000d1a 0%,#000814 50%,#0d001a 100%);display:flex;align-items:center;justify-content:center;">
-            <span style="font-family:monospace;font-size:0.7em;color:rgba(100,180,255,0.4);letter-spacing:0.1em;">SDF</span>
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #000d1a 0%,
+                #000814 50%,
+                #0d001a 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(100, 180, 255, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >SDF</span
+            >
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -391,8 +412,8 @@
               A raymarching SDF rendered inside the volume of a rotating
               <code>Box</code> mesh. The fragment shader casts rays from each
               mesh surface point, infinitely repeating a frame-and-sphere
-              lattice. The cube's model matrix is passed as a uniform so the
-              SDF space rotates in sync with the geometry.
+              lattice. The cube's model matrix is passed as a uniform so the SDF
+              space rotates in sync with the geometry.
             </p>
             <a class="btn" href="./raymarching-webgl2/">Open demo →</a>
           </div>
@@ -402,7 +423,12 @@
           <div
             class="demo__preview"
             style="
-              background: linear-gradient(135deg, #07070e 0%, #05051a 40%, #040814 100%);
+              background: linear-gradient(
+                135deg,
+                #07070e 0%,
+                #05051a 40%,
+                #040814 100%
+              );
               display: flex;
               align-items: center;
               justify-content: center;
@@ -453,9 +479,9 @@
             <p>
               A portal into another world, drawn with a
               <code>RenderTarget</code> whose depth and stencil share one
-              texture. The stencil limits the second world to the portal, and
-              a post pass samples the depth texture for fog and outlines.
-              Switch views to see the depth and stencil on their own.
+              texture. The stencil limits the second world to the portal, and a
+              post pass samples the depth texture for fog and outlines. Switch
+              views to see the depth and stencil on their own.
             </p>
             <a class="btn" href="./stencil-depth/">Open demo →</a>
           </div>
@@ -479,10 +505,10 @@
             <h3>Many meshes</h3>
             <p>
               A spiral galaxy of up to 6,000 separate meshes, each moved and
-              rotated every frame. One pane is the camera you control; the
-              other watches it from above, showing its frustum and only the
-              meshes it didn't cull. Matrices, uniforms and render lists are
-              updated in place, so the render loop makes almost no garbage.
+              rotated every frame. One pane is the camera you control; the other
+              watches it from above, showing its frustum and only the meshes it
+              didn't cull. Matrices, uniforms and render lists are updated in
+              place, so the render loop makes almost no garbage.
             </p>
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
@@ -588,7 +614,7 @@ fs.<span class="prop">setUniform</span>(<span class="str">'u_mouse'</span>, [x, 
             >We The Collective</a
           >.
         </p>
-        <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+        <a href="https://github.com/wethegit/wtc-gl" target="_blank"
           >GitHub →</a
         >
       </footer>
