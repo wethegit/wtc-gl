@@ -34,6 +34,9 @@ export default defineConfig({
         reactScrollRenderer: resolvePath(
           'demos/react-scroll-renderer/index.html'
         ),
+        reactManifoldDivider: resolvePath(
+          'demos/react-manifold-divider/index.html'
+        ),
         reactDragWorld: resolvePath('demos/react-drag-world/index.html'),
         reactDragWorldInfinite: resolvePath(
           'demos/react-drag-world-infinite/index.html'

@@ -50,6 +50,7 @@ Several classes have no way to free what they allocate. This matters most for Re
 ### Drop WebGL1
 
 The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures already don't work there:
+
 - `Texture.update` uses the 9-argument `texImage2D(…, image)` form, which only exists in WebGL2, so WebGL1 would throw.
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
@@ -74,7 +75,7 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 - [x] `Texture` should accept `Uint8Array`/`Uint16Array`/`Int32Array` data, `ImageBitmap` and `OffscreenCanvas`.
 - [x] Add a video-texture helper that sets `needsUpdate` via `requestVideoFrameCallback`.
 - [x] `RenderTarget` should honour the `stencil` and `depthTexture` options (both are currently ignored).
-- [x] `RenderTarget` creates its depth texture as `DEPTH_COMPONENT16` (inherited from OGL), which z-fights on coplanar faces. Default to `DEPTH_COMPONENT24` or add a `depthFormat` option. The manifold-divider demo's `scene-target.ts` swaps in a 24-bit renderbuffer to work around this.
+- [x] `RenderTarget` creates its depth texture as `DEPTH_COMPONENT16` (inherited from OGL), which z-fights on coplanar faces. Default to `DEPTH_COMPONENT24` or add a `depthFormat` option.
 - [x] `Renderer` should throw when it can't get a context, rather than logging an error and returning a half-built object.
 - [x] Add a clear-colour API on `Renderer` instead of raw `gl.clearColor` calls.
 - [x] `Geometry.computeBoundingBox` should handle 2D positions (`size: 2`); there's already a TODO.
@@ -84,25 +85,25 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 
 wtc-gl already has a scene graph, cameras, indexed and instanced geometry, and `Box`/`Sphere`/`Plane`. What's missing is the layer for building and shading models in code. The manifold-divider demo works around most of these gaps by hand (a `Builder` class that offsets and merges boxes, hand-written normals, a sweep done in `helix.vert`, per-demo lighting).
 
-Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep its licence notice), which wtc-gl's core is descended from. Items marked *new* have no OGL equivalent.
+Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep its licence notice), which wtc-gl's core is descended from. Items marked _new_ have no OGL equivalent.
 
 ### Building geometry
 
-- [ ] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. *New.*
-- [ ] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. *New.*
-- [ ] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. *New.*
-- [ ] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. *New.*
+- [ ] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. _New._
+- [ ] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. _New._
+- [ ] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
+- [ ] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. _New._
 - [ ] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
 - [ ] Vitest coverage for all of the above. They're pure array work.
 
 ### Primitives and generators
 
 - [ ] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
-- [ ] `Capsule`. *New.*
+- [ ] `Capsule`. _New._
 - [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
 - [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
 - [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
-- [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). *New.*
+- [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). _New._
 - [ ] Optional CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves.
 
 ### Lines (MeshLine equivalent)
@@ -122,7 +123,7 @@ A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±
 
 ### Shading and viewing
 
-- [ ] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. Ship the lighting as GLSL snippets alongside the `#include` work in Future features item 2. *New.*
+- [ ] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. Ship the lighting as GLSL snippets alongside the `#include` work in Future features item 2. _New._
 - [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
 - [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
 
@@ -141,7 +142,7 @@ A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±
 ### Later
 
 - [ ] `Shadow` — shadow-map pass from a light camera (OGL).
-- [ ] OBJ/STL/GLB export, if models need to leave the browser. *New.*
+- [ ] OBJ/STL/GLB export, if models need to leave the browser. _New._
 - glTF import stays under Future features item 6.
 
 ---
