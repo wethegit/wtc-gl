@@ -205,7 +205,7 @@ function loadHash() {
   }
   // these are compiled into the shader, so keep them sane
   params.samples = Math.round(Math.min(16, Math.max(1, params.samples)))
-  params.maxSteps = Math.round(Math.min(512, Math.max(16, params.maxSteps)))
+  params.maxSteps = Math.round(Math.min(1024, Math.max(16, params.maxSteps)))
   params.stepScale = Math.min(1, Math.max(0.02, params.stepScale))
 }
 // Colour channels to two places, other numbers to four. The colour
@@ -738,7 +738,7 @@ quality.addBinding(params, 'shutter', { min: 0, max: 0.005 })
 quality.addBinding(params, 'maxSteps', {
   label: 'max steps',
   min: 16,
-  max: 512,
+  max: 1024,
   step: 1
 })
 quality.addBinding(params, 'stepScale', {
@@ -746,7 +746,7 @@ quality.addBinding(params, 'stepScale', {
   min: 0.02,
   max: 1
 })
-quality.addBinding(params, 'far', { label: 'far clip', min: 2, max: 60 })
+quality.addBinding(params, 'far', { label: 'far clip', min: 2, max: 120 })
 
 const tiles = tweak.addFolder({ title: 'Tiles', expanded: false })
 tiles.addBinding(params, 'order', {
