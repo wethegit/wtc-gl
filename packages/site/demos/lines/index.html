@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Lines</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      canvas {
+        cursor: grab;
+        touch-action: none;
+      }
+      #controls {
+        position: fixed;
+        top: calc(3em + 8px);
+        right: 8px;
+        z-index: 100;
+        width: 280px;
+      }
+      .hint {
+        position: fixed;
+        left: 1em;
+        bottom: 1em;
+        z-index: 100;
+        font:
+          12px/1.4 ui-monospace,
+          monospace;
+        color: rgba(221, 224, 238, 0.6);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Lines</span>
+    </nav>
+    <div id="controls"></div>
+    <div class="hint">
+      drag to orbit · scroll to zoom: world-unit lines scale, pixel lines don't
+    </div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

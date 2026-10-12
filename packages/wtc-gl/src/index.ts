@@ -12,6 +12,7 @@ export * from './core/Camera'
 export * from './core/DollyCamera'
 export * from './core/RenderTarget'
 export * from './core/TransformFeedback'
+export * from './core/Line'
 
 export * from './geometry/Geometry'
 export * from './geometry/GeometryAttribute'
@@ -20,6 +21,7 @@ export * from './geometry/Plane'
 export * from './geometry/Box'
 export * from './geometry/Sphere'
 export * from './geometry/PointCloud'
+export * from './geometry/LineGeometry'
 
 export * from './ext/Framebuffer'
 

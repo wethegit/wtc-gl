@@ -589,6 +589,91 @@
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
         </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0a0a14 0%,
+                #071426 40%,
+                #0a0a14 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(115, 204, 255, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >LINES</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Line</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">Texture</span>
+            </div>
+            <h3>Lines</h3>
+            <p>
+              Thick lines extruded in screen space: a tapered, dashed spiral
+              that draws itself on, a closed star, a zigzag showing the mitre
+              limit, a textured wave and a trail that follows the pointer. Zoom
+              to compare widths in world units with widths in pixels.
+            </p>
+            <a class="btn" href="./lines/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0e0707 0%,
+                #1a0c05 40%,
+                #0e0707 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(255, 158, 74, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >PARTICLE TRAILS</span
+            >
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">LineGeometry</span>
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">Framebuffer</span>
+            </div>
+            <h3>Particle trails</h3>
+            <p>
+              16,384 particles swirl through a force field, each drawn as a
+              ribbon through its recent positions. A float simulation writes
+              into a history texture, and one instanced
+              <code>LineGeometry</code> reads it back and extrudes each trail
+              with <code>lineExtrudeGLSL</code>. Click for the next shot.
+            </p>
+            <a class="btn" href="./particle-trails/">Open demo →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Getting started -->

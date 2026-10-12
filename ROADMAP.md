@@ -110,15 +110,15 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 
 A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±1, prev/next attributes, extruded in screen space with mitred corners), extended with what three.js MeshLine adds.
 
-- [ ] `Line extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
-- [ ] Width in pixels or world units (`sizeAttenuation`).
-- [ ] Per-vertex width from a callback (`t => 1 - t`) for tapers and trails.
-- [ ] Dashes: `dashArray`, `dashOffset`, `dashRatio`. Measure along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
-- [ ] Texture `map` with repeat along the line, `alphaTest`, `opacity`.
-- [ ] Closed loops and a mitre limit.
-- [ ] `setPoints()` that reuses buffers when the count is unchanged, plus a trail mode that pushes a new head point and drops the tail.
-- [ ] Export the extrusion as a GLSL function so custom shaders can reuse it.
-- [ ] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance) and a demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
+- [x] `Line extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
+- [x] Width in pixels or world units (`sizeAttenuation`).
+- [x] Per-vertex width from a callback (`t => 1 - t`) for tapers and trails.
+- [x] Dashes: `dashArray`, `dashOffset`, `dashRatio`. Measure along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
+- [x] Texture `map` with repeat along the line, `alphaTest`, `opacity`.
+- [x] Closed loops and a mitre limit.
+- [x] `setPoints()` that reuses buffers when the count is unchanged, plus a trail mode that pushes a new head point and drops the tail.
+- [x] Export the extrusion as a GLSL function so custom shaders can reuse it.
+- [x] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance) and a demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
 - Known limits, same as MeshLine: mitred joins only (no round joins or caps), and self-overlapping transparent lines double up unless depth writes are off or `alphaTest` is used.
 
 ### Shading and viewing

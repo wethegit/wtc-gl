@@ -51,7 +51,9 @@ export default defineConfig({
         stencilDepth: resolvePath('demos/stencil-depth/index.html'),
         manyMeshes: resolvePath('demos/many-meshes/index.html'),
         manifoldMandala: resolvePath('demos/manifold-mandala/index.html'),
-        progressiveRender: resolvePath('demos/progressive-render/index.html')
+        progressiveRender: resolvePath('demos/progressive-render/index.html'),
+        lines: resolvePath('demos/lines/index.html'),
+        particleTrails: resolvePath('demos/particle-trails/index.html')
       }
     }
   }
