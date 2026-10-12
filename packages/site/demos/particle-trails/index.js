@@ -108,17 +108,18 @@ const params = {
   lineWidth: 0.12,
   shape: 2, // see SHAPES
   smear: 0.5, // how much of the last frame stays
-  speed: 1,
+  speed: 1, // how hard the field pushes the particles
+  timeScale: 1, // playback rate: below 1 is slow motion
   count: size, // particles per side
   showTexture: false, // the position texture, in a corner
   zoom: 1, // camera distance from its target, as a multiple of the shot's
-  background: { r: 0.09, g: 0.12, b: 0.18 }
+  background: { r: 0.09, g: 0.1, b: 0.14 }
 }
 
 const dpr = Math.min(window.devicePixelRatio, 2)
 const renderer = new Renderer({
   dpr,
-  clearColour: [0.05, 0.15, 0.35, 1]
+  clearColour: [0.09, 0.1, 0.14, 1]
 })
 const { gl } = renderer
 document.body.appendChild(gl.canvas)
@@ -152,7 +153,10 @@ const stateOptions = {
 let state = new RenderTarget(gl, stateOptions)
 let nextState = new RenderTarget(gl, stateOptions)
 
-const historyRows = () => Math.ceil(params.length / BLOCKS_PER_ROW)
+// One block more than the trail has points, so the trail can sit anywhere
+// between two steps (see u_fraction)
+const historyBlocks = () => params.length + 1
+const historyRows = () => Math.ceil(historyBlocks() / BLOCKS_PER_ROW)
 const history = new RenderTarget(gl, {
   width: size * BLOCKS_PER_ROW,
   height: size * historyRows(),
@@ -178,7 +182,8 @@ const simUniforms = {
   b_position: new Uniform({ name: 'position', kind: 'texture' }),
   b_velocity: new Uniform({ name: 'velocity', kind: 'texture' }),
   u_time,
-  u_delta
+  u_delta,
+  u_speed: new Uniform({ name: 'speed', value: params.speed, kind: 'float' })
 }
 const sim = fullscreen(simFrag, simUniforms)
 const copyUniforms = {
@@ -207,8 +212,8 @@ let head = 0 // the history block holding the newest positions
 
 // Every block starts at the current positions, so trails grow out of them
 function fillHistory() {
-  for (let i = 0; i < params.length; i++) writeHistory(i)
-  head = params.length - 1
+  for (let i = 0; i < historyBlocks(); i++) writeHistory(i)
+  head = historyBlocks() - 1
 }
 
 function reset() {
@@ -217,15 +222,37 @@ function reset() {
   fillHistory()
 }
 
-function step(delta) {
+// The simulation runs in fixed steps of simulated time, so a trail always
+// covers the same stretch of a particle's path, whatever the time scale or
+// frame rate. At a time scale of 1 that's one step per 60 Hz frame; slow
+// motion steps less often and the trails slide between steps (u_fraction)
+// to stay smooth. `speed` is separate: it changes the motion itself.
+const STEP = 1 / 60
+const MAX_STEPS_PER_FRAME = 4
+let pending = 0 // simulated time not yet stepped, in seconds
+
+function step() {
   simUniforms.b_position.value = state.textures[0]
   simUniforms.b_velocity.value = state.textures[1]
-  u_delta.value = delta
+  u_delta.value = STEP
+  u_time.value += STEP * 0.05
   renderer.render({ scene: sim, target: nextState })
   ;[state, nextState] = [nextState, state]
 
-  head = (head + 1) % params.length
+  head = (head + 1) % historyBlocks()
   writeHistory(head)
+}
+
+function advance(delta) {
+  pending += delta * params.timeScale
+  let steps = 0
+  while (pending >= STEP && steps < MAX_STEPS_PER_FRAME) {
+    step()
+    pending -= STEP
+    steps++
+  }
+  // after a long stall, catch up rather than racing through the backlog
+  if (steps === MAX_STEPS_PER_FRAME) pending = Math.min(pending, STEP)
 }
 
 // --- trails: one ribbon of `length` points, instanced once per particle.
@@ -260,6 +287,8 @@ uniform float u_lineWidth;
 uniform sampler2D b_history;
 uniform float u_head;
 uniform float u_history; // points per trail
+uniform float u_blocks; // history blocks, one more than u_history
+uniform float u_fraction; // how far through the next step, 0 to 1
 uniform float u_size; // particles per side of the simulation texture
 uniform vec3 u_paletteA;
 uniform vec3 u_paletteB;
@@ -275,12 +304,20 @@ const float BLOCKS_PER_ROW = ${BLOCKS_PER_ROW}.;
 
 ${lineExtrudeGLSL}
 
-// Point k of this particle's trail, from 0 (oldest) to u_history - 1 (newest)
-vec3 trailPoint(float k) {
-  float block = mod(u_head + 1. + k, u_history);
+// Stored position j of this particle, from 0 (oldest) to u_blocks - 1 (newest)
+vec3 stored(float j) {
+  float block = mod(u_head + 1. + j, u_blocks);
   vec2 corner = vec2(mod(block, BLOCKS_PER_ROW), floor(block / BLOCKS_PER_ROW)) * u_size;
   vec2 particle = vec2(mod(instance, u_size), floor(instance / u_size));
   return texelFetch(b_history, ivec2(corner + particle), 0).xyz;
+}
+
+// Point k of this particle's trail, from 0 (oldest) to u_history - 1
+// (newest). Each point slides from one stored position towards the next as
+// time passes between steps, so slow motion is smooth rather than stepped.
+// The head trails the simulation by up to one step.
+vec3 trailPoint(float k) {
+  return mix(stored(k), stored(k + 1.), u_fraction);
 }
 
 float hash21(vec2 p) {
@@ -349,6 +386,12 @@ const trailUniforms = {
     kind: 'texture'
   }),
   u_head: new Uniform({ name: 'head', value: 0, kind: 'float' }),
+  u_blocks: new Uniform({
+    name: 'blocks',
+    value: historyBlocks(),
+    kind: 'float'
+  }),
+  u_fraction: new Uniform({ name: 'fraction', value: 0, kind: 'float' }),
   u_shape: new Uniform({ name: 'shape', value: params.shape, kind: 'int' }),
   u_transition
 }
@@ -367,6 +410,7 @@ trails.addBeforeRender(() => {
   resolution[0] = renderer.state.viewport.width
   resolution[1] = renderer.state.viewport.height
   trailUniforms.u_head.value = head
+  trailUniforms.u_fraction.value = Math.min(pending / STEP, 1)
 })
 // Palette and trail settings from `params`
 function syncTrails() {
@@ -388,6 +432,7 @@ syncTrails()
 function setLength(length) {
   params.length = length
   trailUniforms.u_history.value = length
+  trailUniforms.u_blocks.value = historyBlocks()
   ribbon.setPoints(ribbonPoints(length))
   history.resize(size * BLOCKS_PER_ROW, size * historyRows())
   fillHistory()
@@ -638,7 +683,12 @@ trailsFolder
 // let go, so mid-drag the simulation and the ribbon still agree
 const trailLength = { length: params.length }
 trailsFolder
-  .addBinding(trailLength, 'length', { min: 2, max: MAX_HISTORY, step: 1 })
+  // the history keeps one extra block, so it never needs more than 64
+  .addBinding(trailLength, 'length', {
+    min: 2,
+    max: MAX_HISTORY - 1,
+    step: 1
+  })
   .on('change', (e) => e.last && setLength(e.value))
 trailsFolder
   .addBinding(params, 'lineWidth', { label: 'width', min: 0.01, max: 0.6 })
@@ -649,7 +699,14 @@ trailsFolder
 trailsFolder
   .addBinding(params, 'shape', { options: SHAPES })
   .on('change', syncTrails)
-trailsFolder.addBinding(params, 'speed', { min: 0, max: 3 })
+trailsFolder
+  .addBinding(params, 'speed', { min: 0, max: 3 })
+  .on('change', (e) => (simUniforms.u_speed.value = e.value))
+trailsFolder.addBinding(params, 'timeScale', {
+  label: 'time scale',
+  min: 0,
+  max: 2
+})
 trailsFolder.addBinding(params, 'showTexture', { label: 'texture' })
 const cameraFolder = pane.addFolder({ title: 'Camera' })
 cameraFolder.addBinding(params, 'zoom', { min: MIN_ZOOM, max: MAX_ZOOM })
@@ -683,12 +740,11 @@ function run(now) {
   if (playing) {
     shotTime += delta
     if (shotTime > shot.duration) nextShot()
-    u_time.value += delta * 0.05 * params.speed
     u_transition.value = Math.min(
       1,
       Math.max(0, u_transition.value + (fading ? delta : -delta) * 0.5)
     )
-    step(delta * params.speed)
+    advance(delta)
   }
   aim(delta)
 

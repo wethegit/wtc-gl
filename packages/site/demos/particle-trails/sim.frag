@@ -10,6 +10,7 @@ uniform sampler2D b_position;
 uniform sampler2D b_velocity;
 uniform float u_time;
 uniform float u_delta;
+uniform float u_speed; // scales the push the field gives each step
 
 layout(location = 0) out vec4 positionOut;
 layout(location = 1) out vec4 velocityOut;
@@ -51,7 +52,7 @@ void main() {
 
   vec3 pull = -normalize(position - acceleration) * smoothstep(10., 40., l) * 2.;
 
-  vec3 vel = velocity * .99 + (acceleration + pull) * .5;
+  vec3 vel = velocity * .99 + (acceleration + pull) * .5 * u_speed;
   vec3 pos = position + vel * u_delta * .5;
   // anything that escapes starts again near the centre
   if (length(pos) > 100.) pos = pos / length(pos) * 2.;
