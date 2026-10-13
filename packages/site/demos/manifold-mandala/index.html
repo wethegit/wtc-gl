@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Manifold mandala</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      html.demo-fullscreen,
+      html.demo-fullscreen body {
+        background: #f6efd9;
+      }
+      canvas {
+        cursor: pointer;
+        touch-action: none;
+      }
+      .hint {
+        position: fixed;
+        left: 16px;
+        bottom: 14px;
+        font:
+          12px/1.4 ui-monospace,
+          Menlo,
+          monospace;
+        color: rgba(60, 40, 30, 0.8);
+        padding: 0.4em 0.75em;
+        border-radius: 6px;
+        background: rgba(246, 239, 217, 0.75);
+        backdrop-filter: blur(8px);
+        pointer-events: none;
+        user-select: none;
+      }
+      #controls {
+        position: fixed;
+        top: calc(3em + 8px);
+        right: 8px;
+        z-index: 100;
+        width: 280px;
+        max-height: calc(100vh - 3em - 16px);
+        overflow-y: auto;
+      }
+      .no-float .hint::after {
+        content: ' · this device can’t render to float textures';
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Manifold mandala</span>
+    </nav>
+    <div class="hint">
+      drag: orbit &middot; scroll: zoom &middot; click: next world &middot; R:
+      regrow &middot; space: pause
+    </div>
+    <div id="controls"></div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

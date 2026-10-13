@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Many meshes</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .count {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        color: rgba(221, 224, 238, 0.7);
+      }
+      .count select {
+        font: inherit;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        padding: 0.2em 0.4em;
+      }
+      .pane {
+        position: fixed;
+        z-index: 1;
+        box-sizing: border-box;
+      }
+      body {
+        /* Dragging to orbit shouldn't select text */
+        user-select: none;
+      }
+      #pane-main {
+        cursor: grab;
+        touch-action: none;
+      }
+      #pane-overview {
+        pointer-events: none;
+        border-left: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      #pane-overview.pane--stacked {
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .pane__label {
+        position: absolute;
+        left: 1em;
+        top: 0.75em;
+        font: 12px/1.4 system-ui, sans-serif;
+        color: rgba(221, 224, 238, 0.7);
+        pointer-events: none;
+      }
+      .pane--top .pane__label {
+        top: calc(3em + 0.75em);
+      }
+      .hud {
+        position: fixed;
+        left: 1em;
+        bottom: 1em;
+        z-index: 100;
+        padding: 0.6em 0.9em;
+        border-radius: 6px;
+        background: rgba(7, 7, 14, 0.75);
+        backdrop-filter: blur(8px);
+        font: 12px/1.6 ui-monospace, monospace;
+        color: rgba(221, 224, 238, 0.85);
+        white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Many meshes</span>
+      <label class="count">
+        Meshes
+        <select id="count">
+          <option value="1000">1,000</option>
+          <option value="3000" selected>3,000</option>
+          <option value="6000">6,000</option>
+        </select>
+      </label>
+    </nav>
+    <div class="pane" id="pane-main">
+      <span class="pane__label">Camera view · drag to orbit, scroll to zoom</span>
+    </div>
+    <div class="pane" id="pane-overview">
+      <span class="pane__label"
+        >Overview · the camera, its frustum, and only the meshes it didn't
+        cull</span
+      >
+    </div>
+    <div class="hud" id="hud" aria-live="off"></div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
