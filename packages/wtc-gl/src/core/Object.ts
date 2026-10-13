@@ -1,5 +1,7 @@
 import { Vec3, Quat, Mat4 } from 'wtc-math'
 
+import { composeMat4, multiplyMat4, quatFromEuler } from './matrix'
+
 /**
  * Class representing an object. This provides basic transformations for sub-objects and shouldn't be instanciated directly.
  **/
@@ -85,7 +87,8 @@ export class Obj {
    * ```
    */
   updateRotation(): void {
-    this.quaternion = Quat.fromEuler(this.rotation) || new Quat()
+    // Updated in place, so this doesn't allocate every frame
+    quatFromEuler(this.quaternion, this.rotation)
   }
 
   /**
@@ -143,9 +146,10 @@ export class Obj {
   updateMatrixWorld(force?: boolean): void {
     if (this.matrixAutoUpdate) this.updateMatrix()
     if (this.worldMatrixNeedsUpdate || force) {
+      // Updated in place, so this doesn't allocate every frame
       if (this.parent === null || this.parent === undefined)
-        this.worldMatrix = this.matrix.clone()
-      else this.worldMatrix = this.parent.worldMatrix.multiplyNew(this.matrix)
+        this.worldMatrix.resetToMat4(this.matrix)
+      else multiplyMat4(this.worldMatrix, this.parent.worldMatrix, this.matrix)
       this.worldMatrixNeedsUpdate = false
       force = true
     }
@@ -159,11 +163,7 @@ export class Obj {
    * Updates the object matrix based on the rotation, translation and scale , then runs an update.
    */
   updateMatrix(): void {
-    this.matrix = Mat4.fromRotationTranslationScale(
-      this.quaternion,
-      this.position,
-      this.scale
-    )
+    composeMat4(this.matrix, this.quaternion, this.position, this.scale)
     this.worldMatrixNeedsUpdate = true
   }
 

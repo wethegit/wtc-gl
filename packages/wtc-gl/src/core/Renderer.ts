@@ -4,13 +4,15 @@ import type {
   WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLExtensions,
-  WTCGLRendererParams
+  WTCGLRendererParams,
+  WTCGLRestorable
 } from '../types'
 
 import { Camera } from './Camera'
 import { RenderTarget } from './RenderTarget'
 import { Obj } from './Object'
 import { Drawable } from './Drawable'
+import type { StencilOptions } from './Program'
 
 export interface RendererOptions {
   canvas: HTMLCanvasElement
@@ -25,8 +27,14 @@ export interface RendererOptions {
   preserveDrawingBuffer: boolean
   powerPreference: string
   autoClear: boolean
+  clearColour: WTCGLColour
   webgl: number
 }
+
+/**
+ * A colour as `[r, g, b, a]`, each from 0 to 1.
+ */
+export type WTCGLColour = [number, number, number, number]
 
 export interface RenderOptions {
   scene: Obj
@@ -45,13 +53,13 @@ export interface RenderOptions {
 export class Renderer {
   /**
    * The pixel aspect ratio of the renderer.
-   * @default window.devicePixelRatio or 2, whichever is smaller.
+   * @default devicePixelRatio, capped at 2 (1 when there is no window).
    */
   dpr: number
   /**
    * The dimensions of the renderer
    */
-  #dimensions: Vec2
+  #dimensions = new Vec2()
 
   /**
    * Whether to render an alpha channel. This property is passed to the rendering context.
@@ -83,6 +91,7 @@ export class Renderer {
    * @default true
    */
   autoClear: boolean
+  #clearColour: WTCGLColour = [0, 0, 0, 0]
   /**
    * Whether the context we've retrieved is webGL2 or not.
    */
@@ -108,7 +117,7 @@ export class Renderer {
   /**
    * Stores the current geometry being rendered. Used to otimise geo rendering.
    */
-  currentGeometry: string
+  currentGeometry = ''
 
   /**
    * The WebGL2RenderingContext.vertexAttribDivisor() method of the WebGL 2 API modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives with
@@ -152,9 +161,33 @@ export class Renderer {
   drawBuffers: (buffers: GLenum[]) => void
 
   // Allows programs to optimise by determine if they're the currently rendering program and skipping some steps
-  currentProgram: number
+  currentProgram = -1
 
   #ownsCanvas: boolean
+
+  /**
+   * Whether the WebGL context is currently lost. Rendering is skipped until
+   * the browser restores it.
+   */
+  contextLost = false
+  /**
+   * Incremented each time the context is restored. Resources compare it with
+   * their own, so each one is only rebuilt once per restore.
+   */
+  contextVersion = 0
+  /**
+   * Called when the WebGL context is lost, e.g. after a GPU reset or when the
+   * browser reclaims contexts. A good place to show a fallback.
+   */
+  onContextLost?: () => void
+  /**
+   * Called once the context has been restored and every tracked resource has
+   * been rebuilt.
+   */
+  onContextRestored?: () => void
+
+  #resources = new Set<WeakRef<WTCGLRestorable>>()
+  #resourceRefs = new WeakMap<WTCGLRestorable, WeakRef<WTCGLRestorable>>()
 
   /**
    * create a renderer
@@ -170,13 +203,14 @@ export class Renderer {
    * @param preserveDrawingBuffer - Preserve the drawing buffer between calls. Useful for when downloading the canvas to an image.
    * @param powerPreference - WebGL power preference.
    * @param autoClear - Whether to clear the canvas between draw.
+   * @param clearColour - The colour to clear to, as `[r, g, b, a]`.
    * @param webgl - The webGL version to try to use - 1, or 2
    */
   constructor({
     canvas,
     width = 300,
     height = 150,
-    dpr = Math.min(window.devicePixelRatio, 2),
+    dpr = Math.min(globalThis.devicePixelRatio ?? 1, 2),
     alpha = false,
     depth = true,
     stencil = false,
@@ -185,6 +219,7 @@ export class Renderer {
     preserveDrawingBuffer = false,
     powerPreference = 'default',
     autoClear = true,
+    clearColour,
     webgl = 2
   }: Partial<RendererOptions> = {}) {
     const attributes = {
@@ -207,23 +242,46 @@ export class Renderer {
     this.premultipliedAlpha = premultipliedAlpha
     this.autoClear = autoClear
 
-    if (webgl === 2)
-      this.gl = canvas.getContext('webgl2', attributes) as WTCGLRenderingContext
-    this.isWebgl2 = !!this.gl
-    if (!this.gl) {
-      this.gl = canvas.getContext('webgl', attributes) as WTCGLRenderingContext
-    }
-    if (!this.gl) {
-      console.error('unable to create webgl context')
-      return this
-    }
+    let gl =
+      webgl === 2
+        ? (canvas.getContext('webgl2', attributes) as WTCGLRenderingContext)
+        : null
+    this.isWebgl2 = !!gl
+    gl ??= canvas.getContext('webgl', attributes) as WTCGLRenderingContext
+    if (!gl) throw new Error('Unable to create a WebGL context')
 
+    this.gl = gl
     this.gl.renderer = this
 
     // initialise size values
     this.dimensions = new Vec2(width, height)
 
-    this.state = {
+    this.state = this.#createState()
+
+    // store requested extensions
+    this.extensions = {}
+    const extensionFunctions = this.#enableExtensions()
+    this.vertexAttribDivisor = extensionFunctions.vertexAttribDivisor
+    this.drawArraysInstanced = extensionFunctions.drawArraysInstanced
+    this.drawElementsInstanced = extensionFunctions.drawElementsInstanced
+    this.createVertexArray = extensionFunctions.createVertexArray
+    this.bindVertexArray = extensionFunctions.bindVertexArray
+    this.deleteVertexArray = extensionFunctions.deleteVertexArray
+    this.drawBuffers = extensionFunctions.drawBuffers
+
+    this.parameters = this.#getParameters()
+
+    if (clearColour) this.clearColour = clearColour
+
+    canvas.addEventListener('webglcontextlost', this.#handleContextLost)
+    canvas.addEventListener('webglcontextrestored', this.#handleContextRestored)
+  }
+
+  /**
+   * The initial state cache, matching a fresh WebGL context.
+   */
+  #createState(): WTCGLRendererState {
+    return {
       blendFunc: { src: this.gl.ONE, dst: this.gl.ZERO },
       blendEquation: {
         modeRGB: this.gl.FUNC_ADD,
@@ -243,10 +301,16 @@ export class Renderer {
       boundBuffer: null,
       uniformLocations: new Map()
     }
+  }
 
-    // store requested extensions
-    this.extensions = {}
-
+  /**
+   * Enable the extensions the library relies on, and look up the functions
+   * that are native in WebGL2 but come from extensions in WebGL1.
+   *
+   * Most of this, and the alias copying in the constructor and context
+   * restore, goes away once WebGL1 support is dropped (see ROADMAP Phase 4).
+   */
+  #enableExtensions() {
     // Initialise extra format types
     if (this.isWebgl2) {
       this.getExtension('EXT_color_buffer_float')
@@ -265,43 +329,47 @@ export class Renderer {
     }
 
     // Create method aliases using extension (WebGL1) or native if available (WebGL2)
-    this.vertexAttribDivisor = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'vertexAttribDivisor',
-      'vertexAttribDivisorANGLE'
-    )
-    this.drawArraysInstanced = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'drawArraysInstanced',
-      'drawArraysInstancedANGLE'
-    )
-    this.drawElementsInstanced = this.getExtension(
-      'ANGLE_instanced_arrays',
-      'drawElementsInstanced',
-      'drawElementsInstancedANGLE'
-    )
-    this.createVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'createVertexArray',
-      'createVertexArrayOES'
-    )
-    this.bindVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'bindVertexArray',
-      'bindVertexArrayOES'
-    )
-    this.deleteVertexArray = this.getExtension(
-      'OES_vertex_array_object',
-      'deleteVertexArray',
-      'deleteVertexArrayOES'
-    )
-    this.drawBuffers = this.getExtension(
-      'WEBGL_draw_buffers',
-      'drawBuffers',
-      'drawBuffersWEBGL'
-    )
+    return {
+      vertexAttribDivisor: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'vertexAttribDivisor',
+        'vertexAttribDivisorANGLE'
+      ),
+      drawArraysInstanced: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'drawArraysInstanced',
+        'drawArraysInstancedANGLE'
+      ),
+      drawElementsInstanced: this.getExtension(
+        'ANGLE_instanced_arrays',
+        'drawElementsInstanced',
+        'drawElementsInstancedANGLE'
+      ),
+      createVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'createVertexArray',
+        'createVertexArrayOES'
+      ),
+      bindVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'bindVertexArray',
+        'bindVertexArrayOES'
+      ),
+      deleteVertexArray: this.getExtension(
+        'OES_vertex_array_object',
+        'deleteVertexArray',
+        'deleteVertexArrayOES'
+      ),
+      drawBuffers: this.getExtension(
+        'WEBGL_draw_buffers',
+        'drawBuffers',
+        'drawBuffersWEBGL'
+      )
+    }
+  }
 
-    this.parameters = {
+  #getParameters(): WTCGLRendererParams {
+    return {
       maxTextureUnits: this.gl.getParameter(
         this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS
       ),
@@ -312,6 +380,64 @@ export class Renderer {
           )
         : 0
     }
+  }
+
+  #handleContextLost = (event: Event) => {
+    // Without preventDefault the browser won't try to restore the context
+    event.preventDefault()
+    this.contextLost = true
+    this.onContextLost?.()
+  }
+
+  #handleContextRestored = () => {
+    // A restored context starts from scratch, so reset every cache and
+    // re-request the extensions before rebuilding resources
+    this.state = this.#createState()
+    this.extensions = {}
+    Object.assign(this, this.#enableExtensions())
+    this.parameters = this.#getParameters()
+    this.currentProgram = -1
+    this.currentGeometry = ''
+    this.clearColour = this.#clearColour
+    this.#colourWrite = true
+    this.#stencilState = defaultStencilState()
+
+    this.contextVersion++
+    this.contextLost = false
+
+    for (const ref of this.#resources) {
+      const resource = ref.deref()
+      if (resource) resource.restoreContext()
+      else this.#resources.delete(ref)
+    }
+
+    this.onContextRestored?.()
+  }
+
+  /**
+   * Register a resource to be rebuilt when the WebGL context is restored.
+   * Programs, geometry, textures, render targets and transform feedbacks
+   * register themselves when created; call this for your own resources.
+   * Only a weak reference is kept, so tracking doesn't stop garbage collection;
+   * keep your own reference to anything you track.
+   * @param resource - An object with a `restoreContext()` method.
+   */
+  track(resource: WTCGLRestorable): void {
+    if (this.#resourceRefs.has(resource)) return
+    const ref = new WeakRef(resource)
+    this.#resourceRefs.set(resource, ref)
+    this.#resources.add(ref)
+  }
+
+  /**
+   * Stop rebuilding a resource on context restore. Called by `remove()`.
+   * @param resource - A resource previously passed to `track`.
+   */
+  untrack(resource: WTCGLRestorable): void {
+    const ref = this.#resourceRefs.get(resource)
+    if (!ref) return
+    this.#resources.delete(ref)
+    this.#resourceRefs.delete(resource)
   }
 
   /**
@@ -326,6 +452,13 @@ export class Renderer {
    * `remove()` on them first if the context is being kept.
    */
   dispose() {
+    const canvas = this.gl.canvas as HTMLCanvasElement
+    canvas.removeEventListener('webglcontextlost', this.#handleContextLost)
+    canvas.removeEventListener(
+      'webglcontextrestored',
+      this.#handleContextRestored
+    )
+    this.#resources.clear()
     this.state.uniformLocations.clear()
     this.state.textureUnits = []
     this.currentProgram = -1
@@ -472,6 +605,20 @@ export class Renderer {
   }
 
   /**
+   * The colour the canvas and render targets are cleared to, as
+   * `[r, g, b, a]` from 0 to 1. Kept across context loss, unlike a colour set
+   * with `gl.clearColor` directly.
+   * @default [0, 0, 0, 0]
+   */
+  set clearColour(value: WTCGLColour) {
+    this.#clearColour = [value[0], value[1], value[2], value[3]]
+    this.gl.clearColor(value[0], value[1], value[2], value[3])
+  }
+  get clearColour(): WTCGLColour {
+    return [...this.#clearColour]
+  }
+
+  /**
    * Sets the depth mask bit
    */
   set depthMask(value: boolean) {
@@ -493,6 +640,75 @@ export class Renderer {
   }
   get depthFunc(): GLenum | null {
     return this.state.depthFunc
+  }
+
+  // Colour-write and stencil state the renderer has set. Only changes the
+  // renderer makes are undone, so gl.colorMask and stencil calls made
+  // directly on the context keep working for programs that don't set these.
+  #colourWrite = true
+  #stencilState = defaultStencilState()
+
+  /**
+   * Whether colour is written. Set from each program's `colourWrite`.
+   */
+  set colourWrite(value: boolean) {
+    if (this.#colourWrite === value) return
+    this.#colourWrite = value
+    this.gl.colorMask(value, value, value, value)
+  }
+  get colourWrite(): boolean {
+    return this.#colourWrite
+  }
+
+  /**
+   * Apply a program's stencil test, or turn off a stencil test this renderer
+   * turned on. Called by `Program.applyState`.
+   * @param stencil - The resolved stencil settings, or null for none.
+   */
+  setStencil(stencil: Required<StencilOptions> | null): void {
+    const gl = this.gl
+    const current = this.#stencilState
+    if (!stencil) {
+      if (current.enabled) {
+        gl.disable(gl.STENCIL_TEST)
+        current.enabled = false
+      }
+      return
+    }
+
+    // State may have been changed directly on the context since this
+    // renderer last enabled the test, so set everything when enabling
+    const force = !current.enabled
+    if (force) {
+      gl.enable(gl.STENCIL_TEST)
+      current.enabled = true
+    }
+    if (
+      force ||
+      current.func !== stencil.func ||
+      current.ref !== stencil.ref ||
+      current.mask !== stencil.mask
+    ) {
+      gl.stencilFunc(stencil.func, stencil.ref, stencil.mask)
+      current.func = stencil.func
+      current.ref = stencil.ref
+      current.mask = stencil.mask
+    }
+    if (
+      force ||
+      current.fail !== stencil.fail ||
+      current.zfail !== stencil.zfail ||
+      current.zpass !== stencil.zpass
+    ) {
+      gl.stencilOp(stencil.fail, stencil.zfail, stencil.zpass)
+      current.fail = stencil.fail
+      current.zfail = stencil.zfail
+      current.zpass = stencil.zpass
+    }
+    if (force || current.writeMask !== stencil.writeMask) {
+      gl.stencilMask(stencil.writeMask)
+      current.writeMask = stencil.writeMask
+    }
   }
 
   /**
@@ -574,8 +790,8 @@ export class Renderer {
   sortOpaque(a: Drawable, b: Drawable) {
     if (a.renderOrder !== b.renderOrder) {
       return a.renderOrder - b.renderOrder
-    } else if (a.program.id !== b.program.id) {
-      return a.program.id - b.program.id
+    } else if (a.program?.id !== b.program?.id) {
+      return (a.program?.id ?? 0) - (b.program?.id ?? 0)
     } else if (a.zDepth !== b.zDepth) {
       return a.zDepth - b.zDepth
     } else {
@@ -636,59 +852,93 @@ export class Renderer {
     frustumCull: boolean
     sort: boolean
   }): Drawable[] {
-    let renderList: Drawable[] = []
+    // A fresh list, as callers may keep it
+    return this.#buildRenderList(scene, camera, frustumCull, sort, {
+      list: [],
+      opaque: [],
+      transparent: [],
+      ui: []
+    })
+  }
+
+  // Reused by render() so building the list doesn't allocate every frame
+  #lists: RenderLists = { list: [], opaque: [], transparent: [], ui: [] }
+  #drawProps: { camera?: Camera } = {}
+  // How many render() calls are running, as a draw callback can render too
+  #renderDepth = 0
+  #viewportSize = new Vec2()
+  #viewportPosition = new Vec2()
+
+  /**
+   * Fill `lists.list` with the visible drawables in `scene`, culled and
+   * sorted as requested. The arrays in `lists` are cleared and reused.
+   */
+  #buildRenderList(
+    scene: Obj,
+    camera: Camera | undefined,
+    frustumCull: boolean,
+    sort: boolean,
+    lists: RenderLists
+  ): Drawable[] {
+    const { list, opaque, transparent, ui } = lists
 
     if (camera && frustumCull) camera.updateFrustum()
 
-    // Get visible
-    scene.traverse((node: Obj): boolean | null => {
-      if (!node.visible) return true
-      if (!(node instanceof Drawable)) return null
+    // Arrays are filled by index and truncated afterwards, rather than
+    // emptied with `length = 0`, which would drop their storage and make
+    // them regrow every frame
+    const count = collectVisible(
+      scene,
+      frustumCull ? camera : undefined,
+      list,
+      0
+    )
+    list.length = count
 
-      if (frustumCull && node.frustumCulled && camera) {
-        if (!camera.frustumIntersects(node)) return null
+    if (!sort) return list
+
+    let o = 0
+    let t = 0
+    let u = 0
+    const m = camera?.projectionViewMatrix
+
+    for (let i = 0; i < count; i++) {
+      const node = list[i]
+      // Split into the 3 render groups
+      const { program } = node
+
+      if (program && !program.transparent) {
+        opaque[o++] = node
+      } else if (program?.depthTest) {
+        transparent[t++] = node // depthTest true
+      } else {
+        ui[u++] = node // depthTest false
       }
 
-      renderList.push(node)
+      // Only calculate z-depth if renderOrder unset and depthTest is true
+      if (node.renderOrder !== 0 || !program?.depthTest || !m) continue
 
-      return null
-    })
-
-    if (sort) {
-      const opaque: Drawable[] = []
-      const transparent: Drawable[] = [] // depthTest true
-      const ui: Drawable[] = [] // depthTest false
-
-      renderList.forEach((node) => {
-        // Split into the 3 render groups
-        const { program } = node
-
-        if (program && !program.transparent) {
-          opaque.push(node)
-        } else if (program?.depthTest) {
-          transparent.push(node)
-        } else {
-          ui.push(node)
-        }
-
-        // Only calculate z-depth if renderOrder unset and depthTest is true
-        if (node.renderOrder !== 0 || !program?.depthTest || !camera) return
-
-        // update z-depth
-        const translation = node.worldMatrix.translation
-        translation.transformByMat4(camera.projectionViewMatrix)
-
-        node.zDepth = translation.z
-      })
-
-      opaque.sort(this.sortOpaque)
-      transparent.sort(this.sortTransparent)
-      ui.sort(this.sortUI)
-
-      renderList = opaque.concat(transparent, ui)
+      // z of the object's position in clip space, computed inline rather
+      // than with .translation and transformByMat4, which allocate
+      const w = node.worldMatrix
+      const x = w.a41, y = w.a42, z = w.a43 // prettier-ignore
+      const cw = m.a14 * x + m.a24 * y + m.a34 * z + m.a44 || 1
+      node.zDepth = (m.a13 * x + m.a23 * y + m.a33 * z + m.a43) / cw
     }
+    opaque.length = o
+    transparent.length = t
+    ui.length = u
 
-    return renderList
+    opaque.sort(this.sortOpaque)
+    transparent.sort(this.sortTransparent)
+    ui.sort(this.sortUI)
+
+    let n = 0
+    for (let i = 0; i < o; i++) list[n++] = opaque[i]
+    for (let i = 0; i < t; i++) list[n++] = transparent[i]
+    for (let i = 0; i < u; i++) list[n++] = ui[i]
+
+    return list
   }
 
   /**
@@ -712,30 +962,49 @@ export class Renderer {
     clear,
     viewport
   }: RenderOptions) {
+    // Nothing can be drawn until the browser restores the context
+    if (this.contextLost) return
+
     if (target === null) {
       // make sure no render target bound so draws to canvas
       this.bindFramebuffer()
-      if (!viewport) viewport = [this.dimensions.scaleNew(this.dpr), new Vec2()]
-      this.setViewport(...viewport)
+      if (viewport) this.setViewport(...viewport)
+      else {
+        this.#viewportSize.x = this.dimensions.x * this.dpr
+        this.#viewportSize.y = this.dimensions.y * this.dpr
+        this.setViewport(this.#viewportSize, this.#viewportPosition)
+      }
     } else {
       // bind supplied render target and update viewport
 
       this.bindFramebuffer(target)
-      if (!viewport)
-        viewport = [new Vec2(target.width, target.height), new Vec2()]
-      this.setViewport(...viewport)
+      if (viewport) this.setViewport(...viewport)
+      else {
+        this.#viewportSize.x = target.width
+        this.#viewportSize.y = target.height
+        this.setViewport(this.#viewportSize, this.#viewportPosition)
+      }
     }
 
     if (clear || (this.autoClear && clear !== false)) {
+      // A render target has its own depth and stencil buffers
+      const depth = target ? target.depth : this.depth
+      const stencil = target ? target.stencil : this.stencil
       // Ensure depth buffer writing is enabled so it can be cleared
-      if (this.depth && (!target || target.depth)) {
+      if (depth) {
         this.enable(this.gl.DEPTH_TEST)
         this.depthMask = true
       }
+      // Likewise colour and stencil writes, if a program turned them off
+      if (this.colour) this.colourWrite = true
+      if (stencil && this.#stencilState.writeMask !== 0xff) {
+        this.gl.stencilMask(0xff)
+        this.#stencilState.writeMask = 0xff
+      }
       this.gl.clear(
         (this.colour ? this.gl.COLOR_BUFFER_BIT : 0) |
-          (this.depth ? this.gl.DEPTH_BUFFER_BIT : 0) |
-          (this.stencil ? this.gl.STENCIL_BUFFER_BIT : 0)
+          (depth ? this.gl.DEPTH_BUFFER_BIT : 0) |
+          (stencil ? this.gl.STENCIL_BUFFER_BIT : 0)
       )
     }
 
@@ -746,10 +1015,76 @@ export class Renderer {
     if (camera) camera.updateMatrixWorld()
 
     // Get render list - entails culling and sorting
-    const renderList = this.getRenderList({ scene, camera, frustumCull, sort })
+    // A render started from inside a draw (e.g. to a render target in a
+    // mesh callback) gets its own lists, so it doesn't overwrite these
+    const nested = this.#renderDepth > 0
+    const renderList = this.#buildRenderList(
+      scene,
+      camera,
+      frustumCull,
+      sort,
+      nested ? { list: [], opaque: [], transparent: [], ui: [] } : this.#lists
+    )
+    const props = nested ? { camera } : this.#drawProps
+    props.camera = camera
 
-    renderList.forEach((node) => {
-      node.draw({ camera })
-    })
+    this.#renderDepth++
+    try {
+      for (let i = 0; i < renderList.length; i++) {
+        renderList[i].draw(props as { camera: Camera })
+      }
+    } finally {
+      this.#renderDepth--
+      props.camera = undefined
+    }
   }
+}
+
+/**
+ * The stencil state of a new context, as far as the renderer tracks it.
+ */
+function defaultStencilState() {
+  return {
+    enabled: false,
+    func: 0x0207 as GLenum, // ALWAYS
+    ref: 0,
+    mask: 0xff,
+    writeMask: 0xff,
+    fail: 0x1e00 as GLenum, // KEEP
+    zfail: 0x1e00 as GLenum,
+    zpass: 0x1e00 as GLenum
+  }
+}
+
+type RenderLists = {
+  list: Drawable[]
+  opaque: Drawable[]
+  transparent: Drawable[]
+  ui: Drawable[]
+}
+
+/**
+ * Write the visible drawables under `node` into `list` from index `count`,
+ * skipping invisible subtrees and, when a camera is given, drawables outside
+ * its frustum. Returns the new count. A plain recursive function, so
+ * traversal doesn't allocate a callback.
+ */
+function collectVisible(
+  node: Obj,
+  camera: Camera | undefined,
+  list: Drawable[],
+  count: number
+): number {
+  if (!node.visible) return count
+  if (
+    node instanceof Drawable &&
+    (!camera || !node.frustumCulled || camera.frustumIntersects(node))
+  ) {
+    list[count++] = node
+  }
+  const children = node.children
+  for (let i = 0; i < children.length; i++) {
+    count = collectVisible(children[i], camera, list, count)
+  }
+  return count
 }

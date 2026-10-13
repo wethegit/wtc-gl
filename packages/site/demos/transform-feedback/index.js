@@ -76,7 +76,7 @@ class TFParticles {
     this.renderer = new Renderer({ ...rendererProps, dpr: this.dpr })
     console.log(this.renderer)
     const gl = (this.gl = this.renderer.gl)
-    gl.clearColor(0, 0, 0, 1)
+    this.renderer.clearColour = [0, 0, 0, 1]
     // gl.disable(gl.DEPTH_TEST)
     gl.depthMask(false)
     gl.enable(gl.BLEND)

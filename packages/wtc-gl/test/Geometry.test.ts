@@ -8,7 +8,7 @@ const position = (data: number[], size = 3) =>
   new GeometryAttribute({
     size,
     data: new Float32Array(data),
-    type: 5126 // FLOAT, so the attribute doesn't reach for window
+    type: 5126 // FLOAT
   })
 
 describe('Geometry bounds', () => {
@@ -24,11 +24,25 @@ describe('Geometry bounds', () => {
     })
     geometry.computeBoundingBox()
 
-    const { min, max, center, scale } = geometry.bounds
+    const { min, max, center, scale } = geometry.bounds!
     expect([min.x, min.y, min.z]).toEqual([-1, -2, -3])
     expect([max.x, max.y, max.z]).toEqual([3, 2, 1])
     expect([center.x, center.y, center.z]).toEqual([1, 0, -1])
     expect([scale.x, scale.y, scale.z]).toEqual([4, 4, 4])
+  })
+
+  it('treats 2D positions as z = 0', () => {
+    const geometry = new Geometry(gl, {
+      position: position([-1, -2, 3, 4, 0, 6], 2)
+    })
+    geometry.computeBoundingSphere()
+
+    const { min, max, center, radius } = geometry.bounds!
+    expect([min.x, min.y, min.z]).toEqual([-1, -2, 0])
+    expect([max.x, max.y, max.z]).toEqual([3, 6, 0])
+    expect([center.x, center.y, center.z]).toEqual([1, 2, 0])
+    // Furthest point is (-1, -2) or (3, 6), both sqrt(20) from the centre
+    expect(radius).toBeCloseTo(Math.sqrt(20))
   })
 
   it('computes the bounding sphere around the box centre', () => {
@@ -38,7 +52,7 @@ describe('Geometry bounds', () => {
     geometry.computeBoundingSphere()
 
     // Box centre is (3, 0, 0); the furthest points are 1 away
-    const { center, radius } = geometry.bounds
+    const { center, radius } = geometry.bounds!
     expect([center.x, center.y, center.z]).toEqual([3, 0, 0])
     expect(radius).toBeCloseTo(1)
   })
@@ -56,12 +70,12 @@ describe('Geometry bounds', () => {
     const geometry = new Geometry(gl, {})
     geometry.computeBoundingBox(attr)
 
-    const { min, max } = geometry.bounds
+    const { min, max } = geometry.bounds!
     expect([min.x, min.y, min.z]).toEqual([-10, -20, -30])
     expect([max.x, max.y, max.z]).toEqual([10, 20, 30])
 
     geometry.computeBoundingSphere(attr)
-    expect(geometry.bounds.radius).toBeCloseTo(Math.hypot(10, 20, 30))
+    expect(geometry.bounds!.radius).toBeCloseTo(Math.hypot(10, 20, 30))
   })
 
   it('leaves bounds unset when there is no position data', () => {

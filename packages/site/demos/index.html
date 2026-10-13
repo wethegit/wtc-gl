@@ -16,7 +16,7 @@
         <li><a href="#core">Core</a></li>
         <li><a href="./docs/">Docs</a></li>
         <li>
-          <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+          <a href="https://github.com/wethegit/wtc-gl" target="_blank"
             >GitHub ↗</a
           >
         </li>
@@ -37,7 +37,7 @@
             <span class="chip">npm install wtc-gl</span>
             <a
               class="btn"
-              href="https://github.com/wethecollective/wtc-gl"
+              href="https://github.com/wethegit/wtc-gl"
               target="_blank"
             >
               View on GitHub
@@ -113,7 +113,7 @@
         <div class="demo">
           <div class="demo__preview">
             <img
-              src="./screenshots/videoTex.png"
+              src="./screenshots/video-texture.png"
               alt="Video texture demo"
               loading="lazy"
             />
@@ -130,14 +130,14 @@
               <code>onBeforeRender</code> hook marks the texture dirty so the
               GPU always sees the current video frame.
             </p>
-            <a class="btn" href="./videoTex/">Open demo →</a>
+            <a class="btn" href="./video-texture/">Open demo →</a>
           </div>
         </div>
 
         <div class="demo">
           <div class="demo__preview">
             <img
-              src="./screenshots/transformFeedback.png"
+              src="./screenshots/transform-feedback.png"
               alt="Transform feedback particles demo"
               loading="lazy"
             />
@@ -155,7 +155,7 @@
               computed in a vertex shader and fed back as position attributes
               each frame - zero CPU involvement per particle.
             </p>
-            <a class="btn" href="./transformFeedback/">Open demo →</a>
+            <a class="btn" href="./transform-feedback/">Open demo →</a>
           </div>
         </div>
 
@@ -187,8 +187,8 @@
         <div class="demo">
           <div class="demo__preview">
             <img
-              src="./screenshots/scroll-image-cloth.png"
-              alt="ScrollImage and ScrollHTML cloth demo"
+              src="./screenshots/scroll-image-cloth.jpg"
+              alt="Verlet cloth simulation deforming a photo of sand"
               loading="lazy"
             />
           </div>
@@ -244,11 +244,61 @@
             <p>
               The ScrollRenderer demo rebuilt with
               <code>@wethegit/react-wtc-gl</code>: a provider owns the canvas
-              and render loop, hooks register scenes from components, and
-              React state pauses the loop. Runs in StrictMode to exercise the
-              cleanup paths.
+              and render loop, hooks register scenes from components, and React
+              state pauses the loop. Runs in StrictMode to exercise the cleanup
+              paths.
             </p>
             <a class="btn" href="./react-scroll-renderer/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/react-manifold-divider.jpg"
+              alt="Teal box modules coiled around a line on helical strands"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">useScrollScene</span>
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">GeometryAttribute</span>
+            </div>
+            <h3>React Manifold Divider</h3>
+            <p>
+              A section divider: instanced box modules coil around a line on
+              helical strands and flow along it. Each divider renders a float
+              G-buffer offscreen, then composites outlines, AO and fog into its
+              strip of the shared ScrollRenderer canvas.
+            </p>
+            <a class="btn" href="./react-manifold-divider/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/manifold-mandala.jpg"
+              alt="Rings of box modules forming a funnel-shaped mandala"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">GeometryAttribute</span>
+            </div>
+            <h3>Manifold Mandala</h3>
+            <p>
+              Thirty rings of instanced box modules form a funnel that reads as
+              a mandala head-on. Rings spin, ripple and regrow as new shapes;
+              click to sweep a new palette through them. The same float G-buffer
+              and outline, AO and fog pass as the divider.
+            </p>
+            <a class="btn" href="./manifold-mandala/">Open demo →</a>
           </div>
         </div>
 
@@ -284,9 +334,9 @@
             </div>
             <h3>React DragWorld</h3>
             <p>
-              A click-and-drag explorable world in the style of the Super
-              Mario Odyssey site: a 4,400px map panned with momentum and
-              elastic bounds, where shader regions registered with
+              A click-and-drag explorable world in the style of the Super Mario
+              Odyssey site: a 4,400px map panned with momentum and elastic
+              bounds, where shader regions registered with
               <code>useScrollScene</code> light up as you approach them.
             </p>
             <a class="btn" href="./react-drag-world/">Open demo →</a>
@@ -326,9 +376,9 @@
             <h3>React DragWorld Infinite</h3>
             <p>
               The drag world wrapped into a torus: no edges, no bounds — each
-              region is a single DOM element folded back around the seam
-              while off-screen, with a compass pointing the shortest way home
-              across the wrap.
+              region is a single DOM element folded back around the seam while
+              off-screen, with a compass pointing the shortest way home across
+              the wrap.
             </p>
             <a class="btn" href="./react-drag-world-infinite/">Open demo →</a>
           </div>
@@ -377,8 +427,29 @@
         </div>
 
         <div class="demo">
-          <div class="demo__preview" style="background:linear-gradient(135deg,#000d1a 0%,#000814 50%,#0d001a 100%);display:flex;align-items:center;justify-content:center;">
-            <span style="font-family:monospace;font-size:0.7em;color:rgba(100,180,255,0.4);letter-spacing:0.1em;">SDF</span>
+          <div
+            class="demo__preview"
+            style="
+              background: linear-gradient(
+                135deg,
+                #000d1a 0%,
+                #000814 50%,
+                #0d001a 100%
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span
+              style="
+                font-family: monospace;
+                font-size: 0.7em;
+                color: rgba(100, 180, 255, 0.4);
+                letter-spacing: 0.1em;
+              "
+              >SDF</span
+            >
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -391,10 +462,36 @@
               A raymarching SDF rendered inside the volume of a rotating
               <code>Box</code> mesh. The fragment shader casts rays from each
               mesh surface point, infinitely repeating a frame-and-sphere
-              lattice. The cube's model matrix is passed as a uniform so the
-              SDF space rotates in sync with the geometry.
+              lattice. The cube's model matrix is passed as a uniform so the SDF
+              space rotates in sync with the geometry.
             </p>
             <a class="btn" href="./raymarching-webgl2/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/progressive-render.jpg"
+              alt="A winding ribbon of motion-blurred blocks, rendered in tiles"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Framebuffer</span>
+              <span class="demo__class">Drawable</span>
+              <span class="demo__class">Renderer viewport</span>
+            </div>
+            <h3>Progressive render</h3>
+            <p>
+              A raymarcher far too heavy for one frame, rendered a tile at a
+              time. Each tile goes into one <code>Framebuffer</code> through a
+              viewport, a composition pass adds it to the image so far in
+              another, and the tile size adapts to keep frames responsive. Click
+              for a new image.
+            </p>
+            <a class="btn" href="./progressive-render/">Open demo →</a>
           </div>
         </div>
 
@@ -402,7 +499,12 @@
           <div
             class="demo__preview"
             style="
-              background: linear-gradient(135deg, #07070e 0%, #05051a 40%, #040814 100%);
+              background: linear-gradient(
+                135deg,
+                #07070e 0%,
+                #05051a 40%,
+                #040814 100%
+              );
               display: flex;
               align-items: center;
               justify-content: center;
@@ -432,6 +534,59 @@
               chromatic aberration — all on one shared WebGL context.
             </p>
             <a class="btn" href="./scroll-blades/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/stencil-depth.jpg"
+              alt="A glowing portal among boxes, showing a world of spheres"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">Renderer</span>
+            </div>
+            <h3>Stencil &amp; depth texture</h3>
+            <p>
+              A portal into another world, drawn with a
+              <code>RenderTarget</code> whose depth and stencil share one
+              texture. The stencil limits the second world to the portal, and a
+              post pass samples the depth texture for fog and outlines. Switch
+              views to see the depth and stencil on their own.
+            </p>
+            <a class="btn" href="./stencil-depth/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/many-meshes.jpg"
+              alt="A galaxy of cubes beside an overview of the camera and its frustum"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Mesh</span>
+              <span class="demo__class">Renderer</span>
+              <span class="demo__class">DollyCamera</span>
+              <span class="demo__class">Camera</span>
+            </div>
+            <h3>Many meshes</h3>
+            <p>
+              A spiral galaxy of up to 6,000 separate meshes, each moved and
+              rotated every frame. One pane is the camera you control; the other
+              watches it from above, showing its frustum and only the meshes it
+              didn't cull. Matrices, uniforms and render lists are updated in
+              place, so the render loop makes almost no garbage.
+            </p>
+            <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
         </div>
       </section>
@@ -535,7 +690,7 @@ fs.<span class="prop">setUniform</span>(<span class="str">'u_mouse'</span>, [x, 
             >We The Collective</a
           >.
         </p>
-        <a href="https://github.com/wethecollective/wtc-gl" target="_blank"
+        <a href="https://github.com/wethegit/wtc-gl" target="_blank"
           >GitHub →</a
         >
       </footer>

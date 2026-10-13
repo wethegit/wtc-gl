@@ -1,7 +1,6 @@
 import { Vec3 } from 'wtc-math'
 
 import type {
-  WTCGLRendererState,
   WTCGLRenderingContext,
   WTCGLGeometryAttributeCollection,
   WTCGLGeometryAttribute,
@@ -15,12 +14,17 @@ let ID = 1
 // To stop inifinite warnings
 let isBoundsWarned = false
 
+// Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
   a: number[] | Float32Array | Float64Array | Uint16Array | Uint32Array,
-  o: number = 0
+  o: number = 0,
+  size: number = 3
 ): Vec3 {
-  return new Vec3(a[o], a[o + 1], a[o + 2])
+  return new Vec3(a[o], size > 1 ? a[o + 1] : 0, size > 2 ? a[o + 2] : 0)
 }
+
+// The context generation each attribute's buffer was last rebuilt for
+const restoredAttributes = new WeakMap<WTCGLGeometryAttribute, number>()
 
 /**
  * Class representing some Geometry.
@@ -48,8 +52,14 @@ export class Geometry {
   /**
    * Any supplied transform feedback objects
    */
-  transformFeedbacks: TransformFeedback
+  transformFeedbacks?: TransformFeedback
   transformFeedbackIndex: number = 0
+
+  // The context generation this geometry's buffers were created for
+  #contextVersion: number
+  // The renderer's currentGeometry key for each attribute order, built once
+  // rather than on every draw
+  #geometryKeys: { [attributeOrder: string]: string } = {}
 
   /**
    * The range of supplied elements to draw.
@@ -63,16 +73,11 @@ export class Geometry {
   /**
    * A boolean indicating whether the geometry is an instanced geometry or not.
    */
-  isInstanced: boolean
+  isInstanced = false
   /**
    * An object defining the boundary of the geometry
    */
-  bounds: WTCGLBounds
-
-  /**
-   * An object defining all of the rendering state properties.
-   */
-  glState: WTCGLRendererState
+  bounds?: WTCGLBounds
 
   /**
    * Create a geometry object.
@@ -104,6 +109,34 @@ export class Geometry {
     for (const key in attributes) {
       this.addAttribute(key, attributes[key])
     }
+
+    this.#contextVersion = gl.renderer.contextVersion
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Recreate the buffers and vertex arrays after the WebGL context has been
+   * restored. Called by the renderer.
+   */
+  restoreContext(): void {
+    const version = this.gl.renderer.contextVersion
+    if (this.#contextVersion === version) return
+    this.#contextVersion = version
+
+    // The old VAOs belonged to the lost context; they're recreated on draw
+    this.VAOs = {}
+
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      // Attributes can be shared between geometries; only rebuild once
+      if (restoredAttributes.get(attr) === version) continue
+      restoredAttributes.set(attr, version)
+
+      attr.buffer = this.gl.createBuffer()
+      attr.updateAttribute(this.gl)
+    }
+
+    this.transformFeedbacks?.restoreContext()
   }
 
   /**
@@ -125,7 +158,7 @@ export class Geometry {
     attr.needsUpdate = false
 
     if (!attr.buffer) {
-      attr.buffer = this.gl.createBuffer()!
+      attr.buffer = this.gl.createBuffer()
 
       // Push data to the buffer
       attr.updateAttribute(this.gl)
@@ -238,11 +271,14 @@ export class Geometry {
   }
 
   bindTransformFeedbacks(): void {
+    const transformFeedbacks = this.transformFeedbacks
+    if (!transformFeedbacks) return
+
     const i = (this.transformFeedbackIndex + 1) % 2
-    const source = this.transformFeedbacks.VAOs[this.transformFeedbackIndex]
-    // const dest = this.transformFeedbacks.VAOs[i]
-    const feedbk = this.transformFeedbacks.TFBs[i]
-    const buffer = this.transformFeedbacks.BufferRefs[i]
+    const source = transformFeedbacks.VAOs[this.transformFeedbackIndex]
+    // const dest = transformFeedbacks.VAOs[i]
+    const feedbk = transformFeedbacks.TFBs[i]
+    const buffer = transformFeedbacks.BufferRefs[i]
 
     // this.readTFB = source
     // this.writeTFB = dest
@@ -265,6 +301,11 @@ export class Geometry {
    * @param {Program} program - The Program object to draw to
    * @param {GLenum} mode - The mode to draw the object in
    */
+  #updateAttribute = (_: unknown, { name }: { name: string }) => {
+    const attr = this.attributes[name]
+    if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
+  }
+
   draw({
     program,
     mode = this.gl.TRIANGLES
@@ -272,13 +313,12 @@ export class Geometry {
     program: Program
     mode: GLenum
   }): void {
-    if (
-      this.gl.renderer.currentGeometry !==
-      `${this.id}_${program.attributeOrder}`
-    ) {
-      if (!this.VAOs[program.attributeOrder]) this.createVAO(program)
-      this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
-      this.gl.renderer.currentGeometry = `${this.id}_${program.attributeOrder}`
+    const order = program.attributeOrder
+    const key = (this.#geometryKeys[order] ??= `${this.id}_${order}`)
+    if (this.gl.renderer.currentGeometry !== key) {
+      if (!this.VAOs[order]) this.createVAO(program)
+      this.gl.renderer.bindVertexArray(this.VAOs[order])
+      this.gl.renderer.currentGeometry = key
     }
 
     if (this.transformFeedbacks) {
@@ -286,11 +326,9 @@ export class Geometry {
       this.gl.beginTransformFeedback(mode)
     }
 
-    // Check if any attributes need updating
-    program?.attributeLocations.forEach((_, { name }) => {
-      const attr = this.attributes[name]
-      if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
-    })
+    // Check if any attributes need updating. A stored callback, so this
+    // doesn't allocate a closure on every draw.
+    program?.attributeLocations.forEach(this.#updateAttribute)
 
     // drawRange.start counts indices; the draw call needs a byte offset
     const index = this.attributes.index
@@ -350,7 +388,7 @@ export class Geometry {
    * Computes the bounding box of the geometry. If no attribute is provided to compue with, try to use the position attribute array by default.
    * @param {WTCGLGeometryAttribute} attr - The attribute array to compute the bounding box off
    */
-  computeBoundingBox(attr?: WTCGLGeometryAttribute): void {
+  computeBoundingBox(attr?: WTCGLGeometryAttribute): WTCGLBounds | undefined {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
@@ -359,29 +397,28 @@ export class Geometry {
     const offset = (attr.offset || 0) / bytes
     const stride = (attr.stride || 0) / bytes || attr.size
 
-    if (!this.bounds) {
-      this.bounds = {
-        min: new Vec3(),
-        max: new Vec3(),
-        center: new Vec3(),
-        scale: new Vec3(),
-        radius: Infinity
-      }
-    }
+    const bounds = (this.bounds ??= {
+      min: new Vec3(),
+      max: new Vec3(),
+      center: new Vec3(),
+      scale: new Vec3(),
+      radius: Infinity
+    })
 
-    const min = this.bounds.min
-    const max = this.bounds.max
-    const center = this.bounds.center
-    const scale = this.bounds.scale
+    const min = bounds.min
+    const max = bounds.max
+    const center = bounds.center
+    const scale = bounds.scale
 
     min.reset(Infinity, Infinity, Infinity)
     max.reset(-Infinity, -Infinity, -Infinity)
 
-    // TODO: check size of position (eg triangle with Vec2)
+    // 2D positions (size 2) have z = 0
+    const size = attr.size
     for (let i = offset, l = array.length; i < l; i += stride) {
       const x = array[i]
-      const y = array[i + 1]
-      const z = array[i + 2]
+      const y = size > 1 ? array[i + 1] : 0
+      const z = size > 2 ? array[i + 2] : 0
 
       min.x = Math.min(x, min.x)
       min.y = Math.min(y, min.y)
@@ -394,6 +431,8 @@ export class Geometry {
 
     scale.resetToVector(max.subtractNew(min))
     center.resetToVector(min.addNew(max).scale(0.5))
+
+    return bounds
   }
 
   /**
@@ -409,18 +448,19 @@ export class Geometry {
     const offset = (attr.offset || 0) / bytes
     const stride = (attr.stride || 0) / bytes || attr.size
 
-    if (!this.bounds) this.computeBoundingBox(attr)
+    const bounds = this.bounds ?? this.computeBoundingBox(attr)
+    if (!bounds) return
 
     let maxRadiusSq = 0
     for (let i = offset, l = array.length; i < l; i += stride) {
-      const point = originArrayToVec3(array, i)
+      const point = originArrayToVec3(array, i, attr.size)
       maxRadiusSq = Math.max(
         maxRadiusSq,
-        this.bounds.center.subtractNew(point).lengthSquared
+        bounds.center.subtractNew(point).lengthSquared
       )
     }
 
-    this.bounds.radius = Math.sqrt(maxRadiusSq)
+    bounds.radius = Math.sqrt(maxRadiusSq)
   }
 
   /**
@@ -435,5 +475,6 @@ export class Geometry {
       this.gl.deleteBuffer(this.attributes[key].buffer)
       delete this.attributes[key]
     }
+    this.gl.renderer.untrack(this)
   }
 }

@@ -32,3 +32,5 @@ bower_components
 **/*/*.log
 docs/
 dist-site/
+test-results/
+playwright-report/

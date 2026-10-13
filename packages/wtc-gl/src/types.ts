@@ -81,6 +81,13 @@ export interface WTCGLActiveInfo extends WebGLActiveInfo {
 export type WTCGLUniformValue =
   Texture | Texture[] | number[] | string | number | boolean | Float32Array
 /**
+ * A resource that can rebuild its GL objects after the WebGL context is
+ * restored. See `Renderer.track`.
+ */
+export interface WTCGLRestorable {
+  restoreContext(): void
+}
+/**
  * Represents a map of uniforms returned from a program.
  */
 export type WTCGLUniformMap = Map<WTCGLActiveInfo, WebGLUniformLocation>
@@ -265,7 +272,7 @@ export interface WTCGLGeometryAttribute {
   /**
    * The WebGL buffer containing the static attribute data.
    */
-  buffer: WebGLBuffer
+  buffer: WebGLBuffer | null
 
   /**
    * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others.

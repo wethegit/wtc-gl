@@ -20,7 +20,30 @@ export interface ProgramOptions {
   depthTest?: boolean
   depthWrite?: boolean
   depthFunc?: GLenum
+  stencil?: StencilOptions | null
+  colourWrite?: boolean
   transformFeedbackVaryings?: string[]
+}
+
+/**
+ * Stencil test settings for a program. Anything left out uses the WebGL
+ * default. See `gl.stencilFunc`, `gl.stencilOp` and `gl.stencilMask`.
+ */
+export interface StencilOptions {
+  /** The comparison, e.g. `gl.EQUAL`. @default gl.ALWAYS */
+  func?: GLenum
+  /** The reference value compared against and written by `gl.REPLACE`. @default 0 */
+  ref?: number
+  /** Bits compared by `func`. @default 0xff */
+  mask?: number
+  /** Bits that can be written. @default 0xff */
+  writeMask?: number
+  /** Action when the stencil test fails. @default gl.KEEP */
+  fail?: GLenum
+  /** Action when the stencil test passes but the depth test fails. @default gl.KEEP */
+  zfail?: GLenum
+  /** Action when both tests pass, e.g. `gl.REPLACE` to write `ref`. @default gl.KEEP */
+  zpass?: GLenum
 }
 
 /**
@@ -71,6 +94,36 @@ export class Program {
    * @default gl.LESS
    */
   depthFunc: GLenum
+  /**
+   * Whether to write colour. Turn off for passes that only write depth or
+   * stencil.
+   * @default true
+   */
+  colourWrite: boolean
+
+  #stencil: Required<StencilOptions> | null = null
+  /**
+   * The stencil test, or null for none. Programs without one turn the
+   * stencil test off only if another program turned it on, so stencil state
+   * set directly on the context is left alone.
+   * @default null
+   */
+  set stencil(options: StencilOptions | null) {
+    const gl = this.gl
+    this.#stencil = options && {
+      func: gl.ALWAYS,
+      ref: 0,
+      mask: 0xff,
+      writeMask: 0xff,
+      fail: gl.KEEP,
+      zfail: gl.KEEP,
+      zpass: gl.KEEP,
+      ...options
+    }
+  }
+  get stencil(): Required<StencilOptions> | null {
+    return this.#stencil
+  }
 
   /**
    * The blend function to use
@@ -110,6 +163,12 @@ export class Program {
    */
   linked: boolean = false
 
+  #vertex: string
+  #fragment: string
+  #transformFeedbackVaryings?: string[]
+  // The context generation this program was compiled for
+  #contextVersion: number
+
   /**
    * Create a Program
    * @param gl - The WTCGL Rendering context
@@ -123,6 +182,8 @@ export class Program {
    * @param depthTest - Whether to test the depth of a fragment against the depth buffer
    * @param depthWrite - Whether to write the depth information
    * @param depthFunc - The function to use when depth testing
+   * @param stencil - The stencil test to apply, if any
+   * @param colourWrite - Whether to write colour
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -137,6 +198,8 @@ export class Program {
       depthTest = true,
       depthWrite = true,
       depthFunc = gl.LESS,
+      stencil = null,
+      colourWrite = true,
       transformFeedbackVaryings
     }: ProgramOptions
   ) {
@@ -155,6 +218,8 @@ export class Program {
     this.depthTest = depthTest
     this.depthWrite = depthWrite
     this.depthFunc = depthFunc
+    this.stencil = stencil
+    this.colourWrite = colourWrite
     this.blendFunc = { src: 0, dst: 0 }
     this.blendEquation = { modeRGB: gl.FUNC_ADD, modeAlpha: gl.FUNC_ADD }
 
@@ -169,6 +234,26 @@ export class Program {
         this.setBlendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA)
       else this.setBlendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA)
     }
+
+    this.#vertex = vertex
+    this.#fragment = fragment
+    this.#transformFeedbackVaryings = transformFeedbackVaryings
+    this.#contextVersion = gl.renderer.contextVersion
+    this.program = this.#compile()
+
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Compile and link the shaders, then read the active uniforms and
+   * attributes. Returns the program even if linking failed, in which case
+   * `linked` stays false.
+   */
+  #compile(): WebGLProgram {
+    const gl = this.gl
+    const vertex = this.#vertex
+    const fragment = this.#fragment
+    const transformFeedbackVaryings = this.#transformFeedbackVaryings
 
     // compile vertex shader and log errors
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -200,43 +285,40 @@ export class Program {
     }
 
     // compile program and log errors
-    this.program = gl.createProgram()!
-    if (vertexShader) gl.attachShader(this.program, vertexShader)
-    if (fragmentShader) gl.attachShader(this.program, fragmentShader)
+    const program = gl.createProgram()!
+    if (vertexShader) gl.attachShader(program, vertexShader)
+    if (fragmentShader) gl.attachShader(program, fragmentShader)
 
     // If we have transformFeedbackVaryings, bind them
     // TO DO: allow for INTERLEAVED_ATTRIBS as well
     if (transformFeedbackVaryings)
       gl.transformFeedbackVaryings?.(
-        this.program,
+        program,
         transformFeedbackVaryings,
         gl.SEPARATE_ATTRIBS
       )
 
     // Finally, link the program and record any errors
-    gl.linkProgram(this.program)
+    gl.linkProgram(program)
 
     // The shaders aren't needed once linking has been attempted
     gl.deleteShader(vertexShader)
     gl.deleteShader(fragmentShader)
 
-    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-      console.warn(gl.getProgramInfoLog(this.program))
-      return this
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn(gl.getProgramInfoLog(program))
+      return program
     }
     this.linked = true
 
     // Get active uniform locations
-    const numUniforms = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS)
+    const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
-      const uniform: WTCGLActiveInfo = gl.getActiveUniform(
-        this.program,
-        uIndex
-      )!
+      const uniform: WTCGLActiveInfo = gl.getActiveUniform(program, uIndex)!
 
       this.uniformLocations.set(
         uniform,
-        gl.getUniformLocation(this.program, uniform.name)!
+        gl.getUniformLocation(program, uniform.name)!
       )
 
       // split uniforms' names to separate array and struct declarations
@@ -259,17 +341,31 @@ export class Program {
 
     // Get active attribute locations
     const locations = []
-    const numAttribs = gl.getProgramParameter(
-      this.program,
-      gl.ACTIVE_ATTRIBUTES
-    )
+    const numAttribs = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES)
     for (let aIndex = 0; aIndex < numAttribs; aIndex++) {
-      const attribute = gl.getActiveAttrib(this.program, aIndex)!
-      const location = gl.getAttribLocation(this.program, attribute.name)
+      const attribute = gl.getActiveAttrib(program, aIndex)!
+      const location = gl.getAttribLocation(program, attribute.name)
       locations[location] = attribute.name
       this.attributeLocations.set(attribute, location)
     }
     this.attributeOrder = locations.join('')
+
+    return program
+  }
+
+  /**
+   * Recompile the program after the WebGL context has been restored.
+   * Called by the renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    this.linked = false
+    this.uniformLocations = new Map()
+    this.attributeLocations = new Map()
+    this.attributeOrder = ''
+    this.program = this.#compile()
   }
 
   /**
@@ -319,6 +415,8 @@ export class Program {
     this.gl.renderer.frontFace = this.frontFace
     this.gl.renderer.depthMask = this.depthWrite
     this.gl.renderer.depthFunc = this.depthFunc
+    this.gl.renderer.colourWrite = this.colourWrite
+    this.gl.renderer.setStencil(this.#stencil)
     if (this.blendFunc?.src)
       this.gl.renderer.setBlendFunc(
         this.blendFunc.src,
@@ -336,6 +434,24 @@ export class Program {
    * Set up the program for use
    * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
    */
+  #bindUniform = (
+    location: WebGLUniformLocation,
+    activeUniform: WTCGLActiveInfo
+  ) => {
+    const name = activeUniform.uniformName
+
+    if (!name) return
+
+    // get supplied uniform
+    const uniform = this.uniforms[name]
+
+    if (!uniform) {
+      return warn(`Active uniform ${name} has not been supplied`)
+    }
+
+    uniform.bind(this, location, activeUniform)
+  }
+
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     this.textureUnit = -1
 
@@ -356,21 +472,9 @@ export class Program {
       this.gl.renderer.currentProgram = this.id
     }
 
-    // Set only the active uniforms found in the shader
-    this.uniformLocations.forEach((location, activeUniform) => {
-      const name = activeUniform.uniformName
-
-      if (!name) return
-
-      // get supplied uniform
-      const uniform = this.uniforms[name]
-
-      if (!uniform) {
-        return warn(`Active uniform ${name} has not been supplied`)
-      }
-
-      uniform.bind(this, location, activeUniform)
-    })
+    // Set only the active uniforms found in the shader. A stored callback,
+    // so this doesn't allocate a closure on every draw.
+    this.uniformLocations.forEach(this.#bindUniform)
 
     this.applyState()
     if (flipFaces)
@@ -389,6 +493,7 @@ export class Program {
     )
     this.uniformLocations.clear()
     this.gl.deleteProgram(this.program)
+    this.gl.renderer.untrack(this)
   }
 }
 

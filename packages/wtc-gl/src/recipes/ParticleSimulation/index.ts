@@ -14,12 +14,17 @@ import defaultShaderF from './default-shader-frag.frag'
 import defaultShaderV from './default-shader-vert.vert'
 
 const hasWindow = typeof window !== 'undefined'
+const hasDocument = typeof document !== 'undefined'
 
 export interface ParticleSimulationOptions {
   vertex: string
   fragment: string
   dimensions: Vec2
-  container: HTMLElement
+  /**
+   * The element the canvas is appended to. Defaults to `document.body`, or
+   * `null` (don't append) when there's no document.
+   */
+  container: HTMLElement | null
   autoResize: boolean
   uniforms: WTCGLUniformArray
   onBeforeRender: (delta: number) => void
@@ -52,7 +57,7 @@ export class ParticleSimulation {
 
   references: Float32Array
 
-  cloud: PointCloud
+  cloud?: PointCloud
 
   lastTime = 0
 
@@ -62,7 +67,7 @@ export class ParticleSimulation {
     dimensions = hasWindow
       ? new Vec2(window.innerWidth, window.innerHeight)
       : new Vec2(500, 500),
-    container = document.body,
+    container = hasDocument ? document.body : null,
     autoResize = true,
     uniforms = {},
     onBeforeRender = () => {},
@@ -92,9 +97,11 @@ export class ParticleSimulation {
       u_resolution: this.u_resolution
     })
 
-    this.renderer = new Renderer(rendererProps)
+    this.renderer = new Renderer({
+      clearColour: [0, 0, 0, 1],
+      ...rendererProps
+    })
     this.gl = this.renderer.gl
-    this.gl.clearColor(0, 0, 0, 1)
 
     if (this.autoResize && hasWindow) {
       window.addEventListener('resize', this.resize, false)
@@ -122,6 +129,9 @@ export class ParticleSimulation {
       uniforms: this.uniforms
     })
 
+    if (!this.cloud)
+      throw new Error('createGeometry must set this.cloud to a PointCloud')
+
     this.mesh = new Mesh(this.gl, {
       mode: this.gl.POINTS,
       geometry: this.cloud,
@@ -130,7 +140,7 @@ export class ParticleSimulation {
 
     this.playing = true
 
-    container.appendChild(this.gl.canvas)
+    container?.appendChild(this.gl.canvas)
   }
 
   createGeometry() {
@@ -206,12 +216,12 @@ export class ParticleSimulation {
     this.renderer.dimensions = this.dimensions
   }
 
-  #post: Framebuffer
+  #post: Framebuffer | null = null
   set post(p) {
     this.#post = p
   }
   get post() {
-    return this.#post || null
+    return this.#post
   }
 
   #playing = false

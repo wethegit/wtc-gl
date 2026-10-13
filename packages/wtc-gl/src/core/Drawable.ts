@@ -24,9 +24,10 @@ export class Drawable extends Obj {
    */
   gl: WTCGLRenderingContext
   /**
-   * The program that is rendering this object
+   * The program that is rendering this object. A plain Drawable used as a
+   * group node has none.
    */
-  program: Program
+  program?: Program
   /**
    * Whether to apply frustum culling to this object
    * @default true

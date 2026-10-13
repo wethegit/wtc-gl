@@ -2,6 +2,7 @@ import { Vec2 } from 'wtc-math'
 
 import type { WTCGLRenderingContext } from '../../types'
 import { Renderer, type RendererOptions } from '../../core/Renderer'
+import type { Uniform } from '../../core/Uniform'
 import { ScrollScene } from './ScrollScene'
 
 /** Options passed to the {@link ScrollRenderer} constructor. */
@@ -131,6 +132,8 @@ export class ScrollRenderer {
   #overscan: number
   /** Viewport size in CSS px. In absolute layout this differs from `renderer.dimensions`. */
   #viewport: Vec2 = new Vec2(0, 0)
+  // Reused for each scene's viewport, rather than allocated per scene per frame
+  #sceneViewport: [Vec2, Vec2] = [new Vec2(), new Vec2()]
 
   constructor({
     rendererProps = {},
@@ -210,7 +213,8 @@ export class ScrollRenderer {
       width = canvas.clientWidth || el.clientWidth
       const vh = el.clientHeight
       if (this.#viewport.width === width && this.#viewport.height === vh) return
-      this.#viewport = new Vec2(width, vh)
+      this.#viewport.x = width
+      this.#viewport.y = vh
       height = Math.round(vh * (1 + 2 * this.#overscan))
       canvas.style.height = `${height}px`
       this.#positionCanvas()
@@ -221,7 +225,9 @@ export class ScrollRenderer {
         width = el.clientWidth
         height = el.clientHeight
       }
-      this.#viewport = new Vec2(width, height)
+      // Updated in place, as this runs every frame
+      this.#viewport.x = width
+      this.#viewport.y = height
     }
 
     const current = this.renderer.dimensions
@@ -325,25 +331,36 @@ export class ScrollRenderer {
 
       scrollScene.u_time.value =
         (scrollScene.u_time.value as number) + delta * 0.00005
-      scrollScene.u_resolution.value = [width, height]
-      scrollScene.u_origin.value = [
+      // Written into the existing arrays; the uniform cache compares
+      // contents, so changes are still uploaded
+      setValues(scrollScene.u_resolution, 2, width, height)
+      setValues(
+        scrollScene.u_origin,
+        4,
         x,
         y,
         ((x + width * 0.5) / canvasWidth) * 2 - 1,
         ((y + height * 0.5) / canvasHeight) * 2 - 1
-      ]
+      )
       if (scrollScene.elementSpace && scrollScene.u_elementSize) {
-        scrollScene.u_elementSize.value = [
+        setValues(
+          scrollScene.u_elementSize,
+          2,
           (width / canvasWidth) * 2,
           (height / canvasHeight) * 2
-        ]
+        )
       }
 
       scrollScene.onBeforeRender(delta, rect)
 
-      const vp = scrollScene.useViewport
-        ? ([new Vec2(width, height), new Vec2(x, y)] as [Vec2, Vec2])
-        : undefined
+      let vp: [Vec2, Vec2] | undefined
+      if (scrollScene.useViewport) {
+        vp = this.#sceneViewport
+        vp[0].x = width
+        vp[0].y = height
+        vp[1].x = x
+        vp[1].y = y
+      }
 
       if (scrollScene.clipToViewport) {
         gl.scissor(x, y, width, height)
@@ -422,5 +439,31 @@ export class ScrollRenderer {
     }
     this.renderer.dispose()
     return this.canvas
+  }
+}
+
+/**
+ * Set a vector uniform's values in place when it already holds a plain array
+ * of the right length, otherwise give it a new array.
+ */
+function setValues(
+  uniform: Uniform,
+  length: 2 | 4,
+  a: number,
+  b: number,
+  c = 0,
+  d = 0
+) {
+  const current = uniform.value
+  if (Array.isArray(current) && current.length === length) {
+    const values = current as number[]
+    values[0] = a
+    values[1] = b
+    if (length === 4) {
+      values[2] = c
+      values[3] = d
+    }
+  } else {
+    uniform.value = length === 2 ? [a, b] : [a, b, c, d]
   }
 }

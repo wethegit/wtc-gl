@@ -17,7 +17,7 @@ import fragment from './main.frag'
 const renderer = new Renderer({ autoClear: true, dpr: 2, webgl: 2 })
 const gl = renderer.gl
 document.body.appendChild(gl.canvas)
-gl.clearColor(0, 0.05, 0.1, 1)
+renderer.clearColour = [0, 0.05, 0.1, 1]
 
 const camera = new DollyCamera()
 camera.setPosition(0, 0.5, 1.85)

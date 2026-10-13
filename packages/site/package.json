@@ -5,15 +5,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --config vite.site.config.js",
-    "preview": "vite preview --config vite.site.config.js"
+    "preview": "vite preview --config vite.site.config.js",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@wethegit/react-wtc-gl": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tweakpane": "^4.0.5",
     "vite": "^8.0.0",
     "vite-plugin-glsl": "~1.6.0",
     "wtc-gl": "workspace:*"

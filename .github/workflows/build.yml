@@ -2,9 +2,17 @@ name: Build
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    # Not `edited`: changing the PR title or description doesn't need a build
+    types: [opened, reopened, synchronize]
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+permissions:
+  contents: read
+  actions: read
+
+# A newer run for the same branch replaces one still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,3 +39,37 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+  e2e:
+    name: Demo smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The site's Vite config aliases wtc-gl to its source, so no build is needed
+      - name: Install Chromium
+        run: pnpm --filter wtc-gl-site exec playwright install --with-deps chromium
+
+      - name: Run demo tests
+        run: pnpm --filter wtc-gl-site test:e2e
+
+      - name: Upload traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces
+          path: packages/site/test-results/
+          retention-days: 7

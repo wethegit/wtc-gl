@@ -19,9 +19,19 @@ type Kind =
   | 'int_vec2'
   | 'int_vec3'
   | 'int_vec4'
+  | 'uint'
+  | 'uint_vec2'
+  | 'uint_vec3'
+  | 'uint_vec4'
   | 'mat2'
   | 'mat3'
   | 'mat4'
+  | 'mat2x3'
+  | 'mat2x4'
+  | 'mat3x2'
+  | 'mat3x4'
+  | 'mat4x2'
+  | 'mat4x3'
 
 export interface UniformOptions {
   name: string
@@ -42,9 +52,14 @@ export class Uniform {
    */
   value: WTCGLUniformValue
   /**
-   * The uniform kind. Currently unused but useful in future for testing against supplied bind type.
+   * The uniform kind. Textures are detected from the value, so this is only
+   * used to warn when it doesn't match.
    */
   kind: Kind
+  /**
+   * Whether a mismatch warning has already been shown for this uniform.
+   */
+  private warned = false
   /**
    * Create a unform object
    * @param __namedParameters
@@ -118,8 +133,21 @@ export class Uniform {
       case 35670: // BOOL
       case 5124: // INT
       case 35678: // SAMPLER_2D
-      case 35680:
-        // SAMPLER_CUBE
+      case 35679: // SAMPLER_3D
+      case 35680: // SAMPLER_CUBE
+      case 35682: // SAMPLER_2D_SHADOW
+      case 36289: // SAMPLER_2D_ARRAY
+      case 36292: // SAMPLER_2D_ARRAY_SHADOW
+      case 36293: // SAMPLER_CUBE_SHADOW
+      case 36298: // INT_SAMPLER_2D
+      case 36299: // INT_SAMPLER_3D
+      case 36300: // INT_SAMPLER_CUBE
+      case 36303: // INT_SAMPLER_2D_ARRAY
+      case 36306: // UNSIGNED_INT_SAMPLER_2D
+      case 36307: // UNSIGNED_INT_SAMPLER_3D
+      case 36308: // UNSIGNED_INT_SAMPLER_CUBE
+      case 36311:
+        // UNSIGNED_INT_SAMPLER_2D_ARRAY
         return val?.length
           ? gl.uniform1iv(location, val)
           : gl.uniform1i(location, val as unknown as number)
@@ -135,6 +163,20 @@ export class Uniform {
       case 35669:
         // INT_VEC4
         return gl.uniform4iv(location, val)
+      case 5125:
+        // UNSIGNED_INT
+        return val?.length
+          ? gl.uniform1uiv(location, val)
+          : gl.uniform1ui(location, val as unknown as number)
+      case 36294:
+        // UNSIGNED_INT_VEC2
+        return gl.uniform2uiv(location, val)
+      case 36295:
+        // UNSIGNED_INT_VEC3
+        return gl.uniform3uiv(location, val)
+      case 36296:
+        // UNSIGNED_INT_VEC4
+        return gl.uniform4uiv(location, val)
       case 35674:
         // FLOAT_MAT2
         return gl.uniformMatrix2fv(location, false, val)
@@ -145,6 +187,24 @@ export class Uniform {
         if (val === null) return
         // FLOAT_MAT4
         return gl.uniformMatrix4fv(location, false, val)
+      case 35685:
+        // FLOAT_MAT2x3
+        return gl.uniformMatrix2x3fv(location, false, val)
+      case 35686:
+        // FLOAT_MAT2x4
+        return gl.uniformMatrix2x4fv(location, false, val)
+      case 35687:
+        // FLOAT_MAT3x2
+        return gl.uniformMatrix3x2fv(location, false, val)
+      case 35688:
+        // FLOAT_MAT3x4
+        return gl.uniformMatrix3x4fv(location, false, val)
+      case 35689:
+        // FLOAT_MAT4x2
+        return gl.uniformMatrix4x2fv(location, false, val)
+      case 35690:
+        // FLOAT_MAT4x3
+        return gl.uniformMatrix4x3fv(location, false, val)
     }
   }
   /**
@@ -163,11 +223,45 @@ export class Uniform {
       return
     }
 
-    if (this.kind === 'texture' && this.value instanceof Texture) {
+    // Decide how to bind from the value rather than `kind`, so a texture
+    // passed with the wrong (or default) kind still binds as a texture
+    const isTexture = this.value instanceof Texture
+    const isTextureArray =
+      Array.isArray(this.value) && this.value[0] instanceof Texture
+    const samplerTarget = getSamplerTarget(program.gl, activeUniform.type)
+    const isSampler = samplerTarget !== undefined
+
+    if (isTexture || isTextureArray) {
+      if (!isSampler) {
+        return this.warnOnce(
+          `${this.name} is a texture but the shader declares it as a non-sampler type; skipping`
+        )
+      }
+      // WebGL refuses to draw when a texture's target doesn't match its sampler
+      const textures = (isTexture ? [this.value] : this.value) as Texture[]
+      if (textures.some((texture) => texture.target !== samplerTarget)) {
+        return this.warnOnce(
+          `${this.name} has a texture whose target doesn't match the shader's sampler type (e.g. a cube map on a sampler2D); skipping`
+        )
+      }
+      if (this.kind !== (isTexture ? 'texture' : 'texture_array')) {
+        this.warnOnce(
+          `${this.name} is a texture but has kind '${this.kind}'; binding it as a texture`
+        )
+      }
+    } else if (isSampler && !isTextureUnitValue(this.value)) {
+      // A null texture binds to unit 0, which is common while a target is being set up
+      return this.warnOnce(
+        `${this.name} is a sampler in the shader but its value isn't a texture; skipping`
+      )
+    }
+
+    if (isTexture) {
+      const texture = this.value as Texture
       const textureUnit = ++program.textureUnit
 
       // Check if texture needs to be updated
-      this.value.update(textureUnit)
+      texture.update(textureUnit)
 
       return this.setUniform(
         program.gl,
@@ -178,27 +272,73 @@ export class Uniform {
     }
 
     // For texture arrays, set uniform as an array of texture units instead of just one
-    if (this.kind === 'texture_array') {
-      if (this.value instanceof Array && this.value[0] instanceof Texture) {
-        const textureUnits: Array<Texture | number> = []
+    if (isTextureArray) {
+      const textureUnits: number[] = []
 
-        this.value.forEach((value) => {
-          const textureUnit = ++program.textureUnit
-          if (value instanceof Texture) value.update(textureUnit)
-          textureUnits.push(textureUnit)
-        })
+      ;(this.value as Texture[]).forEach((value) => {
+        const textureUnit = ++program.textureUnit
+        if (value instanceof Texture) value.update(textureUnit)
+        textureUnits.push(textureUnit)
+      })
 
-        return this.setUniform(
-          program.gl,
-          activeUniform.type,
-          location,
-          textureUnits as WTCGLUniformValue
-        )
-      }
+      return this.setUniform(
+        program.gl,
+        activeUniform.type,
+        location,
+        textureUnits
+      )
     }
 
     this.setUniform(program.gl, activeUniform.type, location)
   }
+  /**
+   * Warn about a mismatch once per uniform, since `bind` runs every frame.
+   */
+  private warnOnce(message: string): void {
+    if (this.warned) return
+    this.warned = true
+    console.warn(message)
+  }
+}
+
+/**
+ * The texture target a sampler type reads from, or undefined if the type
+ * isn't a sampler.
+ */
+function getSamplerTarget(
+  gl: WTCGLRenderingContext,
+  type: GLenum
+): GLenum | undefined {
+  switch (type) {
+    case 35678: // SAMPLER_2D
+    case 35682: // SAMPLER_2D_SHADOW
+    case 36298: // INT_SAMPLER_2D
+    case 36306: // UNSIGNED_INT_SAMPLER_2D
+      return gl.TEXTURE_2D
+    case 35680: // SAMPLER_CUBE
+    case 36293: // SAMPLER_CUBE_SHADOW
+    case 36300: // INT_SAMPLER_CUBE
+    case 36308: // UNSIGNED_INT_SAMPLER_CUBE
+      return gl.TEXTURE_CUBE_MAP
+    case 35679: // SAMPLER_3D
+    case 36299: // INT_SAMPLER_3D
+    case 36307: // UNSIGNED_INT_SAMPLER_3D
+      return gl.TEXTURE_3D
+    case 36289: // SAMPLER_2D_ARRAY
+    case 36292: // SAMPLER_2D_ARRAY_SHADOW
+    case 36303: // INT_SAMPLER_2D_ARRAY
+    case 36311: // UNSIGNED_INT_SAMPLER_2D_ARRAY
+      return gl.TEXTURE_2D_ARRAY
+  }
+}
+
+/**
+ * Whether a value can be sent to a sampler as-is: a texture unit, an array of
+ * them, or null for unit 0.
+ */
+function isTextureUnitValue(value: WTCGLUniformValue | null): boolean {
+  if (value === null || typeof value === 'number') return true
+  return Array.isArray(value) && value.every((v) => typeof v === 'number')
 }
 
 type ArrayValue = Texture[] | number[] | Float32Array

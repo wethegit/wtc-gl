@@ -1,8 +1,4 @@
-import type {
-  WTCGLRendererState,
-  WTCGLTextureState,
-  WTCGLRenderingContext
-} from '../types'
+import type { WTCGLTextureState, WTCGLRenderingContext } from '../types'
 
 const emptyPixel = new Uint8Array(4)
 
@@ -12,11 +8,38 @@ function isPowerOf2(value: number) {
 
 let ID = 1
 
-type ImageTypes = HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+/**
+ * Sources that can be uploaded as an image. `ImageBitmap` ignores `flipY` and
+ * `premultiplyAlpha`; set `imageOrientation` and `premultiplyAlpha` in
+ * `createImageBitmap` instead.
+ */
+export type TextureImage =
+  | HTMLImageElement
+  | HTMLVideoElement
+  | HTMLCanvasElement
+  | ImageBitmap
+  | OffscreenCanvas
+
+/**
+ * Typed arrays that can be uploaded as texture data. The array type has to
+ * match `type`, e.g. `Uint8Array` with `gl.UNSIGNED_BYTE`, `Float32Array`
+ * with `gl.FLOAT`, `Uint16Array` with `gl.HALF_FLOAT` or `gl.UNSIGNED_SHORT`.
+ */
+export type TextureData =
+  | Float32Array
+  | Uint8Array
+  | Uint8ClampedArray
+  | Int8Array
+  | Uint16Array
+  | Int16Array
+  | Uint32Array
+  | Int32Array
+
+type ImageTypes = TextureImage
 
 export interface TextureOptions {
   image: ImageTypes | ImageTypes[]
-  data: Float32Array | null
+  data: TextureData | null
   target: GLenum
   type: GLenum
   format: GLenum
@@ -50,10 +73,14 @@ export class Texture {
   gl: WTCGLRenderingContext
 
   /**
-   * The image element representing the texture. Can be an HTML image, video, or canvas
+   * The image representing the texture. Can be an HTML image, video or
+   * canvas, an `ImageBitmap` or an `OffscreenCanvas`.
    */
-  image: ImageTypes | ImageTypes[]
-  data: Float32Array | null
+  image?: ImageTypes | ImageTypes[]
+  /**
+   * Typed array data for a data texture. Needs `width` and `height`.
+   */
+  data: TextureData | null = null
 
   /**
    * The WebGL texture object containing the data and state for WebGL
@@ -61,13 +88,13 @@ export class Texture {
   texture: WebGLTexture
 
   /**
-   * The width of the texture.
+   * The width of the texture. 0 until known.
    */
-  width: number
+  width = 0
   /**
-   * The height of the texture.
+   * The height of the texture. 0 until known.
    */
-  height: number
+  height = 0
 
   /**
    * The binding point for the texture.
@@ -145,10 +172,6 @@ export class Texture {
     image?: ImageTypes | ImageTypes[]
   }
   /**
-   * A local reference to the renderer state
-   */
-  glState: WTCGLRendererState
-  /**
    * Texture state, contains the basic texture properties.
    */
   state: WTCGLTextureState
@@ -157,6 +180,9 @@ export class Texture {
    * Whether the texture needs an update in memory
    */
   needsUpdate: boolean
+
+  // The context generation this texture was created for
+  #contextVersion: number
 
   /**
    * Create a render target object.
@@ -238,14 +264,25 @@ export class Texture {
     }
 
     // State store to avoid redundant calls for per-texture state
-    this.state = {
-      minFilter: this.gl.NEAREST_MIPMAP_LINEAR,
-      magFilter: this.gl.LINEAR,
-      wrapS: this.gl.REPEAT,
-      wrapT: this.gl.REPEAT,
-      anisotropy: 0
-    }
+    this.state = defaultTextureState(gl)
 
+    this.needsUpdate = true
+
+    this.#contextVersion = gl.renderer.contextVersion
+    gl.renderer.track(this)
+  }
+
+  /**
+   * Recreate the WebGL texture after the context has been restored and
+   * re-upload the image or data on next use. Called by the renderer.
+   */
+  restoreContext(): void {
+    if (this.#contextVersion === this.gl.renderer.contextVersion) return
+    this.#contextVersion = this.gl.renderer.contextVersion
+
+    this.texture = this.gl.createTexture()!
+    this.store.image = undefined
+    this.state = defaultTextureState(this.gl)
     this.needsUpdate = true
   }
 
@@ -344,17 +381,22 @@ export class Texture {
     }
 
     if (this.image || this.data) {
-      if (this.image instanceof HTMLVideoElement) {
-        this.width = this.image.videoWidth
-        this.height = this.image.videoHeight
-      } else if (this.image instanceof HTMLImageElement) {
-        // `.width`/`.height` on HTMLImageElement reflect layout/CSS sizing, not
-        // the source bitmap. Use natural dimensions so the full image uploads.
-        this.width = this.image.naturalWidth
-        this.height = this.image.naturalHeight
-      } else if (this.image instanceof HTMLCanvasElement) {
-        this.width = this.image.width
-        this.height = this.image.height
+      // Checked by property rather than instanceof, because the HTML element
+      // classes don't exist in workers
+      const image = this.image
+      if (image && !Array.isArray(image)) {
+        if ('videoWidth' in image) {
+          this.width = image.videoWidth
+          this.height = image.videoHeight
+        } else if ('naturalWidth' in image) {
+          // `.width`/`.height` on HTMLImageElement reflect layout/CSS sizing, not
+          // the source bitmap. Use natural dimensions so the full image uploads.
+          this.width = image.naturalWidth
+          this.height = image.naturalHeight
+        } else {
+          this.width = image.width
+          this.height = image.height
+        }
       }
 
       if (
@@ -385,7 +427,7 @@ export class Texture {
           this.type,
           this.data
         )
-      } else if (!Array.isArray(this.image)) {
+      } else if (this.image && !Array.isArray(this.image)) {
         // Regular texture
         this.gl.texImage2D(
           this.target,
@@ -472,5 +514,19 @@ export class Texture {
       if (textureUnits[i] === this.id) textureUnits[i] = -1
     }
     this.gl.deleteTexture(this.texture)
+    this.gl.renderer.untrack(this)
+  }
+}
+
+/**
+ * The parameters of a newly created WebGL texture.
+ */
+function defaultTextureState(gl: WTCGLRenderingContext): WTCGLTextureState {
+  return {
+    minFilter: gl.NEAREST_MIPMAP_LINEAR,
+    magFilter: gl.LINEAR,
+    wrapS: gl.REPEAT,
+    wrapT: gl.REPEAT,
+    anisotropy: 0
   }
 }

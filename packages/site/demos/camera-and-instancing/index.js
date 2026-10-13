@@ -70,7 +70,10 @@ const initBlurBuffer = (renderer, u) => {
 }
 
 const initWebgl = () => {
-  const rendererProps = { antialias: true, premultipliedAlpha: true, dpr: 2 }
+  // The device's pixel ratio, capped at 2. This demo runs several full-screen
+  // blur passes, so a fixed 2 quadruples the work on 1x screens
+  const dpr = Math.min(window.devicePixelRatio, 2)
+  const rendererProps = { antialias: true, premultipliedAlpha: true, dpr }
 
   const mats = []
   const transformationsa = new Float32Array(numT * 16)
@@ -90,7 +93,6 @@ const initWebgl = () => {
     })
   }
 
-  const dpr = 2
   const uniforms = {
     u_time: new Uniform({ name: 'time', value: 0.0, kind: 'float' }),
     u_resolution: new Uniform({
@@ -108,7 +110,7 @@ const initWebgl = () => {
   const renderer = new Renderer(rendererProps)
   const gl = renderer.gl
   document.body.appendChild(gl.canvas)
-  gl.clearColor(0.1, 0.15, 0.2, 1)
+  renderer.clearColour = [0.1, 0.15, 0.2, 1]
   gl.enable(gl.BLEND)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
   gl.colorMask(true, true, true, false)
