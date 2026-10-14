@@ -1,3 +1,8 @@
+/* Imported here rather than linked in the HTML: separate <link>s can be
+   reordered in the build, letting the shared rules override this file's */
+@import '../styles.css';
+@import '../react-drag-world/styles.css';
+
 /* Builds on ../react-drag-world/styles.css — paper theme, poi frames,
    labels, hub card, hint, map chips, coords. This file adds the toroidal
    layer/item plumbing and the compass. */
