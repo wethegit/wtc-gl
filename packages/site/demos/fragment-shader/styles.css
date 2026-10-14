@@ -1,3 +1,7 @@
+/* Imported here rather than linked in the HTML: separate <link>s can be
+   reordered in the build, letting the shared rules override this file's */
+@import '../styles.css';
+
 /* ── usage / code ── */
 .usage {
   border-top: 1px solid var(--border);

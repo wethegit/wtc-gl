@@ -1,3 +1,7 @@
+/* Imported here rather than linked in the HTML: separate <link>s can be
+   reordered in the build, letting the shared rules override this file's */
+@import '../styles.css';
+
 /* Light, manifold-ish page. The provider's canvas is fixed at z-index 0;
    content here stays unpositioned so the canvas paints above section
    backgrounds (dividers never overlap text, and the canvas ignores pointers). */
