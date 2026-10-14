@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Progressive render</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      html.demo-fullscreen,
+      html.demo-fullscreen body {
+        background: #000;
+      }
+      canvas {
+        cursor: pointer;
+      }
+      .status {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.75em;
+        color: rgba(221, 224, 238, 0.7);
+        font-variant-numeric: tabular-nums;
+      }
+      .status button {
+        font: inherit;
+        color: rgba(221, 224, 238, 0.85);
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        padding: 0.25em 0.75em;
+        cursor: pointer;
+      }
+      #controls {
+        position: fixed;
+        top: calc(3em + 8px);
+        right: 8px;
+        z-index: 100;
+        width: 280px;
+        max-height: calc(100vh - 3em - 16px);
+        overflow-y: auto;
+      }
+      .status button:hover {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Progressive render</span>
+      <div class="status">
+        <span id="progress" aria-live="polite">Loading</span>
+        <button id="download" type="button">Download PNG</button>
+      </div>
+    </nav>
+    <div id="controls"></div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

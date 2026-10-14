@@ -1,0 +1,131 @@
+/* Light, manifold-ish page. The provider's canvas is fixed at z-index 0;
+   content here stays unpositioned so the canvas paints above section
+   backgrounds (dividers never overlap text, and the canvas ignores pointers). */
+:root {
+  --bg: #f6efd9;
+  --text: #3c2d26;
+  --muted: rgba(60, 45, 38, 0.6);
+  --accent: #c0596a;
+  --dark: #1d1a24;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.demo-nav {
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+}
+.demo-nav__sep,
+.demo-nav__title {
+  color: var(--muted);
+}
+
+.content {
+  position: static;
+  z-index: auto;
+}
+
+.copy {
+  max-width: 64ch;
+  margin: 0 auto;
+  padding: 7rem 1.5rem 3rem;
+}
+.copy p {
+  margin-top: 1rem;
+  color: var(--muted);
+}
+.copy h1 {
+  font-size: clamp(2.5rem, 7vw, 5rem);
+}
+
+.copy--dark {
+  max-width: none;
+  margin: 3rem 0;
+  padding: 6rem max(1.5rem, calc((100% - 64ch) / 2)) 4rem;
+  background: var(--dark);
+  color: #ece6f5;
+}
+.copy--dark h2 {
+  color: inherit;
+}
+.copy--dark p {
+  color: rgba(236, 230, 245, 0.6);
+}
+.copy--dark .manifold-divider {
+  margin-top: 3rem;
+}
+
+.copy--end {
+  min-height: 60vh;
+}
+
+/* ── the divider ── */
+.manifold-divider {
+  position: relative;
+  width: 100%;
+  height: clamp(110px, 16vw, 240px);
+}
+.manifold-divider--tall {
+  height: clamp(160px, 24vw, 340px);
+}
+
+/* Plain rule until the scene registers, or if float targets are missing */
+.manifold-divider::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 50%;
+  border-top: 1px solid currentColor;
+  opacity: 0.25;
+}
+.manifold-divider.scroll-scene--initialized:not([data-fallback])::before {
+  display: none;
+}
+
+/* ── controls ── */
+.controls {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+  display: flex;
+  gap: 0.5rem;
+}
+.controls button {
+  padding: 0.6em 1.4em;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border: 1px solid rgba(60, 45, 38, 0.25);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+.controls button:hover {
+  background: var(--bg);
+}
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.4em 1.1em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border: 1px solid rgba(60, 45, 38, 0.25);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+.controls input {
+  width: 8rem;
+  accent-color: var(--accent);
+}

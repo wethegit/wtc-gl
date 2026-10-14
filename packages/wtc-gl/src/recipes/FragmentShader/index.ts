@@ -1,0 +1,196 @@
+import { Vec2 } from 'wtc-math'
+
+import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
+import type { Framebuffer } from '../../ext/Framebuffer'
+import { Renderer, type RendererOptions } from '../../core/Renderer'
+import { Program } from '../../core/Program'
+import { Mesh } from '../../core/Mesh'
+import { Triangle } from '../../geometry/Triangle'
+import { Uniform } from '../../core/Uniform'
+
+import defaultShaderF from './default-shader-frag.frag'
+import defaultShaderV from './default-shader-vert.vert'
+
+export interface FragmentShaderOptions {
+  vertex: string
+  fragment: string
+  dimensions: Vec2
+  /**
+   * The element the canvas is appended to. Defaults to `document.body`, or
+   * `null` (don't append) when there's no document.
+   */
+  container: HTMLElement | null
+  autoResize: boolean
+  uniforms: WTCGLUniformArray
+  onInit: (renderer: Renderer) => void
+  onBeforeRender: (delta: number) => void
+  onAfterRender: (delta: number) => void
+  rendererProps: Partial<RendererOptions>
+}
+
+const hasWindow = typeof window !== 'undefined'
+const hasDocument = typeof document !== 'undefined'
+
+export class FragmentShader {
+  uniforms: WTCGLUniformArray
+  dimensions: Vec2
+  autoResize: boolean = true
+  onBeforeRender: (t: number) => void
+  onAfterRender: (t: number) => void
+
+  u_time: Uniform
+  u_resolution: Uniform
+
+  gl: WTCGLRenderingContext
+  renderer: Renderer
+  program: Program
+  mesh: Mesh
+
+  lastTime: number = 0
+
+  #ownsCanvas: boolean
+  #frame: number = 0
+
+  constructor({
+    vertex = defaultShaderV,
+    fragment = defaultShaderF,
+    dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500),
+    container = hasDocument ? document.body : null,
+    autoResize = true,
+    uniforms = {},
+    onInit = () => {},
+    onBeforeRender = () => {},
+    onAfterRender = () => {},
+    rendererProps = {}
+  }: Partial<FragmentShaderOptions> = {}) {
+    this.onBeforeRender = onBeforeRender.bind(this)
+    this.onAfterRender = onAfterRender.bind(this)
+    this.render = this.render.bind(this)
+    this.resize = this.resize.bind(this)
+    this.autoResize = autoResize
+
+    this.dimensions = dimensions
+
+    this.u_time = new Uniform({ name: 'time', value: 0, kind: 'float' })
+    this.u_resolution = new Uniform({
+      name: 'resolution',
+      value: this.dimensions.array,
+      kind: 'float_vec2'
+    })
+
+    this.uniforms = Object.assign({}, uniforms, {
+      u_time: this.u_time,
+      u_resolution: this.u_resolution
+    })
+
+    this.#ownsCanvas = !rendererProps.canvas
+    this.renderer = new Renderer({
+      clearColour: [1, 1, 1, 1],
+      ...rendererProps
+    })
+    onInit(this.renderer)
+    this.gl = this.renderer.gl
+    container?.appendChild(this.gl.canvas)
+
+    if (this.autoResize && hasWindow) {
+      window.addEventListener('resize', this.resize, false)
+      this.resize()
+    } else {
+      this.renderer.dimensions = dimensions
+      this.u_resolution.value = this.dimensions.scaleNew(
+        this.renderer.dpr
+      ).array
+    }
+
+    const geometry = new Triangle(this.gl)
+
+    this.program = new Program(this.gl, {
+      vertex,
+      fragment,
+      uniforms: this.uniforms
+    })
+
+    this.mesh = new Mesh(this.gl, { geometry, program: this.program })
+
+    this.playing = true
+  }
+
+  resize() {
+    this.dimensions = hasWindow
+      ? new Vec2(window.innerWidth, window.innerHeight)
+      : new Vec2(500, 500)
+    this.u_resolution.value = this.dimensions.scaleNew(this.renderer.dpr).array
+    this.renderer.dimensions = this.dimensions
+  }
+
+  resetTime() {
+    this.lastTime = 0
+  }
+
+  render(t: number) {
+    if (this.lastTime === 0) this.lastTime = t
+    const diff = Math.min(t - this.lastTime, 50)
+    this.lastTime = t
+
+    if (this.playing) {
+      this.#frame = requestAnimationFrame(this.render)
+    }
+
+    const v: number = this.u_time.value as number
+    this.u_time.value = v + diff * 0.00005
+
+    this.onBeforeRender(t)
+
+    if (this.post) this.post.render(this.renderer, { scene: this.mesh })
+    else this.renderer.render({ scene: this.mesh })
+
+    this.onAfterRender(t)
+  }
+
+  /**
+   * Stop the render loop, remove the resize listener, and delete the mesh's
+   * geometry and program. A canvas the renderer created is removed from the
+   * DOM and its WebGL context released (see `Renderer.dispose()`). A canvas
+   * passed in through `rendererProps.canvas` stays where it is.
+   *
+   * A `post` framebuffer is left alone, as it's supplied by the caller. Call
+   * its `remove()` as well if nothing else uses it.
+   *
+   * @returns The canvas element.
+   */
+  destroy(): HTMLCanvasElement {
+    this.playing = false
+    if (hasWindow) window.removeEventListener('resize', this.resize, false)
+    this.mesh.geometry.remove()
+    this.program.remove()
+    this.renderer.dispose()
+    const canvas = this.gl.canvas as HTMLCanvasElement
+    if (this.#ownsCanvas) canvas.remove()
+    return canvas
+  }
+
+  #post: Framebuffer | null = null
+  set post(p) {
+    this.#post = p
+  }
+  get post() {
+    return this.#post
+  }
+
+  #playing: boolean = false
+  set playing(v: boolean) {
+    if (this.#playing !== true && v === true) {
+      this.#frame = requestAnimationFrame(this.render)
+      this.#playing = true
+    } else if (v == false) {
+      cancelAnimationFrame(this.#frame)
+      this.lastTime = 0
+      this.#playing = false
+    }
+  }
+  get playing(): boolean {
+    return this.#playing === true
+  }
+}
