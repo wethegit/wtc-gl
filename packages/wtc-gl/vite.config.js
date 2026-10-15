@@ -11,7 +11,6 @@ export default defineConfig({
   plugins: [
     glsl(),
     dts({
-      // types/ holds the wtc-math declarations the sources rely on
       include: ['src/**/*.ts', 'types/**/*.d.ts']
     })
   ],

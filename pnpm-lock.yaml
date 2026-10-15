@@ -260,8 +260,8 @@ importers:
   packages/wtc-gl:
     dependencies:
       wtc-math:
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^1.4.0
+        version: 1.4.0
     devDependencies:
       '@types/webgl2':
         specifier: 0.0.12
@@ -1889,8 +1889,8 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  wtc-math@1.3.0:
-    resolution: {integrity: sha512-qkyXVT1/xQkD+Rxd2LudcJJLCfIBYaHAkOzwJqkD61o6/rz9WEUAgx9xBkLhGb/muZf0DWVPUEHLnnEFFVeMSQ==}
+  wtc-math@1.4.0:
+    resolution: {integrity: sha512-Qjq47oTexx55B0GB/jB6j2a/4+1Xqm0nrQgb7922xwMuo5ec/Y5ydySglut8843orVivRYH9UmYwSFiH8/6E6Q==}
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
@@ -3398,7 +3398,7 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  wtc-math@1.3.0:
+  wtc-math@1.4.0:
     dependencies:
       typescript: 6.0.3
 
