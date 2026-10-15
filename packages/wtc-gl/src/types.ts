@@ -301,13 +301,10 @@ export interface WTCGLGeometryAttribute {
 }
 
 /**
- * A simple extension of [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext) that supplies a couple of convenient variables.
+ * A [WebGL2RenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext) with a reference back to the renderer that owns it.
  * @interface
  */
-export type WTCGLRenderingContext = Omit<
-  WebGL2RenderingContext,
-  'createVertexArray' | 'bindVertexArray'
-> & {
+export type WTCGLRenderingContext = WebGL2RenderingContext & {
   /**
    * The WTCGL Renderer object
    */
@@ -316,33 +313,30 @@ export type WTCGLRenderingContext = Omit<
    * The HTML canvas element. Supplied here because the in-built interface doesn't contain it.
    */
   canvas: HTMLCanvasElement
-
-  HALF_FLOAT: number
-  RGBA16F: number
-  RGBA32F: number
-  TRANSFORM_FEEDBACK: GLenum
-  TRANSFORM_FEEDBACK_BUFFER: GLenum
-  SEPARATE_ATTRIBS: GLenum
-
-  createVertexArray(): WebGLVertexArrayObject
-  bindVertexArray(vertexArray?: WebGLVertexArrayObject | null): void
 }
 
 /**
- * A list of enabled extenions.
- * @interface
+ * The WebGL2 extensions `Renderer.getExtension` knows the types of. Any other
+ * name can still be requested, but returns `unknown`.
  */
-export interface WTCGLExtensions {
-  EXT_color_buffer_float?: string
-  OES_texture_float_linear?: string
-  OES_texture_float?: string
-  OES_texture_half_float?: string
-  OES_texture_half_float_linear?: string
-  OES_element_index_uint?: string
-  OES_standard_derivatives?: string
-  EXT_sRGB?: string
-  WEBGL_depth_texture?: string
-  WEBGL_draw_buffers?: string
+export interface WTCGLExtensionMap {
+  EXT_color_buffer_float: EXT_color_buffer_float
+  EXT_color_buffer_half_float: EXT_color_buffer_half_float
+  EXT_float_blend: EXT_float_blend
+  EXT_texture_compression_bptc: EXT_texture_compression_bptc
+  EXT_texture_compression_rgtc: EXT_texture_compression_rgtc
+  EXT_texture_filter_anisotropic: EXT_texture_filter_anisotropic
+  KHR_parallel_shader_compile: KHR_parallel_shader_compile
+  OES_texture_float_linear: OES_texture_float_linear
+  OVR_multiview2: OVR_multiview2
+  WEBGL_compressed_texture_astc: WEBGL_compressed_texture_astc
+  WEBGL_compressed_texture_etc: WEBGL_compressed_texture_etc
+  WEBGL_compressed_texture_s3tc: WEBGL_compressed_texture_s3tc
+  WEBGL_compressed_texture_s3tc_srgb: WEBGL_compressed_texture_s3tc_srgb
+  WEBGL_debug_renderer_info: WEBGL_debug_renderer_info
+  WEBGL_debug_shaders: WEBGL_debug_shaders
+  WEBGL_lose_context: WEBGL_lose_context
+  WEBGL_multi_draw: WEBGL_multi_draw
 }
 
 /**

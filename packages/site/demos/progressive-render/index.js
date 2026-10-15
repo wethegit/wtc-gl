@@ -355,7 +355,7 @@ new Mesh(gl, { geometry, program: compositionProgram }).setParent(
 // Nearest filtering, so copying the image from one pass to the next is exact
 const fboOptions = {
   minFilter: gl.NEAREST,
-  texdepth: Framebuffer.TEXTYPE_HALF_FLOAT_OES,
+  texdepth: Framebuffer.TEXTYPE_HALF_FLOAT,
   depth: false,
   generateMipmaps: false
 }

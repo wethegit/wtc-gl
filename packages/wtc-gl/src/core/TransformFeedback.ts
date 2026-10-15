@@ -179,7 +179,7 @@ export class TransformFeedback {
    */
   remove(): void {
     const { gl } = this
-    this.VAOs.forEach((vao) => gl.renderer.deleteVertexArray(vao))
+    this.VAOs.forEach((vao) => gl.deleteVertexArray(vao))
     this.TFBs.forEach((tfb) => gl.deleteTransformFeedback(tfb))
     this.#ownedBuffers.forEach((buffer) => gl.deleteBuffer(buffer))
     this.#ownedBuffers = []

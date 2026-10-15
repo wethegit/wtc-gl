@@ -2,16 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RenderTarget } from '../src/core/RenderTarget'
 import { Texture } from '../src/core/Texture'
-import type { Renderer } from '../src/core/Renderer'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 describe('RenderTarget depth and stencil', () => {
   let gl: MockGL
-  let renderer: Renderer
 
   beforeEach(() => {
-    ;({ gl, renderer } = createMockRenderer())
-    renderer.isWebgl2 = true
+    ;({ gl } = createMockRenderer())
   })
 
   it('defaults to a 24-bit depth texture', () => {
@@ -132,11 +129,9 @@ describe('RenderTarget depth and stencil', () => {
 
 describe('RenderTarget.resize', () => {
   let gl: MockGL
-  let renderer: Renderer
 
   beforeEach(() => {
-    ;({ gl, renderer } = createMockRenderer())
-    renderer.isWebgl2 = true
+    ;({ gl } = createMockRenderer())
   })
 
   it('reallocates the textures in place', () => {

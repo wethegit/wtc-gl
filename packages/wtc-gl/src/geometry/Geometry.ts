@@ -212,7 +212,7 @@ export class Geometry {
    */
   createVAO(program: Program): void {
     // The reason for keying it using the program's attributeOrder is in order to make sure that we're using the appropriate vertex array if we're sharing this geometry between multiple programs
-    this.VAOs[program.attributeOrder] = this.gl.renderer.createVertexArray()
+    this.VAOs[program.attributeOrder] = this.gl.createVertexArray()
     this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
     this.bindAttributes(program)
   }
@@ -258,7 +258,7 @@ export class Geometry {
 
         // For instanced attributes, divisor needs to be set.
         // For firefox, need to set back to 0 if non-instanced drawn after instanced. Else won't render
-        this.gl.renderer.vertexAttribDivisor(location + i, attr.divisor)
+        this.gl.vertexAttribDivisor(location + i, attr.divisor)
       }
     })
 
@@ -317,8 +317,7 @@ export class Geometry {
     const key = (this.#geometryKeys[order] ??= `${this.id}_${order}`)
     if (this.gl.renderer.currentGeometry !== key) {
       if (!this.VAOs[order]) this.createVAO(program)
-      this.gl.renderer.bindVertexArray(this.VAOs[order])
-      this.gl.renderer.currentGeometry = key
+      this.gl.renderer.bindVertexArray(this.VAOs[order], key)
     }
 
     if (this.transformFeedbacks) {
@@ -338,7 +337,7 @@ export class Geometry {
 
     if (this.isInstanced) {
       if (index) {
-        this.gl.renderer.drawElementsInstanced(
+        this.gl.drawElementsInstanced(
           mode,
           this.drawRange.count,
           index.type,
@@ -346,7 +345,7 @@ export class Geometry {
           this.instancedCount
         )
       } else {
-        this.gl.renderer.drawArraysInstanced(
+        this.gl.drawArraysInstanced(
           mode,
           this.drawRange.start,
           this.drawRange.count,
@@ -468,7 +467,7 @@ export class Geometry {
    */
   remove(): void {
     for (const key in this.VAOs) {
-      this.gl.renderer.deleteVertexArray(this.VAOs[key])
+      this.gl.deleteVertexArray(this.VAOs[key])
       delete this.VAOs[key]
     }
     for (const key in this.attributes) {
