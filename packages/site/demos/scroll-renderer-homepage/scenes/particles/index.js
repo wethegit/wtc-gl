@@ -5,11 +5,14 @@ import {
   Program,
   Uniform,
   TransformFeedback,
-  PointCloud,
+  Geometry,
+  GeometryAttribute,
   DollyCamera
 } from 'wtc-gl'
 import particlesVert from './particles.vert'
 import particlesFrag from './particles.frag'
+import simulateVert from './simulate.vert'
+import simulateFrag from './simulate.frag'
 
 export const initParticles = ({ gl, scrollRenderer }) => {
   const N = 10000
@@ -35,15 +38,6 @@ export const initParticles = ({ gl, scrollRenderer }) => {
 
   const u_delta = new Uniform({ name: 'u_delta', value: 0.016, kind: 'float' })
 
-  const particleProgram = new Program(gl, {
-    vertex: particlesVert,
-    fragment: particlesFrag,
-    uniforms: { ...particleScene.uniforms, u_delta },
-    transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_life', 'v_seed'],
-    transparent: true,
-    depthWrite: false
-  })
-
   const posData = new Float32Array(N * 3)
   const velData = new Float32Array(N * 3)
   const lifeData = new Float32Array(N)
@@ -60,49 +54,44 @@ export const initParticles = ({ gl, scrollRenderer }) => {
     lifeData[i] = Math.random()
     seedData[i] = Math.random()
   }
+  const seed = new GeometryAttribute({ size: 1, data: seedData })
 
-  const tf = new TransformFeedback(gl, {
-    program: particleProgram.program,
-    transformFeedbacks: {
-      a_position: {
-        data: posData,
-        size: 3,
-        usage: gl.DYNAMIC_COPY,
-        varying: 'v_position'
-      },
-      a_velocity: {
-        data: velData,
-        size: 3,
-        usage: gl.DYNAMIC_COPY,
-        varying: 'v_velocity'
-      },
-      a_life: {
-        data: lifeData,
-        size: 1,
-        usage: gl.DYNAMIC_COPY,
-        varying: 'v_life'
-      },
-      a_seed: {
-        data: seedData,
-        size: 1,
-        usage: gl.STATIC_DRAW,
-        varying: 'v_seed'
-      }
-    }
+  // The simulation advances every particle on the GPU each frame...
+  const simulation = new TransformFeedback(gl, {
+    program: new Program(gl, {
+      vertex: simulateVert,
+      fragment: simulateFrag,
+      uniforms: { ...particleScene.uniforms, u_delta },
+      transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_life']
+    }),
+    attributes: {
+      a_position: { data: posData, size: 3, varying: 'v_position' },
+      a_velocity: { data: velData, size: 3, varying: 'v_velocity' },
+      a_life: { data: lifeData, size: 1, varying: 'v_life' }
+    },
+    staticAttributes: { a_seed: seed }
   })
 
+  // ...and the points are drawn from its latest results
   new Mesh(gl, {
     mode: gl.POINTS,
-    geometry: new PointCloud(gl, {
-      particles: N,
-      dimensions: 3,
-      transformFeedbacks: tf
+    geometry: new Geometry(gl, {
+      a_position: simulation.attribute('a_position'),
+      a_life: simulation.attribute('a_life'),
+      a_seed: seed
     }),
-    program: particleProgram
+    program: new Program(gl, {
+      vertex: particlesVert,
+      fragment: particlesFrag,
+      uniforms: { ...particleScene.uniforms },
+      transparent: true,
+      depthWrite: false
+    })
   }).setParent(particleDrawable)
 
   particleScene.onBeforeRender = (delta, rect) => {
     u_delta.value = Math.min(delta * 0.001, 0.05)
+    simulation.step()
     particleCamera.perspective({ aspect: rect.width / rect.height })
     particleCamera.update()
   }

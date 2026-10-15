@@ -23,7 +23,15 @@ export interface ProgramOptions {
   stencil?: StencilOptions | null
   colourWrite?: boolean
   transformFeedbackVaryings?: string[]
+  transformFeedbackBufferMode?: TransformFeedbackBufferMode
 }
+
+/**
+ * How transform feedback writes its varyings: each to its own buffer
+ * (`'separate'`), or all into one buffer, one vertex after another
+ * (`'interleaved'`).
+ */
+export type TransformFeedbackBufferMode = 'separate' | 'interleaved'
 
 /**
  * Stencil test settings for a program. Anything left out uses the WebGL
@@ -165,7 +173,14 @@ export class Program {
 
   #vertex: string
   #fragment: string
-  #transformFeedbackVaryings?: string[]
+  /**
+   * The varyings captured by transform feedback, in buffer order.
+   */
+  readonly transformFeedbackVaryings: readonly string[]
+  /**
+   * How transform feedback writes the varyings.
+   */
+  readonly transformFeedbackBufferMode: TransformFeedbackBufferMode
   // The context generation this program was compiled for
   #contextVersion: number
 
@@ -184,6 +199,8 @@ export class Program {
    * @param depthFunc - The function to use when depth testing
    * @param stencil - The stencil test to apply, if any
    * @param colourWrite - Whether to write colour
+   * @param transformFeedbackVaryings - The varyings to capture with a `TransformFeedback`, in buffer order
+   * @param transformFeedbackBufferMode - Whether the varyings are written to separate buffers or interleaved into one
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -200,7 +217,8 @@ export class Program {
       depthFunc = gl.LESS,
       stencil = null,
       colourWrite = true,
-      transformFeedbackVaryings
+      transformFeedbackVaryings = [],
+      transformFeedbackBufferMode = 'separate'
     }: ProgramOptions
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Program')
@@ -237,7 +255,8 @@ export class Program {
 
     this.#vertex = vertex
     this.#fragment = fragment
-    this.#transformFeedbackVaryings = transformFeedbackVaryings
+    this.transformFeedbackVaryings = transformFeedbackVaryings
+    this.transformFeedbackBufferMode = transformFeedbackBufferMode
     this.#contextVersion = gl.renderer.contextVersion
     this.program = this.#compile()
 
@@ -253,7 +272,7 @@ export class Program {
     const gl = this.gl
     const vertex = this.#vertex
     const fragment = this.#fragment
-    const transformFeedbackVaryings = this.#transformFeedbackVaryings
+    const transformFeedbackVaryings = this.transformFeedbackVaryings
 
     // compile vertex shader and log errors
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)
@@ -289,13 +308,14 @@ export class Program {
     if (vertexShader) gl.attachShader(program, vertexShader)
     if (fragmentShader) gl.attachShader(program, fragmentShader)
 
-    // If we have transformFeedbackVaryings, bind them
-    // TO DO: allow for INTERLEAVED_ATTRIBS as well
-    if (transformFeedbackVaryings)
-      gl.transformFeedbackVaryings?.(
+    // Varyings captured by transform feedback have to be named before linking
+    if (transformFeedbackVaryings.length)
+      gl.transformFeedbackVaryings(
         program,
         transformFeedbackVaryings,
-        gl.SEPARATE_ATTRIBS
+        this.transformFeedbackBufferMode === 'interleaved'
+          ? gl.INTERLEAVED_ATTRIBS
+          : gl.SEPARATE_ATTRIBS
       )
 
     // Finally, link the program and record any errors

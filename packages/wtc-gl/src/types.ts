@@ -273,6 +273,13 @@ export interface WTCGLGeometryAttribute {
    * The WebGL buffer containing the static attribute data.
    */
   buffer: WebGLBuffer | null
+  /**
+   * Whether the buffer is managed by something else, such as a
+   * `TransformFeedback`. Geometry never uploads, recreates or deletes an
+   * external attribute's buffer, and re-points its vertex arrays when the
+   * buffer is swapped.
+   */
+  external?: boolean
 
   /**
    * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others.

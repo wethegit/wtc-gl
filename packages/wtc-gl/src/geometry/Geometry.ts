@@ -7,7 +7,6 @@ import type {
   WTCGLBounds
 } from '../types'
 import { Program } from '../core/Program'
-import { TransformFeedback } from '../core/TransformFeedback'
 
 let ID = 1
 
@@ -25,6 +24,15 @@ const originArrayToVec3 = function (
 
 // The context generation each attribute's buffer was last rebuilt for
 const restoredAttributes = new WeakMap<WTCGLGeometryAttribute, number>()
+
+// Where a vertex array points one attribute, so it can be re-pointed when the
+// attribute's buffer is swapped
+interface AttributeBinding {
+  attr: WTCGLGeometryAttribute
+  location: number
+  type: GLenum
+  buffer: WebGLBuffer | null
+}
 
 /**
  * Class representing some Geometry.
@@ -49,17 +57,13 @@ export class Geometry {
    */
   VAOs: { [key: string]: WebGLVertexArrayObject }
 
-  /**
-   * Any supplied transform feedback objects
-   */
-  transformFeedbacks?: TransformFeedback
-  transformFeedbackIndex: number = 0
-
   // The context generation this geometry's buffers were created for
   #contextVersion: number
   // The renderer's currentGeometry key for each attribute order, built once
   // rather than on every draw
   #geometryKeys: { [attributeOrder: string]: string } = {}
+  // The attribute bindings recorded in each vertex array, by attribute order
+  #bindings: { [attributeOrder: string]: AttributeBinding[] } = {}
 
   /**
    * The range of supplied elements to draw.
@@ -86,8 +90,7 @@ export class Geometry {
    */
   constructor(
     gl: WTCGLRenderingContext,
-    attributes: WTCGLGeometryAttributeCollection = {},
-    transformFeedbacks?: TransformFeedback
+    attributes: WTCGLGeometryAttributeCollection = {}
   ) {
     if (!gl.canvas) console.error('gl not passed as first argument to Geometry')
     this.gl = gl
@@ -95,8 +98,6 @@ export class Geometry {
     this.id = ID++
 
     this.VAOs = {}
-
-    if (transformFeedbacks) this.transformFeedbacks = transformFeedbacks
 
     // Unbind existing VAOs
     this.gl.renderer.bindVertexArray(null)
@@ -125,9 +126,12 @@ export class Geometry {
 
     // The old VAOs belonged to the lost context; they're recreated on draw
     this.VAOs = {}
+    this.#bindings = {}
 
     for (const key in this.attributes) {
       const attr = this.attributes[key]
+      // Whatever owns an external buffer restores it
+      if (attr.external) continue
       // Attributes can be shared between geometries; only rebuild once
       if (restoredAttributes.get(attr) === version) continue
       restoredAttributes.set(attr, version)
@@ -135,8 +139,6 @@ export class Geometry {
       attr.buffer = this.gl.createBuffer()
       attr.updateAttribute(this.gl)
     }
-
-    this.transformFeedbacks?.restoreContext()
   }
 
   /**
@@ -157,7 +159,7 @@ export class Geometry {
         : attr.data.length / attr.size)
     attr.needsUpdate = false
 
-    if (!attr.buffer) {
+    if (!attr.buffer && !attr.external) {
       attr.buffer = this.gl.createBuffer()
 
       // Push data to the buffer
@@ -222,6 +224,8 @@ export class Geometry {
    * @param {Program} program - The program to use to determine attribute locations
    */
   bindAttributes(program: Program): void {
+    const bindings: AttributeBinding[] = []
+
     // Link all attributes to program using gl.vertexAttribPointer
     program.attributeLocations.forEach((location, { name, type }) => {
       // If geometry missing a required shader attribute
@@ -231,36 +235,11 @@ export class Geometry {
       }
 
       const attr = this.attributes[name]
-
-      this.gl.bindBuffer(attr.target, attr.buffer)
-      this.gl.renderer.state.boundBuffer = attr.buffer
-
-      // For matrix attributes, buffer needs to be defined per column
-      let numLoc = 1
-      if (type === 35674) numLoc = 2 // mat2
-      if (type === 35675) numLoc = 3 // mat3
-      if (type === 35676) numLoc = 4 // mat4
-
-      const size = attr.size / numLoc
-      const stride = numLoc === 1 ? 0 : numLoc * numLoc * 4
-      const offset = numLoc === 1 ? 0 : numLoc * 4
-
-      for (let i = 0; i < numLoc; i++) {
-        this.gl.vertexAttribPointer(
-          location + i,
-          size,
-          attr.type,
-          attr.normalized,
-          attr.stride + stride,
-          attr.offset + i * offset
-        )
-        this.gl.enableVertexAttribArray(location + i)
-
-        // For instanced attributes, divisor needs to be set.
-        // For firefox, need to set back to 0 if non-instanced drawn after instanced. Else won't render
-        this.gl.vertexAttribDivisor(location + i, attr.divisor)
-      }
+      this.#pointAttribute(attr, location, type)
+      bindings.push({ attr, location, type, buffer: attr.buffer })
     })
+
+    this.#bindings[program.attributeOrder] = bindings
 
     // Bind indices if geometry indexed
     if (this.attributes.index)
@@ -270,29 +249,42 @@ export class Geometry {
       )
   }
 
-  bindTransformFeedbacks(): void {
-    const transformFeedbacks = this.transformFeedbacks
-    if (!transformFeedbacks) return
+  /**
+   * Point the bound vertex array's attribute at `attr`'s buffer.
+   */
+  #pointAttribute(
+    attr: WTCGLGeometryAttribute,
+    location: number,
+    type: GLenum
+  ): void {
+    this.gl.bindBuffer(attr.target, attr.buffer)
+    this.gl.renderer.state.boundBuffer = attr.buffer
 
-    const i = (this.transformFeedbackIndex + 1) % 2
-    const source = transformFeedbacks.VAOs[this.transformFeedbackIndex]
-    // const dest = transformFeedbacks.VAOs[i]
-    const feedbk = transformFeedbacks.TFBs[i]
-    const buffer = transformFeedbacks.BufferRefs[i]
+    // For matrix attributes, buffer needs to be defined per column
+    let numLoc = 1
+    if (type === 35674) numLoc = 2 // mat2
+    if (type === 35675) numLoc = 3 // mat3
+    if (type === 35676) numLoc = 4 // mat4
 
-    // this.readTFB = source
-    // this.writeTFB = dest
+    const size = attr.size / numLoc
+    const stride = numLoc === 1 ? 0 : numLoc * numLoc * 4
+    const offset = numLoc === 1 ? 0 : numLoc * 4
 
-    this.gl.bindVertexArray(source)
-    this.gl.bindTransformFeedback(this.gl.TRANSFORM_FEEDBACK, feedbk)
+    for (let i = 0; i < numLoc; i++) {
+      this.gl.vertexAttribPointer(
+        location + i,
+        size,
+        attr.type,
+        attr.normalized,
+        attr.stride + stride,
+        attr.offset + i * offset
+      )
+      this.gl.enableVertexAttribArray(location + i)
 
-    for (const i in buffer) {
-      const b = buffer[i]
-
-      this.gl.bindBufferBase(this.gl.TRANSFORM_FEEDBACK_BUFFER, b.i, b.buffer)
+      // For instanced attributes, divisor needs to be set.
+      // For firefox, need to set back to 0 if non-instanced drawn after instanced. Else won't render
+      this.gl.vertexAttribDivisor(location + i, attr.divisor)
     }
-
-    this.transformFeedbackIndex = i
   }
 
   /**
@@ -320,9 +312,14 @@ export class Geometry {
       this.gl.renderer.bindVertexArray(this.VAOs[order], key)
     }
 
-    if (this.transformFeedbacks) {
-      this.bindTransformFeedbacks()
-      this.gl.beginTransformFeedback(mode)
+    // Re-point any attribute whose buffer has been swapped since the vertex
+    // array was built, such as a TransformFeedback output
+    const bindings = this.#bindings[order]
+    for (let i = 0; i < bindings.length; i++) {
+      const binding = bindings[i]
+      if (binding.attr.buffer === binding.buffer) continue
+      this.#pointAttribute(binding.attr, binding.location, binding.type)
+      binding.buffer = binding.attr.buffer
     }
 
     // Check if any attributes need updating. A stored callback, so this
@@ -363,10 +360,6 @@ export class Geometry {
       } else {
         this.gl.drawArrays(mode, this.drawRange.start, this.drawRange.count)
       }
-    }
-
-    if (this.transformFeedbacks) {
-      this.gl.endTransformFeedback()
     }
   }
 
@@ -471,9 +464,11 @@ export class Geometry {
       delete this.VAOs[key]
     }
     for (const key in this.attributes) {
-      this.gl.deleteBuffer(this.attributes[key].buffer)
+      const attr = this.attributes[key]
+      if (!attr.external) this.gl.deleteBuffer(attr.buffer)
       delete this.attributes[key]
     }
+    this.#bindings = {}
     this.gl.renderer.untrack(this)
   }
 }

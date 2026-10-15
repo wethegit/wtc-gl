@@ -16,6 +16,8 @@ import defaultVert from './default.vert'
 import bgFrag from './bg.frag'
 import imageVert from './image.vert'
 import imageFrag from './image.frag'
+import simulateVert from './simulate.vert'
+import simulateFrag from './simulate.frag'
 
 // Renderer. Stays on the default fixed layout: the `.bg-scene` below is a
 // position: fixed element, which is the one case `layout: 'absolute'` makes worse.
@@ -123,68 +125,34 @@ document.querySelectorAll('.blade-img').forEach((imgEl) => {
     kind: 'float_vec2'
   })
 
+  // The cloth simulation: each step springs every vertex back toward its
+  // rest position, pushed around by scrolling and the mouse
+  const restPos = new GeometryAttribute({ size: 2, data: restPositions })
+  const simulation = new TransformFeedback(gl, {
+    program: new Program(gl, {
+      vertex: simulateVert,
+      fragment: simulateFrag,
+      uniforms: { u_delta, u_scrollVel, u_mouse },
+      transformFeedbackVaryings: ['v_position', 'v_velocity']
+    }),
+    attributes: {
+      a_position: { data: positions, size: 2, varying: 'v_position' },
+      a_velocity: { data: velocities, size: 2, varying: 'v_velocity' }
+    },
+    staticAttributes: { a_restPos: restPos }
+  })
+
+  // The image, drawn from the simulated positions
+  const geometry = new Geometry(gl, {
+    a_position: simulation.attribute('a_position'),
+    a_restPos: restPos
+  })
   const program = new Program(gl, {
     vertex: imageVert,
     fragment: imageFrag,
-    uniforms: { ...scene.uniforms, u_delta, u_scrollVel, u_mouse },
-    transformFeedbackVaryings: ['v_position', 'v_velocity'],
+    uniforms: { ...scene.uniforms, u_mouse },
     transparent: true
   })
-
-  const tf = new TransformFeedback(gl, {
-    program: program.program,
-    transformFeedbacks: {
-      a_position: {
-        data: positions,
-        size: 2,
-        usage: gl.STREAM_COPY,
-        varying: 'v_position'
-      },
-      a_velocity: {
-        data: velocities,
-        size: 2,
-        usage: gl.STREAM_COPY,
-        varying: 'v_velocity'
-      }
-    }
-  })
-
-  // a_restPos is constant, add it to both TF VAOs at layout location 2. It
-  // isn't part of the TransformFeedback, so it's registered with the renderer
-  // to be added again if the WebGL context is lost and restored.
-  const restPos = {
-    restoreContext() {
-      // Make sure the feedback's VAOs have been rebuilt first
-      tf.restoreContext()
-
-      const restPosBuf = gl.createBuffer()
-      gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
-      gl.bufferData(gl.ARRAY_BUFFER, restPositions, gl.STATIC_DRAW)
-      tf.VAOs.forEach((vao) => {
-        gl.bindVertexArray(vao)
-        gl.bindBuffer(gl.ARRAY_BUFFER, restPosBuf)
-        gl.enableVertexAttribArray(2)
-        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0)
-      })
-      gl.bindVertexArray(null)
-      gl.bindBuffer(gl.ARRAY_BUFFER, null)
-    }
-  }
-  restPos.restoreContext()
-  gl.renderer.track(restPos)
-  // The renderer only holds tracked resources weakly, so keep a reference
-  scene.restPos = restPos
-
-  // Create the custom plane geo
-  const geometry = new Geometry(
-    gl,
-    {
-      a_position: new GeometryAttribute({ size: 2, data: positions }),
-      a_velocity: new GeometryAttribute({ size: 2, data: velocities }),
-      a_restPos: new GeometryAttribute({ size: 2, data: restPositions })
-    },
-    tf
-  )
 
   new Mesh(gl, { geometry, program }).setParent(drawable)
 
@@ -212,6 +180,7 @@ document.querySelectorAll('.blade-img').forEach((imgEl) => {
     u_delta.value = delta
     u_scrollVel.value = scrollVelG
     u_mouse.value = smoothMouse
+    simulation.step()
   }
 
   renderer.addScene(scene)
