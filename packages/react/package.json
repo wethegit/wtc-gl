@@ -28,11 +28,11 @@
     "wtc-gl": "workspace:^"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "react": "^19.0.0",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
     "typescript": "~6.0.3",
-    "vite": "^8.0.0",
-    "vite-plugin-dts": "~5.0.0",
+    "vite": "^8.3.4",
+    "vite-plugin-dts": "~5.1.2",
     "wtc-gl": "workspace:*"
   },
   "repository": {
