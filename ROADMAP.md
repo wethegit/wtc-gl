@@ -54,10 +54,10 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 - `Texture.update` uses the 9-argument `texImage2D(…, image)` form, which only exists in WebGL2, so WebGL1 would throw.
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
-- [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
+- [x] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
 - [x] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, `uint`/`uvec*` and the non-square matrices.
-- [ ] Support `INTERLEAVED_ATTRIBS` transform feedback (there's already a TODO in `Program.ts`).
-- [ ] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`).
+- [x] Support `INTERLEAVED_ATTRIBS` transform feedback (`Program`'s `transformFeedbackBufferMode`).
+- [x] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`). It's now a standalone simulation: `step()` runs it without drawing, and `attribute(name)` feeds the results to any geometry, optionally per instance. See the `swarm` demo.
 
 ### Fewer allocations per frame
 
@@ -186,6 +186,7 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
    - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
+   - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
 8. **Instancing helpers.** Moved to Phase 6 (Interaction).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
 10. **React parity.** `packages/react` only covers ScrollRenderer. Add:
