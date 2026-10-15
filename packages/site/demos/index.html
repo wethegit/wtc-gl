@@ -145,7 +145,7 @@
           <div class="demo__body">
             <div class="demo__classes">
               <span class="demo__class">TransformFeedback</span>
-              <span class="demo__class">PointCloud</span>
+              <span class="demo__class">Geometry</span>
               <span class="demo__class">Camera</span>
             </div>
             <h3>GPU particle simulation</h3>
@@ -156,6 +156,34 @@
               each frame - zero CPU involvement per particle.
             </p>
             <a class="btn" href="./transform-feedback/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/swarm.jpg"
+              alt="A swarm of thousands of arrows gathering around the pointer"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">TransformFeedback</span>
+              <span class="demo__class">Geometry</span>
+              <span class="demo__class">Program</span>
+            </div>
+            <h3>Swarm</h3>
+            <p>
+              8,192 agents chase the pointer through a flow field. One
+              <code>TransformFeedback</code> simulation is stepped several times
+              a frame without drawing, then drawn twice from the same buffers:
+              as instanced arrows pointing along each agent's velocity, and as
+              an additive glow. Position and velocity are captured interleaved,
+              each agent's seed is a static attribute, and Reset restarts the
+              simulation.
+            </p>
+            <a class="btn" href="./swarm/">Open demo →</a>
           </div>
         </div>
 

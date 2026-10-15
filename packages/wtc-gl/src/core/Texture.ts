@@ -2,10 +2,6 @@ import type { WTCGLTextureState, WTCGLRenderingContext } from '../types'
 
 const emptyPixel = new Uint8Array(4)
 
-function isPowerOf2(value: number) {
-  return (value & (value - 1)) === 0
-}
-
 let ID = 1
 
 /**
@@ -102,7 +98,7 @@ export class Texture {
    */
   target: GLenum
   /**
-   * The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
    * @default gl.UNSIGNED_BYTE
    */
   type: GLenum
@@ -189,7 +185,7 @@ export class Texture {
    * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
    * @param __namedParameters - The parameters to initialise the renderer.
    * @param target - The binding point for the frame buffers.
-   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
    * @param format - The texture format.
    * @param internalFormat - the texture internalFormat.
    * @param wrapS - Wrapping
@@ -371,12 +367,15 @@ export class Texture {
     }
 
     if (this.anisotropy && this.anisotropy !== this.state.anisotropy) {
-      this.gl.texParameterf(
-        this.target,
-        this.gl.renderer.getExtension('EXT_texture_filter_anisotropic')
-          .TEXTURE_MAX_ANISOTROPY_EXT,
-        this.anisotropy
+      const ext = this.gl.renderer.getExtension(
+        'EXT_texture_filter_anisotropic'
       )
+      if (ext)
+        this.gl.texParameterf(
+          this.target,
+          ext.TEXTURE_MAX_ANISOTROPY_EXT,
+          this.anisotropy
+        )
       this.state.anisotropy = this.anisotropy
     }
 
@@ -442,21 +441,7 @@ export class Texture {
         )
       }
 
-      if (this.generateMipmaps) {
-        // For WebGL1, if not a power of 2, turn off mips, set wrapping to clamp to edge and minFilter to linear
-        if (
-          !this.gl.renderer.isWebgl2 &&
-          this.image &&
-          !Array.isArray(this.image) &&
-          (!isPowerOf2(this.image.width) || !isPowerOf2(this.image.height))
-        ) {
-          this.generateMipmaps = false
-          this.wrapS = this.wrapT = this.gl.CLAMP_TO_EDGE
-          this.minFilter = this.gl.LINEAR
-        } else {
-          this.gl.generateMipmap(this.target)
-        }
-      }
+      if (this.generateMipmaps) this.gl.generateMipmap(this.target)
     } else {
       if (this.target === this.gl.TEXTURE_CUBE_MAP) {
         // Upload empty pixel for each side while no image to avoid errors while image or video loading

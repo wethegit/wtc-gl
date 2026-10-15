@@ -5,12 +5,13 @@ import {
   Program,
   Mesh,
   Uniform,
-  PointCloud,
-  GeometryAttribute,
+  Geometry,
   Camera,
   Vec2
 } from 'wtc-gl'
 
+import simulateVertex from './simulate.vert'
+import simulateFragment from './simulate.frag'
 import vertex from './particles.vert'
 import fragment from './particle.frag'
 
@@ -32,8 +33,6 @@ class TFParticles {
 
   references
   properties
-
-  cloud
 
   lastTime = 0
   timeMultiplier = 1
@@ -83,7 +82,7 @@ class TFParticles {
 
     this.scene = new Obj()
 
-    this.createPointCloud()
+    this.createParticles()
 
     this.playing = false
 
@@ -93,7 +92,7 @@ class TFParticles {
     this.resize()
   }
 
-  createPointCloud() {
+  createParticles() {
     this.position = new Float32Array(this.numParticles * this.simDimensions)
     this.velocity = new Float32Array(this.numParticles * this.simDimensions)
     this.properties = new Float32Array(this.numParticles * 4)
@@ -116,58 +115,46 @@ class TFParticles {
       this.properties[i + 3] = Math.random() * Math.random()
     }
 
-    const particleProgram = new Program(this.gl, {
-      vertex,
-      fragment,
-      uniforms: this.uniforms,
-      transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_properties']
-    })
-
-    this.transformFeedbacks = new TransformFeedback(this.gl, {
-      program: particleProgram.program,
-      transformFeedbacks: {
+    // Each frame, the simulation advances every particle on the GPU...
+    this.simulation = new TransformFeedback(this.gl, {
+      program: new Program(this.gl, {
+        vertex: simulateVertex,
+        fragment: simulateFragment,
+        uniforms: this.uniforms,
+        transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_properties']
+      }),
+      attributes: {
         a_position: {
           data: this.position,
           size: this.simDimensions,
-          usage: this.gl.STREAM_COPY,
           varying: 'v_position'
         },
         a_velocity: {
           data: this.velocity,
           size: this.simDimensions,
-          usage: this.gl.STREAM_COPY,
           varying: 'v_velocity'
         },
         a_properties: {
           data: this.properties,
           size: 4,
-          usage: this.gl.STREAM_COPY,
           varying: 'v_properties'
         }
       }
     })
 
-    let positions = this.position
-    const cloud = new PointCloud(this.gl, {
-      fillFunction: (points, dimensions) => {
-        for (let i = 0; i < points.length; i++) {
-          points[i] = positions[i]
-        }
-      },
-      particles: this.numParticles,
-      dimensions: this.simDimensions,
-      attributes: {
-        position: new GeometryAttribute({ size: 2, data: this.position })
-      },
-      transformFeedbacks: this.transformFeedbacks
-    })
-
+    // ...and the particles are drawn from its latest results
     this.particleMesh = new Mesh(this.gl, {
       mode: this.gl.POINTS,
-      geometry: cloud,
-      program: particleProgram
+      geometry: new Geometry(this.gl, {
+        a_position: this.simulation.attribute('a_position'),
+        a_properties: this.simulation.attribute('a_properties')
+      }),
+      program: new Program(this.gl, {
+        vertex,
+        fragment,
+        uniforms: this.uniforms
+      })
     })
-    // this.particleMesh.setParent(this.scene)
   }
 
   render(t) {
@@ -194,6 +181,7 @@ class TFParticles {
     //gl.blendEquation(gl.FUNC_ADD)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+    this.simulation.step()
     this.renderer.render({
       scene: this.particleMesh,
       camera: this.camera,

@@ -54,10 +54,10 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 - `Texture.update` uses the 9-argument `texImage2D(…, image)` form, which only exists in WebGL2, so WebGL1 would throw.
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
-- [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
+- [x] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
 - [x] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, `uint`/`uvec*` and the non-square matrices.
-- [ ] Support `INTERLEAVED_ATTRIBS` transform feedback (there's already a TODO in `Program.ts`).
-- [ ] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`).
+- [x] Support `INTERLEAVED_ATTRIBS` transform feedback (`Program`'s `transformFeedbackBufferMode`).
+- [x] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`). It's now a standalone simulation: `step()` runs it without drawing, and `attribute(name)` feeds the results to any geometry, optionally per instance. See the `swarm` demo.
 
 ### Fewer allocations per frame
 
@@ -67,7 +67,7 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 - [x] Update matrices in place in `Obj.updateMatrix` / `updateMatrixWorld`.
 - [x] Reuse the frustum planes in `Camera.updateFrustum`.
 - [x] Stop allocating in `Renderer.render` and `ScrollRenderer.render`: the viewport `Vec2`s, the `resize()` read every frame, and the render-list arrays. (`resize()` no longer allocates, but still reads the canvas size each frame to catch changes the ResizeObserver hasn't reported yet.)
-- [ ] Fix allocation upstream in wtc-math, then remove wtc-gl's workarounds (likely for the next major version). wtc-math's "in place" methods still allocate: `multiply` and `invert` clone first, `invert` and `determinant` build intermediate objects, and `.array`, `.translation` and `Quat.fromEuler` return new objects. Its components are also stored in private fields behind getters and setters, which makes V8 box doubles in code that isn't optimised. Once wtc-math has truly in-place operations (e.g. `multiply(a, b, out)`, `invert(out)`, `fromRotationTranslationScale(..., out)`, `toArray(out)`), replace the copied formulas in `src/core/matrix.ts` with calls to it and delete that file. `test/allocations.test.ts` should keep passing throughout.
+- [ ] Fix allocation upstream in wtc-math, then remove wtc-gl's workarounds (likely for the next major version). wtc-math's "in place" methods still allocate: `multiply` and `invert` clone first, `invert` and `determinant` build intermediate objects, and `.array`, `.translation` and `Quat.fromEuler` return new objects. Its components are also stored in private fields behind getters and setters, which makes V8 box doubles in code that isn't optimised. Once wtc-math has truly in-place operations (e.g. `multiply(a, b, out)`, `invert(out)`, `fromRotationTranslationScale(..., out)`, `toArray(out)`), replace the copied formulas in `src/core/matrix.ts` with calls to it and delete that file. `test/allocations.test.ts` should keep passing throughout. wtc-math 1.4.0 ships its own type declarations, so wtc-gl's `types/wtc-math.d.ts` shim is gone, but it has no in-place operations yet, so `matrix.ts` stays.
 
 ## Phase 5 — Smaller improvements
 
@@ -186,6 +186,7 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
    - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
+   - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
 8. **Instancing helpers.** Moved to Phase 6 (Interaction).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
 10. **React parity.** `packages/react` only covers ScrollRenderer. Add:

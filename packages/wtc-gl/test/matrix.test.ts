@@ -102,7 +102,7 @@ describe('allocation-free matrix helpers', () => {
       const m = randomTransform()
       const out = new Mat3()
       expect(normalMatrix(out, m)).toBe(true)
-      expectSame(out, Mat3.fromMat4(m))
+      expectSame(out, Mat3.fromMat4(m)!)
     }
     const out = new Mat3()
     expect(
@@ -130,7 +130,7 @@ describe('allocation-free matrix helpers', () => {
     expect([...writeMat4(m4, new Float32Array(16))]).toEqual(
       m4.array.map(Math.fround)
     )
-    const m3 = Mat3.fromMat4(randomTransform())
+    const m3 = Mat3.fromMat4(randomTransform())!
     expect([...writeMat3(m3, new Float32Array(9))]).toEqual(
       m3.array.map(Math.fround)
     )

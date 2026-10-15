@@ -20,6 +20,10 @@ export interface FramebufferOptions {
 export class Framebuffer {
   static TEXTYPE_FLOAT = 0
   static TEXTYPE_UNSIGNED_BYTE = 1
+  static TEXTYPE_HALF_FLOAT = 2
+  /**
+   * @deprecated Use `TEXTYPE_HALF_FLOAT`.
+   */
   static TEXTYPE_HALF_FLOAT_OES = 2
   static IMAGETYPE_REGULAR = 0
   static IMAGETYPE_TILING = 1
@@ -164,12 +168,8 @@ export class Framebuffer {
         return this.gl.FLOAT
       case Framebuffer.TEXTYPE_UNSIGNED_BYTE:
         return this.gl.UNSIGNED_BYTE
-      case Framebuffer.TEXTYPE_HALF_FLOAT_OES: {
-        const e = this.gl.getExtension('OES_texture_half_float')
-        // console.log(e.HALF_FLOAT_OES)
-        // t = this.renderer.isWebgl2 ? this.ctx.HALF_FLOAT : e.HALF_FLOAT_OES;
-        return e?.HALF_FLOAT_OES || this.gl.HALF_FLOAT
-      }
+      case Framebuffer.TEXTYPE_HALF_FLOAT:
+        return this.gl.HALF_FLOAT
     }
   }
 
@@ -235,7 +235,7 @@ export class Framebuffer {
       [
         Framebuffer.TEXTYPE_FLOAT,
         Framebuffer.TEXTYPE_UNSIGNED_BYTE,
-        Framebuffer.TEXTYPE_HALF_FLOAT_OES
+        Framebuffer.TEXTYPE_HALF_FLOAT
       ].indexOf(value) > -1
     )
       this.#texdepth = value

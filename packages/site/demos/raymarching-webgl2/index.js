@@ -14,7 +14,7 @@ import {
 import vertex from './main.vert'
 import fragment from './main.frag'
 
-const renderer = new Renderer({ autoClear: true, dpr: 2, webgl: 2 })
+const renderer = new Renderer({ autoClear: true, dpr: 2 })
 const gl = renderer.gl
 document.body.appendChild(gl.canvas)
 renderer.clearColour = [0, 0.05, 0.1, 1]
