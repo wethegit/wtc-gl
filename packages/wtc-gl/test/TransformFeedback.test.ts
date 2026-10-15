@@ -99,6 +99,17 @@ describe('TransformFeedback', () => {
           attributes: attributes()
         })
     ).toThrow(/a_velocity \(v_velocity\) not in the program's varyings/)
+
+    expect(
+      () =>
+        new TransformFeedback(gl, {
+          program: simProgram(),
+          attributes: {
+            ...attributes(),
+            a_start: { ...attributes().a_position }
+          }
+        })
+    ).toThrow(/More than one attribute captures v_position/)
   })
 
   it('throws when an attribute has too little data', () => {

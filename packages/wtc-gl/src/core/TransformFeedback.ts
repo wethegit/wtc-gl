@@ -167,14 +167,22 @@ export class TransformFeedback {
     const unknown = names.filter(
       (name) => !varyings.includes(attributes[name].varying)
     )
-    if (missing.length || unknown.length)
+    // Each varying is captured into exactly one attribute
+    const duplicates = varyings.filter(
+      (varying) =>
+        names.filter((name) => attributes[name].varying === varying).length > 1
+    )
+    if (missing.length || unknown.length || duplicates.length)
       throw new Error(
         "TransformFeedback attributes must match the program's transformFeedbackVaryings. " +
           (missing.length
             ? `No attribute captures ${missing.join(', ')}. `
             : '') +
           (unknown.length
-            ? `${unknown.map((name) => `${name} (${attributes[name].varying})`).join(', ')} not in the program's varyings.`
+            ? `${unknown.map((name) => `${name} (${attributes[name].varying})`).join(', ')} not in the program's varyings. `
+            : '') +
+          (duplicates.length
+            ? `More than one attribute captures ${duplicates.join(', ')}.`
             : '')
       )
 

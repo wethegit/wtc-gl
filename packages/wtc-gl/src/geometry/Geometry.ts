@@ -64,6 +64,8 @@ export class Geometry {
   #geometryKeys: { [attributeOrder: string]: string } = {}
   // The attribute bindings recorded in each vertex array, by attribute order
   #bindings: { [attributeOrder: string]: AttributeBinding[] } = {}
+  // The index buffer recorded in each vertex array, by attribute order
+  #indexBuffers: { [attributeOrder: string]: WebGLBuffer | null } = {}
 
   /**
    * The range of supplied elements to draw.
@@ -127,6 +129,7 @@ export class Geometry {
     // The old VAOs belonged to the lost context; they're recreated on draw
     this.VAOs = {}
     this.#bindings = {}
+    this.#indexBuffers = {}
 
     for (const key in this.attributes) {
       const attr = this.attributes[key]
@@ -214,10 +217,7 @@ export class Geometry {
    */
   createVAO(program: Program): void {
     // The reason for keying it using the program's attributeOrder is in order to make sure that we're using the appropriate vertex array if we're sharing this geometry between multiple programs
-    const vao = this.gl.createVertexArray()
-    if (!vao) throw new Error('Unable to create a vertex array object')
-
-    this.VAOs[program.attributeOrder] = vao
+    this.VAOs[program.attributeOrder] = this.gl.createVertexArray()!
     this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
     this.bindAttributes(program)
   }
@@ -245,11 +245,11 @@ export class Geometry {
     this.#bindings[program.attributeOrder] = bindings
 
     // Bind indices if geometry indexed
-    if (this.attributes.index)
-      this.gl.bindBuffer(
-        this.gl.ELEMENT_ARRAY_BUFFER,
-        this.attributes.index.buffer
-      )
+    if (this.attributes.index) {
+      const { buffer } = this.attributes.index
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer)
+      this.#indexBuffers[program.attributeOrder] = buffer
+    }
   }
 
   /**
@@ -325,12 +325,19 @@ export class Geometry {
       binding.buffer = binding.attr.buffer
     }
 
+    // The vertex array records the index buffer too, so re-bind it if it's
+    // been swapped
+    const index = this.attributes.index
+    if (index && index.buffer !== this.#indexBuffers[order]) {
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, index.buffer)
+      this.#indexBuffers[order] = index.buffer
+    }
+
     // Check if any attributes need updating. A stored callback, so this
     // doesn't allocate a closure on every draw.
     program?.attributeLocations.forEach(this.#updateAttribute)
 
     // drawRange.start counts indices; the draw call needs a byte offset
-    const index = this.attributes.index
     const indexOffset = index
       ? index.offset + this.drawRange.start * index.data.BYTES_PER_ELEMENT
       : 0
@@ -476,6 +483,7 @@ export class Geometry {
       delete this.attributes[key]
     }
     this.#bindings = {}
+    this.#indexBuffers = {}
     this.gl.renderer.untrack(this)
   }
 }

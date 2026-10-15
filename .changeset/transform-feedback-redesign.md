@@ -64,7 +64,7 @@ simulation.step()
 
 - **`program`** must be a `Program`. A raw `WebGLProgram` is no longer accepted.
 - **`transformFeedbacks` is renamed `attributes`.** Its per-attribute `type`, `normalize`, `stride`, `offset`, `buffer`, `usage` and `buffertype` options are gone. Attributes are `Float32Array` data, and a single `usage` option (default `gl.DYNAMIC_COPY`) covers all of them.
-- **The attributes must match the program's `transformFeedbackVaryings` exactly.** The constructor throws if a varying has no attribute or an attribute's varying isn't captured.
+- **The attributes must match the program's `transformFeedbackVaryings` exactly.** The constructor throws if a varying has no attribute, more than one attribute, or an attribute's varying isn't captured.
 - **Values that never change**, like a seed that was fed straight back each frame, should move to `staticAttributes`.
 - **`VAOs`, `TFBs` and `BufferRefs` are gone.** Use `attribute(name)` to read the results.
 - **`Geometry`** no longer takes a transform feedback as its third argument, and loses `transformFeedbacks`, `transformFeedbackIndex` and `bindTransformFeedbacks()`.

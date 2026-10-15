@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
-import type { Program } from '../src/core/Program'
+import { Program } from '../src/core/Program'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 const position = (data: number[], size = 3) =>
@@ -103,16 +103,33 @@ describe('Geometry bounds', () => {
 })
 
 describe('Geometry VAOs', () => {
-  it('throws when a vertex array object cannot be created', () => {
-    const { gl } = createMockRenderer({
-      createVertexArray: vi.fn(() => null)
+  it('re-binds an index buffer swapped after the vertex array was built', () => {
+    const { gl } = createMockRenderer()
+    const first = {}
+    const index = new GeometryAttribute({
+      size: 1,
+      data: new Uint16Array([0, 1, 2]),
+      buffer: first as WebGLBuffer,
+      external: true
     })
-    const geometry = new Geometry(gl)
-    const program = { attributeOrder: 'test' } as Program
+    const geometry = new Geometry(gl, { index })
+    const program = new Program(gl, { vertex: '', fragment: '' })
+    const indexBinds = () =>
+      vi
+        .mocked(gl.bindBuffer)
+        .mock.calls.filter(([target]) => target === gl.ELEMENT_ARRAY_BUFFER)
+        .map(([, buffer]) => buffer)
 
-    expect(() => geometry.createVAO(program)).toThrow(
-      'Unable to create a vertex array object'
-    )
-    expect(geometry.VAOs.test).toBeUndefined()
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(indexBinds()).toEqual([first])
+
+    vi.mocked(gl.bindBuffer).mockClear()
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(indexBinds()).toEqual([])
+
+    const second = {} as WebGLBuffer
+    index.buffer = second
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(indexBinds()).toEqual([second])
   })
 })
