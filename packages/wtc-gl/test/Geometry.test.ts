@@ -87,4 +87,16 @@ describe('Geometry bounds', () => {
     expect(geometry.bounds).toBeUndefined()
     warn.mockRestore()
   })
+
+  it("doesn't measure an external position", () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const attr = position([1, 2, 3, 4, 5, 6])
+    attr.external = true
+    const geometry = new Geometry(gl, { position: attr })
+
+    geometry.computeBoundingBox()
+    geometry.computeBoundingSphere()
+    expect(geometry.bounds).toBeUndefined()
+    warn.mockRestore()
+  })
 })

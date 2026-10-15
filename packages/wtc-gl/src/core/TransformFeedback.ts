@@ -307,7 +307,9 @@ export class TransformFeedback {
   /**
    * An attribute holding the simulation's latest values, to add to any
    * geometry. Its buffer follows the results after each `step()`, and
-   * repeat calls with the same options return the same object.
+   * repeat calls with the same options return the same object. Its values
+   * live on the GPU, so a mesh using it as `position` isn't frustum culled
+   * unless you set `geometry.bounds` yourself.
    * @param name - The attribute's name, as passed in `attributes`.
    * @param options - `instanced` makes it a per-instance attribute that
    * advances once every `instanced` instances, e.g. to draw one instanced

@@ -369,10 +369,14 @@ export class Geometry {
    */
   getPosition(): WTCGLGeometryAttribute | undefined {
     const attr = this.attributes.position
-    if (attr?.data) return attr
+    // An external attribute's data is only its starting values, so it can't
+    // be measured
+    if (attr?.data && !attr.external) return attr
     if (isBoundsWarned) return
     isBoundsWarned = true
-    console.warn('No position buffer data found to compute bounds')
+    console.warn(
+      'No position data to compute bounds from (external positions must be given bounds explicitly)'
+    )
     return
   }
 

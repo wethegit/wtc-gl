@@ -294,11 +294,17 @@ export class Camera extends Obj {
    */
   frustumIntersects(node: Drawable): boolean {
     if (node instanceof Mesh) {
+      const position = node.geometry.attributes.position
       // If no position attribute, treat as frustumCulled false
-      if (!node.geometry.attributes.position) return true
+      if (!position) return true
 
-      if (!node.geometry.bounds || node.geometry.bounds.radius === Infinity)
+      if (!node.geometry.bounds || node.geometry.bounds.radius === Infinity) {
+        // An external position's values live on the GPU, such as a
+        // TransformFeedback output, so they can't be measured. Only cull it
+        // against bounds that were set explicitly.
+        if (position.external) return true
         node.geometry.computeBoundingSphere()
+      }
 
       if (!node.geometry.bounds) return true
 

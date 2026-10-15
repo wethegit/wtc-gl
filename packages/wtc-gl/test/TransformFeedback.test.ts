@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Vec3 } from 'wtc-math'
 
+import { Camera } from '../src/core/Camera'
+import { Mesh } from '../src/core/Mesh'
 import { Program, type ProgramOptions } from '../src/core/Program'
 import { TransformFeedback } from '../src/core/TransformFeedback'
 import { Geometry } from '../src/geometry/Geometry'
@@ -280,6 +283,35 @@ describe('TransformFeedback', () => {
     vi.mocked(gl.deleteBuffer).mockClear()
     geometry.remove()
     expect(gl.deleteBuffer).not.toHaveBeenCalled()
+  })
+
+  it("isn't frustum culled unless given bounds", () => {
+    const tf = new TransformFeedback(gl, {
+      program: simProgram(),
+      attributes: attributes()
+    })
+    const geometry = new Geometry(gl, { position: tf.attribute('a_position') })
+    const mesh = new Mesh(gl, { geometry, program: program(['position'], {}) })
+    // Far outside the camera's view
+    mesh.position.x = 1000
+    mesh.updateMatrixWorld()
+    const camera = new Camera({ fov: 60, aspect: 1, near: 0.1, far: 100 })
+    camera.position.z = 10
+    camera.updateMatrixWorld()
+    camera.updateFrustum()
+
+    // The positions live on the GPU, so they can't be measured
+    expect(camera.frustumIntersects(mesh)).toBe(true)
+    expect(geometry.bounds).toBeUndefined()
+
+    geometry.bounds = {
+      min: new Vec3(-1, -1, -1),
+      max: new Vec3(1, 1, 1),
+      center: new Vec3(),
+      scale: new Vec3(2, 2, 2),
+      radius: Math.sqrt(3)
+    }
+    expect(camera.frustumIntersects(mesh)).toBe(false)
   })
 
   it('hands out instanced attributes that follow the results too', () => {

@@ -54,7 +54,8 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
    * Whether the buffer is managed by something else, such as a
    * `TransformFeedback`. Geometry never uploads, recreates or deletes an
    * external attribute's buffer, and re-points its vertex arrays when the
-   * buffer is swapped.
+   * buffer is swapped. Bounds aren't computed from an external position, so
+   * a mesh using one isn't frustum culled unless you set `geometry.bounds`.
    */
   external: boolean = false
 

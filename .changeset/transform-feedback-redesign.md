@@ -11,7 +11,7 @@ New:
 - **`reset()`** starts the simulation again from the attributes' `data`.
 - **Instanced outputs.** `attribute(name, { instanced: 1 })` returns a per-instance version of an output, for example to draw one instanced shape per simulated vertex. Each option set gets its own attribute, and they all follow the latest results.
 - **Attribute locations come from the linked program**, so simulation shaders no longer need `layout(location = …)`.
-- **`GeometryAttribute` takes `buffer` and `external` options.** An external attribute's buffer is managed elsewhere: `Geometry` never uploads, recreates or deletes it, and re-points its vertex arrays when the buffer is swapped.
+- **`GeometryAttribute` takes `buffer` and `external` options.** An external attribute's buffer is managed elsewhere: `Geometry` never uploads, recreates or deletes it, and re-points its vertex arrays when the buffer is swapped. Bounds aren't computed from an external `position`, since its values live on the GPU, so a mesh using one isn't frustum culled unless you set `geometry.bounds` yourself.
 - **`Program.transformFeedbackVaryings` and `Program.transformFeedbackBufferMode`** are now public and read-only.
 
 **Migrating**
