@@ -214,7 +214,10 @@ export class Geometry {
    */
   createVAO(program: Program): void {
     // The reason for keying it using the program's attributeOrder is in order to make sure that we're using the appropriate vertex array if we're sharing this geometry between multiple programs
-    this.VAOs[program.attributeOrder] = this.gl.createVertexArray()
+    const vao = this.gl.createVertexArray()
+    if (!vao) throw new Error('Unable to create a vertex array object')
+
+    this.VAOs[program.attributeOrder] = vao
     this.gl.renderer.bindVertexArray(this.VAOs[program.attributeOrder])
     this.bindAttributes(program)
   }

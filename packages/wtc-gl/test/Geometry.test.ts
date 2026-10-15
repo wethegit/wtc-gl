@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
+import type { Program } from '../src/core/Program'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 const position = (data: number[], size = 3) =>
@@ -98,5 +99,20 @@ describe('Geometry bounds', () => {
     geometry.computeBoundingSphere()
     expect(geometry.bounds).toBeUndefined()
     warn.mockRestore()
+  })
+})
+
+describe('Geometry VAOs', () => {
+  it('throws when a vertex array object cannot be created', () => {
+    const { gl } = createMockRenderer({
+      createVertexArray: vi.fn(() => null)
+    })
+    const geometry = new Geometry(gl)
+    const program = { attributeOrder: 'test' } as Program
+
+    expect(() => geometry.createVAO(program)).toThrow(
+      'Unable to create a vertex array object'
+    )
+    expect(geometry.VAOs.test).toBeUndefined()
   })
 })
