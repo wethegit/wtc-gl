@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Mat4, Quat, Vec3 } from 'wtc-math'
 
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
@@ -375,5 +376,166 @@ describe('Geometry.addAttribute', () => {
 
     expect(gl.deleteVertexArray).not.toHaveBeenCalled()
     expect(gl.createVertexArray).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('Geometry.applyMatrix', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const compose = (
+    rotation = new Quat(0, 0, 0, 1),
+    translation = new Vec3(0, 0, 0),
+    scale = new Vec3(1, 1, 1)
+  ) => Mat4.fromRotationTranslationScale(rotation, translation, scale)
+
+  const normal = (data: number[]) =>
+    new GeometryAttribute({ size: 3, data: new Float32Array(data) })
+
+  const expectCloseTo = (actual: ArrayLike<number>, expected: number[]) => {
+    expect(actual.length).toBe(expected.length)
+    expected.forEach((value, i) => expect(actual[i]).toBeCloseTo(value))
+  }
+
+  it('translates positions and leaves normals alone', () => {
+    const geometry = new Geometry(gl, {
+      position: position(quadPositions),
+      normal: normal([0, 0, 1, 0, 0, 1, 0, 0, 1])
+    })
+    geometry.applyMatrix(compose(undefined, new Vec3(1, 2, 3)))
+
+    const { position: p, normal: n } = geometry.attributes
+    expectCloseTo(p.data, [1, 2, 3, 2, 2, 3, 1, 3, 3])
+    expectCloseTo(n.data, [0, 0, 1, 0, 0, 1, 0, 0, 1])
+    expect(p.needsUpdate).toBe(true)
+    expect(n.needsUpdate).toBe(true)
+  })
+
+  it('rotates positions and normals', () => {
+    const geometry = new Geometry(gl, {
+      position: position([1, 0, 0]),
+      normal: normal([1, 0, 0])
+    })
+    const half = Math.SQRT1_2
+    geometry.applyMatrix(compose(new Quat(0, 0, half, half)))
+
+    expectCloseTo(geometry.attributes.position.data, [0, 1, 0])
+    expectCloseTo(geometry.attributes.normal.data, [0, 1, 0])
+  })
+
+  it('transforms normals by the inverse transpose and re-normalises them', () => {
+    const n = Math.SQRT1_2
+    const geometry = new Geometry(gl, {
+      position: position(quadPositions),
+      normal: normal([n, n, 0, n, n, 0, n, n, 0])
+    })
+    geometry.applyMatrix(compose(undefined, undefined, new Vec3(2, 1, 1)))
+
+    const s = Math.sqrt(5)
+    expectCloseTo(geometry.attributes.normal.data, [
+      1 / s,
+      2 / s,
+      0,
+      1 / s,
+      2 / s,
+      0,
+      1 / s,
+      2 / s,
+      0
+    ])
+  })
+
+  it('writes back only x and y of 2D positions', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 1, 0, 0, 1], 2)
+    })
+    geometry.applyMatrix(compose(undefined, new Vec3(1, 2, 3)))
+    expectCloseTo(geometry.attributes.position.data, [1, 2, 2, 2, 1, 3])
+  })
+
+  it('transforms interleaved positions and normals', () => {
+    // Interleaved [x, y, z, nx, ny, nz] floats: stride 24 bytes
+    const data = new Float32Array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0])
+    const geometry = new Geometry(gl, {
+      position: new GeometryAttribute({ size: 3, stride: 24, data }),
+      normal: new GeometryAttribute({ size: 3, stride: 24, offset: 12, data })
+    })
+    const half = Math.SQRT1_2
+    geometry.applyMatrix(compose(new Quat(0, 0, half, half)))
+
+    expectCloseTo(data, [0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0])
+  })
+
+  it('reverses the winding of mirrored indexed geometry', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0]),
+      index: new GeometryAttribute({
+        data: new Uint16Array([0, 1, 2, 0, 2, 3])
+      })
+    })
+    geometry.computeVertexNormals()
+    geometry.applyMatrix(compose(undefined, undefined, new Vec3(-1, 1, 1)))
+
+    const index = geometry.attributes.index
+    expect(Array.from(index.data)).toEqual([0, 2, 1, 0, 3, 2])
+    expect(index.needsUpdate).toBe(true)
+
+    // Recomputing from the new winding agrees with the transformed normals
+    const transformed = Array.from(geometry.attributes.normal.data)
+    geometry.computeVertexNormals()
+    expectCloseTo(geometry.attributes.normal.data, transformed)
+    expectCloseTo(transformed, Array(4).fill([0, 0, 1]).flat())
+  })
+
+  it('reverses the winding of mirrored non-indexed geometry', () => {
+    const offsets = new GeometryAttribute({
+      size: 3,
+      instanced: 1,
+      data: new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    })
+    const geometry = new Geometry(gl, {
+      position: position(quadPositions),
+      uv: position([0, 0, 1, 0, 0, 1], 2),
+      offset: offsets
+    })
+    geometry.applyMatrix(compose(undefined, undefined, new Vec3(-1, 1, 1)))
+
+    expectCloseTo(
+      geometry.attributes.position.data,
+      [0, 0, 0, 0, 1, 0, -1, 0, 0]
+    )
+    expect(Array.from(geometry.attributes.uv.data)).toEqual([0, 0, 0, 1, 1, 0])
+    expect(Array.from(offsets.data)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+  })
+
+  it('recomputes existing bounds and leaves missing ones unset', () => {
+    const geometry = new Geometry(gl, { position: position(quadPositions) })
+    geometry.computeBoundingSphere()
+    const bounds = geometry.bounds!
+    geometry.applyMatrix(compose(undefined, new Vec3(10, 0, 0)))
+
+    expect(geometry.bounds).toBe(bounds)
+    expect([bounds.min.x, bounds.max.x, bounds.center.x]).toEqual([
+      10, 11, 10.5
+    ])
+    expect(bounds.radius).toBeCloseTo(Math.sqrt(0.5))
+
+    const unmeasured = new Geometry(gl, { position: position(quadPositions) })
+    unmeasured.applyMatrix(compose(undefined, new Vec3(10, 0, 0)))
+    expect(unmeasured.bounds).toBeUndefined()
+  })
+
+  it("doesn't transform an external position", () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const attr = position(quadPositions)
+    attr.external = true
+    const geometry = new Geometry(gl, { position: attr })
+
+    geometry.applyMatrix(compose(undefined, new Vec3(1, 2, 3)))
+    expect(Array.from(attr.data)).toEqual(quadPositions)
+    warn.mockRestore()
   })
 })

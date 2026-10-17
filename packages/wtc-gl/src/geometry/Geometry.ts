@@ -1,4 +1,4 @@
-import { Vec3 } from 'wtc-math'
+import { Mat3, Vec3, type Mat4 } from 'wtc-math'
 
 import type {
   WTCGLRenderingContext,
@@ -7,6 +7,7 @@ import type {
   WTCGLBounds
 } from '../types'
 import { Program } from '../core/Program'
+import { determinantMat4, normalMatrix } from '../core/matrix'
 import { GeometryAttribute } from './GeometryAttribute'
 
 let ID = 1
@@ -14,6 +15,23 @@ let ID = 1
 // To stop inifinite warnings
 let isBoundsWarned = false
 let isNormalsWarned = false
+let isTransformWarned = false
+
+// Reused by applyMatrix
+const scratchNormalMatrix = new Mat3()
+
+// An attribute's offset and stride are in bytes, as GL expects; convert them
+// to array indices
+const elementLayout = function (attr: WTCGLGeometryAttribute): {
+  offset: number
+  stride: number
+} {
+  const bytes = attr.data.BYTES_PER_ELEMENT
+  return {
+    offset: (attr.offset || 0) / bytes,
+    stride: (attr.stride || 0) / bytes || attr.size
+  }
+}
 
 // Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
@@ -425,10 +443,7 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    // offset and stride are in bytes, as GL expects; convert to array indices
-    const bytes = array.BYTES_PER_ELEMENT
-    const offset = (attr.offset || 0) / bytes
-    const stride = (attr.stride || 0) / bytes || attr.size
+    const { offset, stride } = elementLayout(attr)
 
     const bounds = (this.bounds ??= {
       min: new Vec3(),
@@ -476,10 +491,7 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    // offset and stride are in bytes, as GL expects; convert to array indices
-    const bytes = array.BYTES_PER_ELEMENT
-    const offset = (attr.offset || 0) / bytes
-    const stride = (attr.stride || 0) / bytes || attr.size
+    const { offset, stride } = elementLayout(attr)
 
     const bounds = this.bounds ?? this.computeBoundingBox(attr)
     if (!bounds) return
@@ -515,10 +527,7 @@ export class Geometry {
     }
 
     const array = position.data
-    // offset and stride are in bytes, as GL expects; convert to array indices
-    const bytes = array.BYTES_PER_ELEMENT
-    const offset = (position.offset || 0) / bytes
-    const stride = (position.stride || 0) / bytes || position.size
+    const { offset, stride } = elementLayout(position)
     const size = position.size
     const count = position.count
 
@@ -591,6 +600,123 @@ export class Geometry {
         'normal',
         new GeometryAttribute({ size: 3, data: normals })
       )
+  }
+
+  /**
+   * Transform the geometry's data in place: positions by `matrix`, normals by
+   * its normal matrix. A mirroring matrix also reverses each triangle's
+   * winding (assuming TRIANGLES), so mirrored faces still face outwards.
+   * Attributes shared with other geometries change for them too.
+   * @param {Mat4} matrix - The affine transform to apply
+   */
+  applyMatrix(matrix: Mat4): void {
+    const position = this.attributes.position
+    // An external attribute's data is only its starting values
+    if (!position?.data || position.external) {
+      if (isTransformWarned) return
+      isTransformWarned = true
+      console.warn(
+        "No position data to transform (external positions can't be read back)"
+      )
+      return
+    }
+
+    const { a11, a12, a13, a21, a22, a23, a31, a32, a33, a41, a42, a43 } =
+      matrix
+
+    const positions = position.data
+    const layout = elementLayout(position)
+    // 2D positions (size 2) have z = 0, and only x and y are written back
+    const size = position.size
+    for (let i = layout.offset; i < positions.length; i += layout.stride) {
+      const x = positions[i]
+      const y = size > 1 ? positions[i + 1] : 0
+      const z = size > 2 ? positions[i + 2] : 0
+      positions[i] = a11 * x + a21 * y + a31 * z + a41
+      if (size > 1) positions[i + 1] = a12 * x + a22 * y + a32 * z + a42
+      if (size > 2) positions[i + 2] = a13 * x + a23 * y + a33 * z + a43
+    }
+    position.needsUpdate = true
+
+    const normal = this.attributes.normal
+    if (
+      normal?.data &&
+      !normal.external &&
+      normal.size === 3 &&
+      // A matrix that can't be inverted leaves the normals as they were
+      normalMatrix(scratchNormalMatrix, matrix)
+    ) {
+      const n = scratchNormalMatrix
+      const array = normal.data
+      const { offset, stride } = elementLayout(normal)
+      for (let i = offset, l = array.length; i < l; i += stride) {
+        const x = array[i]
+        const y = array[i + 1]
+        const z = array[i + 2]
+        const nx = n.a11 * x + n.a21 * y + n.a31 * z
+        const ny = n.a12 * x + n.a22 * y + n.a32 * z
+        const nz = n.a13 * x + n.a23 * y + n.a33 * z
+        // Zero normals stay zero
+        const length = Math.hypot(nx, ny, nz) || 1
+        array[i] = nx / length
+        array[i + 1] = ny / length
+        array[i + 2] = nz / length
+      }
+      normal.needsUpdate = true
+    }
+
+    if (determinantMat4(matrix) < 0) this.#reverseWinding()
+
+    // Bounds that were never measured are computed when they're first needed
+    if (this.bounds) {
+      this.computeBoundingBox()
+      this.computeBoundingSphere()
+    }
+  }
+
+  /**
+   * Swap the last two vertices of every triangle.
+   */
+  #reverseWinding(): void {
+    const index = this.attributes.index
+    if (index) {
+      if (index.external) {
+        console.warn("Can't reverse the winding of an external index")
+        return
+      }
+      const array = index.data
+      const start = (index.offset || 0) / array.BYTES_PER_ELEMENT
+      for (let i = start; i + 2 < start + index.count; i += 3) {
+        const b = array[i + 1]
+        array[i + 1] = array[i + 2]
+        array[i + 2] = b
+      }
+      index.needsUpdate = true
+      return
+    }
+
+    // Without an index, the vertices themselves have to move, in every
+    // per-vertex attribute. Interleaved attributes share a data array but
+    // cover different components, so each is swapped on its own.
+    const seen = new Set<WTCGLGeometryAttribute>()
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (attr.divisor || attr.external || seen.has(attr)) continue
+      seen.add(attr)
+
+      const array = attr.data
+      const { offset, stride } = elementLayout(attr)
+      for (let v = 0; v + 2 < attr.count; v += 3) {
+        const b = offset + (v + 1) * stride
+        const c = offset + (v + 2) * stride
+        for (let k = 0; k < attr.size; k++) {
+          const t = array[b + k]
+          array[b + k] = array[c + k]
+          array[c + k] = t
+        }
+      }
+      attr.needsUpdate = true
+    }
   }
 
   /**
