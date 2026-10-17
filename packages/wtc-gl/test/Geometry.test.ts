@@ -5,6 +5,8 @@ import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Program } from '../src/core/Program'
 import { createMockRenderer, type MockGL } from './mockGL'
 
+const quadPositions = [0, 0, 0, 1, 0, 0, 0, 1, 0]
+
 const last = <T>(items: T[]): T => items[items.length - 1]
 
 const position = (data: number[], size = 3) =>
@@ -231,5 +233,147 @@ describe('Geometry.setIndex', () => {
     expect(lastBind).toBeLessThan(
       vi.mocked(gl.bufferData).mock.invocationCallOrder[0]
     )
+  })
+})
+
+describe('Geometry.computeVertexNormals', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const normals = (geometry: Geometry) =>
+    Array.from(geometry.attributes.normal.data)
+
+  // Two counter-clockwise triangles making a unit quad at z = 0
+  const quad = [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0]
+
+  it('gives each face of non-indexed geometry its own normal', () => {
+    const geometry = new Geometry(gl, { position: position(quad) })
+    geometry.computeVertexNormals()
+    expect(normals(geometry)).toEqual(Array(6).fill([0, 0, 1]).flat())
+
+    // Swap the last two vertices of each triangle to reverse the winding
+    const reversed = [0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0]
+    const back = new Geometry(gl, { position: position(reversed) })
+    back.computeVertexNormals()
+    expect(normals(back)).toEqual(Array(6).fill([0, 0, -1]).flat())
+  })
+
+  it('area-weights the normals of shared vertices', () => {
+    // Folded along the y axis: a triangle of area 2 facing +z and one of
+    // area 1 facing -x share vertices 0 and 1
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, -1]),
+      index: new GeometryAttribute({
+        data: new Uint16Array([0, 2, 1, 0, 1, 3])
+      })
+    })
+    geometry.computeVertexNormals()
+
+    const n = normals(geometry)
+    const shared = [-1 / Math.sqrt(5), 0, 2 / Math.sqrt(5)]
+    for (let i = 0; i < 3; i++) {
+      expect(n[i]).toBeCloseTo(shared[i])
+      expect(n[3 + i]).toBeCloseTo(shared[i])
+    }
+    expect(n.slice(6, 9)).toEqual([0, 0, 1])
+    expect(n.slice(9, 12)).toEqual([-1, 0, 0])
+  })
+
+  it('writes into an existing normal attribute', () => {
+    const normal = new GeometryAttribute({
+      size: 3,
+      data: new Float32Array(18).fill(7)
+    })
+    const geometry = new Geometry(gl, { position: position(quad), normal })
+    vi.mocked(gl.createBuffer).mockClear()
+    geometry.computeVertexNormals()
+
+    expect(geometry.attributes.normal).toBe(normal)
+    expect(Array.from(normal.data)).toEqual(Array(6).fill([0, 0, 1]).flat())
+    expect(normal.needsUpdate).toBe(true)
+    expect(gl.createBuffer).not.toHaveBeenCalled()
+  })
+
+  it('treats 2D positions as z = 0', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 1, 0, 1, 1], 2)
+    })
+    geometry.computeVertexNormals()
+    expect(normals(geometry)).toEqual([0, 0, 1, 0, 0, 1, 0, 0, 1])
+  })
+
+  it('reads interleaved positions using byte stride and offset', () => {
+    // Interleaved [u, v, x, y, z] floats: stride 20 bytes, positions 8 bytes in
+    const data: number[] = []
+    for (let i = 0; i < quad.length; i += 3)
+      data.push(9, 9, ...quad.slice(i, i + 3))
+    const geometry = new Geometry(gl, {
+      position: new GeometryAttribute({
+        size: 3,
+        stride: 5 * 4,
+        offset: 2 * 4,
+        data: new Float32Array(data)
+      })
+    })
+    geometry.computeVertexNormals()
+    expect(normals(geometry)).toEqual(Array(6).fill([0, 0, 1]).flat())
+  })
+
+  it("doesn't read an external position", () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const attr = position(quad)
+    attr.external = true
+    const geometry = new Geometry(gl, { position: attr })
+
+    geometry.computeVertexNormals()
+    expect(geometry.attributes.normal).toBeUndefined()
+    warn.mockRestore()
+  })
+
+  it('leaves degenerate faces with a zero normal rather than NaN', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 1, 1, 2, 2, 2])
+    })
+    geometry.computeVertexNormals()
+    expect(normals(geometry)).toEqual(Array(9).fill(0))
+  })
+})
+
+describe('Geometry.addAttribute', () => {
+  let gl: MockGL
+  let program: Program
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+    program = new Program(gl, { vertex: '', fragment: '' })
+  })
+
+  it('rebuilds the vertex arrays when an attribute is added after a draw', () => {
+    const geometry = new Geometry(gl, { position: position(quadPositions) })
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(gl.createVertexArray).toHaveBeenCalledTimes(1)
+    const vao = vi.mocked(gl.createVertexArray).mock.results[0].value
+
+    geometry.addAttribute('uv', position([0, 0, 1, 0, 1, 1], 2))
+    expect(gl.deleteVertexArray).toHaveBeenCalledWith(vao)
+
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(gl.createVertexArray).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the vertex arrays for the same attribute or a new index', () => {
+    const uv = position([0, 0, 1, 0, 1, 1], 2)
+    const geometry = new Geometry(gl, { position: position(quadPositions), uv })
+    geometry.draw({ program, mode: gl.TRIANGLES })
+
+    geometry.addAttribute('uv', uv)
+    geometry.setIndex(new Uint16Array([0, 1, 2]))
+    geometry.draw({ program, mode: gl.TRIANGLES })
+
+    expect(gl.deleteVertexArray).not.toHaveBeenCalled()
+    expect(gl.createVertexArray).toHaveBeenCalledTimes(1)
   })
 })

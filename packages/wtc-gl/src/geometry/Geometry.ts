@@ -13,6 +13,7 @@ let ID = 1
 
 // To stop inifinite warnings
 let isBoundsWarned = false
+let isNormalsWarned = false
 
 // Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
@@ -151,6 +152,11 @@ export class Geometry {
    * @param {WTCGLGeometryAttribute} attr - The Geometry attribute, basically the data to be injected
    */
   addAttribute(key: string, attr: WTCGLGeometryAttribute): void {
+    // Vertex arrays record the attribute objects they were built with, so a
+    // new or replaced attribute needs them rebuilt. The index is re-bound on
+    // draw.
+    if (key !== 'index' && this.attributes[key] !== attr) this.#dropVAOs()
+
     this.attributes[key] = attr
 
     // Attribute options
@@ -491,20 +497,127 @@ export class Geometry {
   }
 
   /**
-   * Remoce all of the vertex array objects and buffers from memory
+   * Compute area-weighted vertex normals from the positions, assuming the
+   * geometry is drawn as TRIANGLES. Indexed geometry gets smooth normals
+   * across shared vertices; non-indexed geometry gets one normal per face.
+   * Writes into the existing normal attribute when it can, otherwise adds one.
    */
-  remove(): void {
+  computeVertexNormals(): void {
+    const position = this.attributes.position
+    // An external attribute's data is only its starting values
+    if (!position?.data || position.external) {
+      if (isNormalsWarned) return
+      isNormalsWarned = true
+      console.warn(
+        "No position data to compute normals from (external positions can't be read back)"
+      )
+      return
+    }
+
+    const array = position.data
+    // offset and stride are in bytes, as GL expects; convert to array indices
+    const bytes = array.BYTES_PER_ELEMENT
+    const offset = (position.offset || 0) / bytes
+    const stride = (position.stride || 0) / bytes || position.size
+    const size = position.size
+    const count = position.count
+
+    const existing = this.attributes.normal
+    const reuse =
+      existing &&
+      !existing.external &&
+      existing.size === 3 &&
+      !existing.stride &&
+      !existing.offset &&
+      existing.data instanceof Float32Array &&
+      existing.data.length === count * 3
+    const normals = reuse
+      ? (existing.data as Float32Array).fill(0)
+      : new Float32Array(count * 3)
+
+    const index = this.attributes.index
+    const indices = index?.data
+    const start = index ? (index.offset || 0) / index.data.BYTES_PER_ELEMENT : 0
+    const total = index ? index.count : count
+
+    for (let i = 0; i + 2 < total; i += 3) {
+      const a = indices ? indices[start + i] : i
+      const b = indices ? indices[start + i + 1] : i + 1
+      const c = indices ? indices[start + i + 2] : i + 2
+
+      // 2D positions (size 2) have z = 0
+      const pa = offset + a * stride
+      const pb = offset + b * stride
+      const pc = offset + c * stride
+      const ax = array[pa]
+      const ay = size > 1 ? array[pa + 1] : 0
+      const az = size > 2 ? array[pa + 2] : 0
+      const abx = array[pb] - ax
+      const aby = (size > 1 ? array[pb + 1] : 0) - ay
+      const abz = (size > 2 ? array[pb + 2] : 0) - az
+      const acx = array[pc] - ax
+      const acy = (size > 1 ? array[pc + 1] : 0) - ay
+      const acz = (size > 2 ? array[pc + 2] : 0) - az
+
+      // The cross product's length is twice the face's area, so adding it
+      // unnormalised weights each face by its area
+      const nx = aby * acz - abz * acy
+      const ny = abz * acx - abx * acz
+      const nz = abx * acy - aby * acx
+
+      normals[a * 3] += nx
+      normals[a * 3 + 1] += ny
+      normals[a * 3 + 2] += nz
+      normals[b * 3] += nx
+      normals[b * 3 + 1] += ny
+      normals[b * 3 + 2] += nz
+      normals[c * 3] += nx
+      normals[c * 3 + 1] += ny
+      normals[c * 3 + 2] += nz
+    }
+
+    // Vertices only on degenerate faces, or on none, stay 0, 0, 0
+    for (let i = 0; i < normals.length; i += 3) {
+      const length = Math.hypot(normals[i], normals[i + 1], normals[i + 2])
+      if (!length) continue
+      normals[i] /= length
+      normals[i + 1] /= length
+      normals[i + 2] /= length
+    }
+
+    if (reuse) existing.needsUpdate = true
+    else
+      this.addAttribute(
+        'normal',
+        new GeometryAttribute({ size: 3, data: normals })
+      )
+  }
+
+  /**
+   * Delete the vertex arrays so they're rebuilt on the next draw.
+   */
+  #dropVAOs(): void {
     for (const key in this.VAOs) {
       this.gl.deleteVertexArray(this.VAOs[key])
       delete this.VAOs[key]
     }
+    this.#bindings = {}
+    this.#indexBuffers = {}
+    // currentGeometry may still name a deleted vertex array, which would make
+    // draw() skip building a new one
+    this.gl.renderer.bindVertexArray(null)
+  }
+
+  /**
+   * Remoce all of the vertex array objects and buffers from memory
+   */
+  remove(): void {
+    this.#dropVAOs()
     for (const key in this.attributes) {
       const attr = this.attributes[key]
       if (!attr.external) this.gl.deleteBuffer(attr.buffer)
       delete this.attributes[key]
     }
-    this.#bindings = {}
-    this.#indexBuffers = {}
     this.gl.renderer.untrack(this)
   }
 }
