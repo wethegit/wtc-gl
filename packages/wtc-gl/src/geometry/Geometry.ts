@@ -1,4 +1,4 @@
-import { Vec3 } from 'wtc-math'
+import { Mat3, Vec3, type Mat4 } from 'wtc-math'
 
 import type {
   WTCGLRenderingContext,
@@ -7,11 +7,31 @@ import type {
   WTCGLBounds
 } from '../types'
 import { Program } from '../core/Program'
+import { determinantMat4, normalMatrix } from '../core/matrix'
+import { GeometryAttribute } from './GeometryAttribute'
 
 let ID = 1
 
 // To stop inifinite warnings
 let isBoundsWarned = false
+let isNormalsWarned = false
+let isTransformWarned = false
+
+// Reused by applyMatrix
+const scratchNormalMatrix = new Mat3()
+
+// An attribute's offset and stride are in bytes, as GL expects; convert them
+// to array indices
+const elementLayout = function (attr: WTCGLGeometryAttribute): {
+  offset: number
+  stride: number
+} {
+  const bytes = attr.data.BYTES_PER_ELEMENT
+  return {
+    offset: (attr.offset || 0) / bytes,
+    stride: (attr.stride || 0) / bytes || attr.size
+  }
+}
 
 // Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
@@ -20,6 +40,90 @@ const originArrayToVec3 = function (
   size: number = 3
 ): Vec3 {
   return new Vec3(a[o], size > 1 ? a[o + 1] : 0, size > 2 ? a[o + 2] : 0)
+}
+
+let isExternalCopyWarned = false
+
+// An external attribute's data is only its starting values, so copies of the
+// geometry leave it out
+const warnExternalCopy = function (key: string): void {
+  if (isExternalCopyWarned) return
+  isExternalCopyWarned = true
+  console.warn(`External attribute ${key} can't be copied, so it's left out`)
+}
+
+type AttributeData = WTCGLGeometryAttribute['data']
+
+// Allocate an empty array of the same typed-array type as `source`
+const allocate = function (
+  source: AttributeData,
+  length: number
+): AttributeData {
+  return new (source.constructor as new (length: number) => AttributeData)(
+    length
+  )
+}
+
+// Write `count` of `attr`'s vertices tightly packed into `out`, from vertex
+// `start`. Vertex `i` is the source's vertex `ids[i]` (or vertex `i` without
+// `ids`).
+const packVertices = function (
+  attr: WTCGLGeometryAttribute,
+  out: AttributeData,
+  start: number,
+  count: number,
+  ids?: ArrayLike<number>
+): void {
+  const { offset, stride } = elementLayout(attr)
+  const size = attr.size
+  const source = attr.data
+  for (let i = 0; i < count; i++) {
+    const from = offset + (ids ? ids[i] : i) * stride
+    const to = (start + i) * size
+    for (let k = 0; k < size; k++) out[to + k] = source[from + k]
+  }
+}
+
+// An attribute like `attr` holding `data`
+const attributeLike = function (
+  attr: WTCGLGeometryAttribute,
+  data: AttributeData
+): GeometryAttribute {
+  return new GeometryAttribute({
+    size: attr.size,
+    data,
+    type: attr.type,
+    normalized: attr.normalized,
+    instanced: attr.divisor
+  })
+}
+
+// A tightly packed copy of `attr` with `count` vertices, where vertex `i` is
+// the source's vertex `ids[i]` (or vertex `i` without `ids`)
+const copyVertices = function (
+  attr: WTCGLGeometryAttribute,
+  count: number,
+  ids?: ArrayLike<number>
+): GeometryAttribute {
+  const data = allocate(attr.data, count * attr.size)
+  packVertices(attr, data, 0, count, ids)
+  return attributeLike(attr, data)
+}
+
+// The index's entries, from its offset
+const indexEntries = function (index: WTCGLGeometryAttribute): AttributeData {
+  const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
+  return index.data.subarray(start, start + index.count)
+}
+
+// The smallest index array type that can hold `vertexCount` vertices
+const indexArray = function (
+  entries: ArrayLike<number>,
+  vertexCount: number
+): Uint16Array | Uint32Array {
+  return vertexCount <= 65536
+    ? new Uint16Array(entries)
+    : new Uint32Array(entries)
 }
 
 // The context generation each attribute's buffer was last rebuilt for
@@ -150,6 +254,11 @@ export class Geometry {
    * @param {WTCGLGeometryAttribute} attr - The Geometry attribute, basically the data to be injected
    */
   addAttribute(key: string, attr: WTCGLGeometryAttribute): void {
+    // Vertex arrays record the attribute objects they were built with, so a
+    // new or replaced attribute needs them rebuilt. The index is re-bound on
+    // draw.
+    if (key !== 'index' && this.attributes[key] !== attr) this.#dropVAOs()
+
     this.attributes[key] = attr
 
     // Attribute options
@@ -191,6 +300,26 @@ export class Geometry {
     } else if (!this.attributes.index) {
       this.drawRange.count = Math.max(this.drawRange.count, attr.count)
     }
+  }
+
+  /**
+   * Replace the index after construction. The old index buffer isn't
+   * deleted, because attributes can be shared between geometries; delete it
+   * yourself if nothing else uses it. To change indices in place at the same
+   * length, edit `attributes.index.data` and set `needsUpdate` instead.
+   * @param {WTCGLGeometryAttribute | Uint16Array | Uint32Array} index - The new index attribute, or the index data to wrap in one
+   */
+  setIndex(index: WTCGLGeometryAttribute | Uint16Array | Uint32Array): void {
+    const attr = ArrayBuffer.isView(index)
+      ? new GeometryAttribute({ data: index })
+      : index
+
+    // Uploading binds ELEMENT_ARRAY_BUFFER, which would overwrite the index
+    // recorded in whatever vertex array is bound, possibly another geometry's
+    this.gl.renderer.bindVertexArray(null)
+    this.addAttribute('index', attr)
+    // A start offset into the old index means nothing in the new one
+    this.drawRange.start = 0
   }
 
   /**
@@ -398,10 +527,7 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    // offset and stride are in bytes, as GL expects; convert to array indices
-    const bytes = array.BYTES_PER_ELEMENT
-    const offset = (attr.offset || 0) / bytes
-    const stride = (attr.stride || 0) / bytes || attr.size
+    const { offset, stride } = elementLayout(attr)
 
     const bounds = (this.bounds ??= {
       min: new Vec3(),
@@ -449,10 +575,7 @@ export class Geometry {
     if (!attr) attr = this.getPosition()
     if (!attr) return
     const array = attr.data
-    // offset and stride are in bytes, as GL expects; convert to array indices
-    const bytes = array.BYTES_PER_ELEMENT
-    const offset = (attr.offset || 0) / bytes
-    const stride = (attr.stride || 0) / bytes || attr.size
+    const { offset, stride } = elementLayout(attr)
 
     const bounds = this.bounds ?? this.computeBoundingBox(attr)
     if (!bounds) return
@@ -470,20 +593,445 @@ export class Geometry {
   }
 
   /**
-   * Remoce all of the vertex array objects and buffers from memory
+   * Compute area-weighted vertex normals from the positions, assuming the
+   * geometry is drawn as TRIANGLES. Indexed geometry gets smooth normals
+   * across shared vertices; non-indexed geometry gets one normal per face.
+   * Writes into the existing normal attribute when it can, otherwise adds one.
    */
-  remove(): void {
+  computeVertexNormals(): void {
+    const position = this.attributes.position
+    // An external attribute's data is only its starting values
+    if (!position?.data || position.external) {
+      if (isNormalsWarned) return
+      isNormalsWarned = true
+      console.warn(
+        "No position data to compute normals from (external positions can't be read back)"
+      )
+      return
+    }
+
+    const array = position.data
+    const { offset, stride } = elementLayout(position)
+    const size = position.size
+    const count = position.count
+
+    const existing = this.attributes.normal
+    const reuse =
+      existing &&
+      !existing.external &&
+      existing.size === 3 &&
+      !existing.stride &&
+      !existing.offset &&
+      existing.data instanceof Float32Array &&
+      existing.data.length === count * 3
+    const normals = reuse
+      ? (existing.data as Float32Array).fill(0)
+      : new Float32Array(count * 3)
+
+    const index = this.attributes.index
+    const indices = index?.data
+    const start = index ? (index.offset || 0) / index.data.BYTES_PER_ELEMENT : 0
+    const total = index ? index.count : count
+
+    for (let i = 0; i + 2 < total; i += 3) {
+      const a = indices ? indices[start + i] : i
+      const b = indices ? indices[start + i + 1] : i + 1
+      const c = indices ? indices[start + i + 2] : i + 2
+
+      // 2D positions (size 2) have z = 0
+      const pa = offset + a * stride
+      const pb = offset + b * stride
+      const pc = offset + c * stride
+      const ax = array[pa]
+      const ay = size > 1 ? array[pa + 1] : 0
+      const az = size > 2 ? array[pa + 2] : 0
+      const abx = array[pb] - ax
+      const aby = (size > 1 ? array[pb + 1] : 0) - ay
+      const abz = (size > 2 ? array[pb + 2] : 0) - az
+      const acx = array[pc] - ax
+      const acy = (size > 1 ? array[pc + 1] : 0) - ay
+      const acz = (size > 2 ? array[pc + 2] : 0) - az
+
+      // The cross product's length is twice the face's area, so adding it
+      // unnormalised weights each face by its area
+      const nx = aby * acz - abz * acy
+      const ny = abz * acx - abx * acz
+      const nz = abx * acy - aby * acx
+
+      normals[a * 3] += nx
+      normals[a * 3 + 1] += ny
+      normals[a * 3 + 2] += nz
+      normals[b * 3] += nx
+      normals[b * 3 + 1] += ny
+      normals[b * 3 + 2] += nz
+      normals[c * 3] += nx
+      normals[c * 3 + 1] += ny
+      normals[c * 3 + 2] += nz
+    }
+
+    // Vertices only on degenerate faces, or on none, stay 0, 0, 0
+    for (let i = 0; i < normals.length; i += 3) {
+      const length = Math.hypot(normals[i], normals[i + 1], normals[i + 2])
+      if (!length) continue
+      normals[i] /= length
+      normals[i + 1] /= length
+      normals[i + 2] /= length
+    }
+
+    if (reuse) existing.needsUpdate = true
+    else
+      this.addAttribute(
+        'normal',
+        new GeometryAttribute({ size: 3, data: normals })
+      )
+  }
+
+  /**
+   * Transform the geometry's data in place: positions by `matrix`, normals by
+   * its normal matrix. A mirroring matrix also reverses each triangle's
+   * winding (assuming TRIANGLES), so mirrored faces still face outwards.
+   * Attributes shared with other geometries change for them too.
+   * @param {Mat4} matrix - The affine transform to apply
+   */
+  applyMatrix(matrix: Mat4): void {
+    const position = this.attributes.position
+    // An external attribute's data is only its starting values
+    if (!position?.data || position.external) {
+      if (isTransformWarned) return
+      isTransformWarned = true
+      console.warn(
+        "No position data to transform (external positions can't be read back)"
+      )
+      return
+    }
+
+    const { a11, a12, a13, a21, a22, a23, a31, a32, a33, a41, a42, a43 } =
+      matrix
+
+    const positions = position.data
+    const layout = elementLayout(position)
+    // 2D positions (size 2) have z = 0, and only x and y are written back
+    const size = position.size
+    for (let i = layout.offset; i < positions.length; i += layout.stride) {
+      const x = positions[i]
+      const y = size > 1 ? positions[i + 1] : 0
+      const z = size > 2 ? positions[i + 2] : 0
+      positions[i] = a11 * x + a21 * y + a31 * z + a41
+      if (size > 1) positions[i + 1] = a12 * x + a22 * y + a32 * z + a42
+      if (size > 2) positions[i + 2] = a13 * x + a23 * y + a33 * z + a43
+    }
+    position.needsUpdate = true
+
+    const normal = this.attributes.normal
+    if (
+      normal?.data &&
+      !normal.external &&
+      normal.size === 3 &&
+      // A matrix that can't be inverted leaves the normals as they were
+      normalMatrix(scratchNormalMatrix, matrix)
+    ) {
+      const n = scratchNormalMatrix
+      const array = normal.data
+      const { offset, stride } = elementLayout(normal)
+      for (let i = offset, l = array.length; i < l; i += stride) {
+        const x = array[i]
+        const y = array[i + 1]
+        const z = array[i + 2]
+        const nx = n.a11 * x + n.a21 * y + n.a31 * z
+        const ny = n.a12 * x + n.a22 * y + n.a32 * z
+        const nz = n.a13 * x + n.a23 * y + n.a33 * z
+        // Zero normals stay zero
+        const length = Math.hypot(nx, ny, nz) || 1
+        array[i] = nx / length
+        array[i + 1] = ny / length
+        array[i + 2] = nz / length
+      }
+      normal.needsUpdate = true
+    }
+
+    if (determinantMat4(matrix) < 0) this.#reverseWinding()
+
+    // Bounds that were never measured are computed when they're first needed
+    if (this.bounds) {
+      this.computeBoundingBox()
+      this.computeBoundingSphere()
+    }
+  }
+
+  /**
+   * A new, non-indexed copy of the geometry, with every index entry as its
+   * own vertex, so computeVertexNormals() gives flat normals. The whole index
+   * is expanded, whatever the draw range. The original is unchanged; call
+   * remove() on it if it's no longer needed.
+   * @returns {Geometry} The non-indexed copy
+   */
+  toNonIndexed(): Geometry {
+    const index = this.attributes.index
+    const ids = index && indexEntries(index)
+
+    const attributes: WTCGLGeometryAttributeCollection = {}
+    this.#copyInstanced(attributes)
+    for (const [key, attr] of this.#vertexAttributes()) {
+      attributes[key] = ids
+        ? copyVertices(attr, ids.length, ids)
+        : copyVertices(attr, attr.count)
+    }
+    return new Geometry(this.gl, attributes)
+  }
+
+  /**
+   * A new, indexed copy of the geometry with matching vertices welded
+   * together. Vertices match when every attribute except `normal` is within
+   * `tolerance`; normals are recomputed afterwards, so shared vertices become
+   * smooth. Values are snapped to a `tolerance` grid, so two values either
+   * side of a grid line may not merge. Vertices the index never uses are
+   * dropped.
+   * @param {number} tolerance - How far apart values can be and still match. 0 compares exactly
+   * @returns {Geometry} The welded copy
+   */
+  mergeVertices(tolerance: number = 1e-4): Geometry {
+    const compared = this.#vertexAttributes().filter(
+      ([key]) => key !== 'normal'
+    )
+    const scale = tolerance > 0 ? 1 / tolerance : 0
+    const layouts = compared.map(([, attr]) => elementLayout(attr))
+
+    // Walk the vertices in draw order, so the new index keeps the triangles
+    // and their winding
+    const index = this.attributes.index
+    const order = index
+      ? indexEntries(index)
+      : Array.from(
+          { length: this.attributes.position?.count ?? 0 },
+          (_, i) => i
+        )
+
+    const remap = new Map<number, number>()
+    const keys = new Map<string, number>()
+    const unique: number[] = []
+    const entries: number[] = []
+    for (let i = 0; i < order.length; i++) {
+      const v = order[i]
+      let id = remap.get(v)
+      if (id === undefined) {
+        let key = ''
+        for (let a = 0; a < compared.length; a++) {
+          const attr = compared[a][1]
+          const from = layouts[a].offset + v * layouts[a].stride
+          for (let k = 0; k < attr.size; k++) {
+            const value = attr.data[from + k]
+            key += (scale ? Math.round(value * scale) : value) + ','
+          }
+        }
+        id = keys.get(key)
+        if (id === undefined) {
+          id = unique.length
+          keys.set(key, id)
+          unique.push(v)
+        }
+        remap.set(v, id)
+      }
+      entries.push(id)
+    }
+
+    const attributes: WTCGLGeometryAttributeCollection = {}
+    this.#copyInstanced(attributes)
+    for (const [key, attr] of compared) {
+      attributes[key] = copyVertices(attr, unique.length, unique)
+    }
+    attributes.index = new GeometryAttribute({
+      data: indexArray(entries, unique.length)
+    })
+
+    const geometry = new Geometry(this.gl, attributes)
+    if (this.attributes.normal) geometry.computeVertexNormals()
+    return geometry
+  }
+
+  /**
+   * The per-vertex attributes that can be read back, by key. External
+   * attributes are left out with a warning.
+   */
+  #vertexAttributes(): [string, WTCGLGeometryAttribute][] {
+    const attributes: [string, WTCGLGeometryAttribute][] = []
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (key === 'index' || attr.divisor) continue
+      if (attr.external) {
+        warnExternalCopy(key)
+        continue
+      }
+      attributes.push([key, attr])
+    }
+    return attributes
+  }
+
+  /**
+   * Copy the instanced attributes into `attributes`.
+   */
+  #copyInstanced(attributes: WTCGLGeometryAttributeCollection): void {
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (key === 'index' || !attr.divisor) continue
+      if (attr.external) warnExternalCopy(key)
+      else attributes[key] = copyVertices(attr, attr.count)
+    }
+  }
+
+  /**
+   * Swap the last two vertices of every triangle.
+   */
+  #reverseWinding(): void {
+    const index = this.attributes.index
+    if (index) {
+      if (index.external) {
+        console.warn("Can't reverse the winding of an external index")
+        return
+      }
+      const array = index.data
+      const start = (index.offset || 0) / array.BYTES_PER_ELEMENT
+      for (let i = start; i + 2 < start + index.count; i += 3) {
+        const b = array[i + 1]
+        array[i + 1] = array[i + 2]
+        array[i + 2] = b
+      }
+      index.needsUpdate = true
+      return
+    }
+
+    // Without an index, the vertices themselves have to move, in every
+    // per-vertex attribute. Interleaved attributes share a data array but
+    // cover different components, so each is swapped on its own.
+    const seen = new Set<WTCGLGeometryAttribute>()
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (attr.divisor || attr.external || seen.has(attr)) continue
+      seen.add(attr)
+
+      const array = attr.data
+      const { offset, stride } = elementLayout(attr)
+      for (let v = 0; v + 2 < attr.count; v += 3) {
+        const b = offset + (v + 1) * stride
+        const c = offset + (v + 2) * stride
+        for (let k = 0; k < attr.size; k++) {
+          const t = array[b + k]
+          array[b + k] = array[c + k]
+          array[c + k] = t
+        }
+      }
+      attr.needsUpdate = true
+    }
+  }
+
+  /**
+   * Delete the vertex arrays so they're rebuilt on the next draw.
+   */
+  #dropVAOs(): void {
     for (const key in this.VAOs) {
       this.gl.deleteVertexArray(this.VAOs[key])
       delete this.VAOs[key]
     }
+    this.#bindings = {}
+    this.#indexBuffers = {}
+    // currentGeometry may still name a deleted vertex array, which would make
+    // draw() skip building a new one
+    this.gl.renderer.bindVertexArray(null)
+  }
+
+  /**
+   * Remoce all of the vertex array objects and buffers from memory
+   */
+  remove(): void {
+    this.#dropVAOs()
     for (const key in this.attributes) {
       const attr = this.attributes[key]
       if (!attr.external) this.gl.deleteBuffer(attr.buffer)
       delete this.attributes[key]
     }
-    this.#bindings = {}
-    this.#indexBuffers = {}
     this.gl.renderer.untrack(this)
   }
+}
+
+/**
+ * Combine geometries into one new Geometry, so they draw in a single call.
+ * Every geometry needs the same attributes, with the same size and type.
+ * If any is indexed, the result is indexed; the others get a sequential
+ * index. Draw ranges are ignored and the inputs are unchanged.
+ * @param {Geometry[]} geometries - The geometries to combine
+ * @returns {Geometry} The combined geometry
+ */
+export function mergeGeometries(geometries: Geometry[]): Geometry {
+  if (!geometries.length) throw new Error('mergeGeometries needs a geometry')
+
+  const first = geometries[0].attributes
+  const keys = Object.keys(first).filter((key) => key !== 'index')
+
+  // Check every geometry has the same attributes as the first
+  geometries.forEach((geometry, g) => {
+    const { attributes } = geometry
+    const own = Object.keys(attributes).filter((key) => key !== 'index')
+    if (own.length !== keys.length || own.some((key) => !(key in first))) {
+      throw new Error(
+        `mergeGeometries: geometry ${g} has attributes ${own.join(', ')}, but geometry 0 has ${keys.join(', ')}`
+      )
+    }
+    for (const key of keys) {
+      const attr = attributes[key]
+      if (attr.divisor) {
+        throw new Error(
+          `mergeGeometries: instanced attribute ${key} (geometry ${g}) can't be merged`
+        )
+      }
+      if (attr.external) {
+        throw new Error(
+          `mergeGeometries: external attribute ${key} (geometry ${g}) can't be read back`
+        )
+      }
+      const match = first[key]
+      if (
+        attr.size !== match.size ||
+        attr.type !== match.type ||
+        attr.normalized !== match.normalized
+      ) {
+        throw new Error(
+          `mergeGeometries: attribute ${key} of geometry ${g} has a different size, type or normalisation from geometry 0`
+        )
+      }
+    }
+  })
+
+  const counts = geometries.map(
+    ({ attributes }) => (attributes.position ?? attributes[keys[0]])?.count ?? 0
+  )
+  const total = counts.reduce((sum, count) => sum + count, 0)
+
+  const attributes: WTCGLGeometryAttributeCollection = {}
+  for (const key of keys) {
+    const data = allocate(first[key].data, total * first[key].size)
+    let start = 0
+    geometries.forEach((geometry, g) => {
+      packVertices(geometry.attributes[key], data, start, counts[g])
+      start += counts[g]
+    })
+    attributes[key] = attributeLike(first[key], data)
+  }
+
+  if (geometries.some(({ attributes }) => attributes.index)) {
+    const entries: number[] = []
+    let base = 0
+    geometries.forEach(({ attributes: { index } }, g) => {
+      if (index) {
+        const own = indexEntries(index)
+        for (let i = 0; i < own.length; i++) entries.push(base + own[i])
+      } else {
+        for (let i = 0; i < counts[g]; i++) entries.push(base + i)
+      }
+      base += counts[g]
+    })
+    attributes.index = new GeometryAttribute({
+      data: indexArray(entries, total)
+    })
+  }
+
+  return new Geometry(geometries[0].gl, attributes)
 }
