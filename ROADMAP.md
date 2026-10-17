@@ -91,7 +91,7 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 
 - [x] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. _New._
 - [x] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. _New._
-- [ ] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
+- [x] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
 - [x] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. _New._
 - [x] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
 - [ ] Vitest coverage for all of the above. They're pure array work.

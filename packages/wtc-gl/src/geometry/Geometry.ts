@@ -54,6 +54,50 @@ const warnExternalCopy = function (key: string): void {
 
 type AttributeData = WTCGLGeometryAttribute['data']
 
+// Allocate an empty array of the same typed-array type as `source`
+const allocate = function (
+  source: AttributeData,
+  length: number
+): AttributeData {
+  return new (source.constructor as new (length: number) => AttributeData)(
+    length
+  )
+}
+
+// Write `count` of `attr`'s vertices tightly packed into `out`, from vertex
+// `start`. Vertex `i` is the source's vertex `ids[i]` (or vertex `i` without
+// `ids`).
+const packVertices = function (
+  attr: WTCGLGeometryAttribute,
+  out: AttributeData,
+  start: number,
+  count: number,
+  ids?: ArrayLike<number>
+): void {
+  const { offset, stride } = elementLayout(attr)
+  const size = attr.size
+  const source = attr.data
+  for (let i = 0; i < count; i++) {
+    const from = offset + (ids ? ids[i] : i) * stride
+    const to = (start + i) * size
+    for (let k = 0; k < size; k++) out[to + k] = source[from + k]
+  }
+}
+
+// An attribute like `attr` holding `data`
+const attributeLike = function (
+  attr: WTCGLGeometryAttribute,
+  data: AttributeData
+): GeometryAttribute {
+  return new GeometryAttribute({
+    size: attr.size,
+    data,
+    type: attr.type,
+    normalized: attr.normalized,
+    instanced: attr.divisor
+  })
+}
+
 // A tightly packed copy of `attr` with `count` vertices, where vertex `i` is
 // the source's vertex `ids[i]` (or vertex `i` without `ids`)
 const copyVertices = function (
@@ -61,23 +105,25 @@ const copyVertices = function (
   count: number,
   ids?: ArrayLike<number>
 ): GeometryAttribute {
-  const { offset, stride } = elementLayout(attr)
-  const size = attr.size
-  const source = attr.data
-  const data = new (
-    source.constructor as new (length: number) => AttributeData
-  )(count * size)
-  for (let i = 0; i < count; i++) {
-    const from = offset + (ids ? ids[i] : i) * stride
-    for (let k = 0; k < size; k++) data[i * size + k] = source[from + k]
-  }
-  return new GeometryAttribute({
-    size,
-    data,
-    type: attr.type,
-    normalized: attr.normalized,
-    instanced: attr.divisor
-  })
+  const data = allocate(attr.data, count * attr.size)
+  packVertices(attr, data, 0, count, ids)
+  return attributeLike(attr, data)
+}
+
+// The index's entries, from its offset
+const indexEntries = function (index: WTCGLGeometryAttribute): AttributeData {
+  const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
+  return index.data.subarray(start, start + index.count)
+}
+
+// The smallest index array type that can hold `vertexCount` vertices
+const indexArray = function (
+  entries: ArrayLike<number>,
+  vertexCount: number
+): Uint16Array | Uint32Array {
+  return vertexCount <= 65536
+    ? new Uint16Array(entries)
+    : new Uint32Array(entries)
 }
 
 // The context generation each attribute's buffer was last rebuilt for
@@ -721,7 +767,7 @@ export class Geometry {
    */
   toNonIndexed(): Geometry {
     const index = this.attributes.index
-    const ids = index && this.#indexEntries(index)
+    const ids = index && indexEntries(index)
 
     const attributes: WTCGLGeometryAttributeCollection = {}
     this.#copyInstanced(attributes)
@@ -754,7 +800,7 @@ export class Geometry {
     // and their winding
     const index = this.attributes.index
     const order = index
-      ? this.#indexEntries(index)
+      ? indexEntries(index)
       : Array.from(
           { length: this.attributes.position?.count ?? 0 },
           (_, i) => i
@@ -794,23 +840,12 @@ export class Geometry {
       attributes[key] = copyVertices(attr, unique.length, unique)
     }
     attributes.index = new GeometryAttribute({
-      data:
-        unique.length <= 65536
-          ? new Uint16Array(entries)
-          : new Uint32Array(entries)
+      data: indexArray(entries, unique.length)
     })
 
     const geometry = new Geometry(this.gl, attributes)
     if (this.attributes.normal) geometry.computeVertexNormals()
     return geometry
-  }
-
-  /**
-   * The index's entries, from its offset.
-   */
-  #indexEntries(index: WTCGLGeometryAttribute): AttributeData {
-    const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
-    return index.data.subarray(start, start + index.count)
   }
 
   /**
@@ -915,4 +950,88 @@ export class Geometry {
     }
     this.gl.renderer.untrack(this)
   }
+}
+
+/**
+ * Combine geometries into one new Geometry, so they draw in a single call.
+ * Every geometry needs the same attributes, with the same size and type.
+ * If any is indexed, the result is indexed; the others get a sequential
+ * index. Draw ranges are ignored and the inputs are unchanged.
+ * @param {Geometry[]} geometries - The geometries to combine
+ * @returns {Geometry} The combined geometry
+ */
+export function mergeGeometries(geometries: Geometry[]): Geometry {
+  if (!geometries.length) throw new Error('mergeGeometries needs a geometry')
+
+  const first = geometries[0].attributes
+  const keys = Object.keys(first).filter((key) => key !== 'index')
+
+  // Check every geometry has the same attributes as the first
+  geometries.forEach((geometry, g) => {
+    const { attributes } = geometry
+    const own = Object.keys(attributes).filter((key) => key !== 'index')
+    if (own.length !== keys.length || own.some((key) => !(key in first))) {
+      throw new Error(
+        `mergeGeometries: geometry ${g} has attributes ${own.join(', ')}, but geometry 0 has ${keys.join(', ')}`
+      )
+    }
+    for (const key of keys) {
+      const attr = attributes[key]
+      if (attr.divisor) {
+        throw new Error(
+          `mergeGeometries: instanced attribute ${key} (geometry ${g}) can't be merged`
+        )
+      }
+      if (attr.external) {
+        throw new Error(
+          `mergeGeometries: external attribute ${key} (geometry ${g}) can't be read back`
+        )
+      }
+      const match = first[key]
+      if (
+        attr.size !== match.size ||
+        attr.type !== match.type ||
+        attr.normalized !== match.normalized
+      ) {
+        throw new Error(
+          `mergeGeometries: attribute ${key} of geometry ${g} has a different size, type or normalisation from geometry 0`
+        )
+      }
+    }
+  })
+
+  const counts = geometries.map(
+    ({ attributes }) => (attributes.position ?? attributes[keys[0]])?.count ?? 0
+  )
+  const total = counts.reduce((sum, count) => sum + count, 0)
+
+  const attributes: WTCGLGeometryAttributeCollection = {}
+  for (const key of keys) {
+    const data = allocate(first[key].data, total * first[key].size)
+    let start = 0
+    geometries.forEach((geometry, g) => {
+      packVertices(geometry.attributes[key], data, start, counts[g])
+      start += counts[g]
+    })
+    attributes[key] = attributeLike(first[key], data)
+  }
+
+  if (geometries.some(({ attributes }) => attributes.index)) {
+    const entries: number[] = []
+    let base = 0
+    geometries.forEach(({ attributes: { index } }, g) => {
+      if (index) {
+        const own = indexEntries(index)
+        for (let i = 0; i < own.length; i++) entries.push(base + own[i])
+      } else {
+        for (let i = 0; i < counts[g]; i++) entries.push(base + i)
+      }
+      base += counts[g]
+    })
+    attributes.index = new GeometryAttribute({
+      data: indexArray(entries, total)
+    })
+  }
+
+  return new Geometry(geometries[0].gl, attributes)
 }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Mat4, Quat, Vec3 } from 'wtc-math'
 
-import { Geometry } from '../src/geometry/Geometry'
+import { Geometry, mergeGeometries } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Program } from '../src/core/Program'
 import { createMockRenderer, type MockGL } from './mockGL'
@@ -703,5 +703,139 @@ describe('Geometry.mergeVertices', () => {
     expect(geometry.mergeVertices().attributes.index.data).toBeInstanceOf(
       Uint32Array
     )
+  })
+})
+
+describe('mergeGeometries', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const triangle = (gl: MockGL, x = 0) =>
+    new Geometry(gl, {
+      position: position([x, 0, 0, x + 1, 0, 0, x, 1, 0]),
+      uv: position([0, 0, 1, 0, 0, 1], 2)
+    })
+
+  it('concatenates non-indexed geometry', () => {
+    const merged = mergeGeometries([triangle(gl), triangle(gl, 5)])
+
+    expect(merged.attributes.index).toBeUndefined()
+    expect(merged.drawRange.count).toBe(6)
+    expect(Array.from(merged.attributes.position.data)).toEqual([
+      0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0, 0, 6, 0, 0, 5, 1, 0
+    ])
+    expect(Array.from(merged.attributes.uv.data)).toEqual([
+      0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1
+    ])
+  })
+
+  it('rebases the indices of each geometry', () => {
+    const merged = mergeGeometries([indexedQuad(gl), indexedQuad(gl)])
+
+    expect(merged.attributes.position.count).toBe(8)
+    expect(merged.attributes.index.data).toBeInstanceOf(Uint16Array)
+    expect(Array.from(merged.attributes.index.data)).toEqual([
+      0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7
+    ])
+  })
+
+  it('indexes non-indexed geometry merged with indexed geometry', () => {
+    const merged = mergeGeometries([indexedQuad(gl), triangle(gl)])
+    expect(Array.from(merged.attributes.index.data)).toEqual([
+      0, 1, 2, 0, 2, 3, 4, 5, 6
+    ])
+  })
+
+  it('packs interleaved attributes tightly', () => {
+    // Interleaved [x, y, z, u, v] floats: stride 20 bytes
+    const data = new Float32Array([0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1])
+    const interleaved = new Geometry(gl, {
+      position: new GeometryAttribute({ size: 3, stride: 20, data }),
+      uv: new GeometryAttribute({ size: 2, stride: 20, offset: 12, data })
+    })
+    const merged = mergeGeometries([triangle(gl, 5), interleaved])
+
+    const { position: p, uv } = merged.attributes
+    expect([p.stride, p.offset, uv.stride, uv.offset]).toEqual([0, 0, 0, 0])
+    expect(Array.from(p.data.slice(9))).toEqual([0, 0, 0, 1, 0, 0, 0, 1, 0])
+    expect(Array.from(uv.data.slice(6))).toEqual([0, 0, 1, 0, 0, 1])
+  })
+
+  it('leaves the inputs unchanged', () => {
+    const a = indexedQuad(gl)
+    const b = triangle(gl)
+    const merged = mergeGeometries([a, b])
+
+    expect(merged.attributes.position).not.toBe(a.attributes.position)
+    expect(a.attributes.position.count).toBe(4)
+    expect(Array.from(a.attributes.index.data)).toEqual([0, 1, 2, 0, 2, 3])
+    expect(b.attributes.index).toBeUndefined()
+  })
+
+  it('throws on geometry that does not match', () => {
+    expect(() => mergeGeometries([])).toThrow()
+
+    const noUV = new Geometry(gl, { position: position(quadPositions) })
+    expect(() => mergeGeometries([triangle(gl), noUV])).toThrow(/uv/)
+
+    const flatUV = new Geometry(gl, {
+      position: position(quadPositions),
+      uv: position([0, 0, 0, 1, 0, 0, 0, 1, 0])
+    })
+    expect(() => mergeGeometries([triangle(gl), flatUV])).toThrow(/uv/)
+
+    const instanced = triangle(gl)
+    instanced.addAttribute(
+      'offset',
+      new GeometryAttribute({
+        size: 3,
+        instanced: 1,
+        data: new Float32Array(3)
+      })
+    )
+    expect(() => mergeGeometries([instanced, instanced])).toThrow(/offset/)
+
+    const external = triangle(gl)
+    external.attributes.uv.external = true
+    expect(() => mergeGeometries([triangle(gl), external])).toThrow(/uv/)
+  })
+
+  it('uses 32-bit indices past 65,536 vertices', () => {
+    const count = 65535
+    const big = new Geometry(gl, {
+      position: new GeometryAttribute({
+        size: 3,
+        data: new Float32Array(count * 3)
+      })
+    })
+    const small = new Geometry(gl, {
+      position: position(quadPositions),
+      index: new GeometryAttribute({ data: new Uint16Array([0, 1, 2]) })
+    })
+    const index = mergeGeometries([big, small]).attributes.index
+
+    expect(index.data).toBeInstanceOf(Uint32Array)
+    expect(Array.from(index.data.slice(-3))).toEqual([65535, 65536, 65537])
+  })
+
+  it('merges parts placed with applyMatrix', () => {
+    const a = indexedQuad(gl)
+    const b = indexedQuad(gl)
+    b.applyMatrix(
+      Mat4.fromRotationTranslationScale(
+        new Quat(0, 0, 0, 1),
+        new Vec3(2, 0, 0),
+        new Vec3(1, 1, 1)
+      )
+    )
+    const merged = mergeGeometries([a, b])
+
+    expect(drawnPositions(merged)).toEqual([
+      ...drawnPositions(a),
+      ...drawnPositions(b)
+    ])
   })
 })
