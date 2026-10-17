@@ -42,6 +42,44 @@ const originArrayToVec3 = function (
   return new Vec3(a[o], size > 1 ? a[o + 1] : 0, size > 2 ? a[o + 2] : 0)
 }
 
+let isExternalCopyWarned = false
+
+// An external attribute's data is only its starting values, so copies of the
+// geometry leave it out
+const warnExternalCopy = function (key: string): void {
+  if (isExternalCopyWarned) return
+  isExternalCopyWarned = true
+  console.warn(`External attribute ${key} can't be copied, so it's left out`)
+}
+
+type AttributeData = WTCGLGeometryAttribute['data']
+
+// A tightly packed copy of `attr` with `count` vertices, where vertex `i` is
+// the source's vertex `ids[i]` (or vertex `i` without `ids`)
+const copyVertices = function (
+  attr: WTCGLGeometryAttribute,
+  count: number,
+  ids?: ArrayLike<number>
+): GeometryAttribute {
+  const { offset, stride } = elementLayout(attr)
+  const size = attr.size
+  const source = attr.data
+  const data = new (
+    source.constructor as new (length: number) => AttributeData
+  )(count * size)
+  for (let i = 0; i < count; i++) {
+    const from = offset + (ids ? ids[i] : i) * stride
+    for (let k = 0; k < size; k++) data[i * size + k] = source[from + k]
+  }
+  return new GeometryAttribute({
+    size,
+    data,
+    type: attr.type,
+    normalized: attr.normalized,
+    instanced: attr.divisor
+  })
+}
+
 // The context generation each attribute's buffer was last rebuilt for
 const restoredAttributes = new WeakMap<WTCGLGeometryAttribute, number>()
 
@@ -671,6 +709,137 @@ export class Geometry {
     if (this.bounds) {
       this.computeBoundingBox()
       this.computeBoundingSphere()
+    }
+  }
+
+  /**
+   * A new, non-indexed copy of the geometry, with every index entry as its
+   * own vertex, so computeVertexNormals() gives flat normals. The whole index
+   * is expanded, whatever the draw range. The original is unchanged; call
+   * remove() on it if it's no longer needed.
+   * @returns {Geometry} The non-indexed copy
+   */
+  toNonIndexed(): Geometry {
+    const index = this.attributes.index
+    const ids = index && this.#indexEntries(index)
+
+    const attributes: WTCGLGeometryAttributeCollection = {}
+    this.#copyInstanced(attributes)
+    for (const [key, attr] of this.#vertexAttributes()) {
+      attributes[key] = ids
+        ? copyVertices(attr, ids.length, ids)
+        : copyVertices(attr, attr.count)
+    }
+    return new Geometry(this.gl, attributes)
+  }
+
+  /**
+   * A new, indexed copy of the geometry with matching vertices welded
+   * together. Vertices match when every attribute except `normal` is within
+   * `tolerance`; normals are recomputed afterwards, so shared vertices become
+   * smooth. Values are snapped to a `tolerance` grid, so two values either
+   * side of a grid line may not merge. Vertices the index never uses are
+   * dropped.
+   * @param {number} tolerance - How far apart values can be and still match. 0 compares exactly
+   * @returns {Geometry} The welded copy
+   */
+  mergeVertices(tolerance: number = 1e-4): Geometry {
+    const compared = this.#vertexAttributes().filter(
+      ([key]) => key !== 'normal'
+    )
+    const scale = tolerance > 0 ? 1 / tolerance : 0
+    const layouts = compared.map(([, attr]) => elementLayout(attr))
+
+    // Walk the vertices in draw order, so the new index keeps the triangles
+    // and their winding
+    const index = this.attributes.index
+    const order = index
+      ? this.#indexEntries(index)
+      : Array.from(
+          { length: this.attributes.position?.count ?? 0 },
+          (_, i) => i
+        )
+
+    const remap = new Map<number, number>()
+    const keys = new Map<string, number>()
+    const unique: number[] = []
+    const entries: number[] = []
+    for (let i = 0; i < order.length; i++) {
+      const v = order[i]
+      let id = remap.get(v)
+      if (id === undefined) {
+        let key = ''
+        for (let a = 0; a < compared.length; a++) {
+          const attr = compared[a][1]
+          const from = layouts[a].offset + v * layouts[a].stride
+          for (let k = 0; k < attr.size; k++) {
+            const value = attr.data[from + k]
+            key += (scale ? Math.round(value * scale) : value) + ','
+          }
+        }
+        id = keys.get(key)
+        if (id === undefined) {
+          id = unique.length
+          keys.set(key, id)
+          unique.push(v)
+        }
+        remap.set(v, id)
+      }
+      entries.push(id)
+    }
+
+    const attributes: WTCGLGeometryAttributeCollection = {}
+    this.#copyInstanced(attributes)
+    for (const [key, attr] of compared) {
+      attributes[key] = copyVertices(attr, unique.length, unique)
+    }
+    attributes.index = new GeometryAttribute({
+      data:
+        unique.length <= 65536
+          ? new Uint16Array(entries)
+          : new Uint32Array(entries)
+    })
+
+    const geometry = new Geometry(this.gl, attributes)
+    if (this.attributes.normal) geometry.computeVertexNormals()
+    return geometry
+  }
+
+  /**
+   * The index's entries, from its offset.
+   */
+  #indexEntries(index: WTCGLGeometryAttribute): AttributeData {
+    const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
+    return index.data.subarray(start, start + index.count)
+  }
+
+  /**
+   * The per-vertex attributes that can be read back, by key. External
+   * attributes are left out with a warning.
+   */
+  #vertexAttributes(): [string, WTCGLGeometryAttribute][] {
+    const attributes: [string, WTCGLGeometryAttribute][] = []
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (key === 'index' || attr.divisor) continue
+      if (attr.external) {
+        warnExternalCopy(key)
+        continue
+      }
+      attributes.push([key, attr])
+    }
+    return attributes
+  }
+
+  /**
+   * Copy the instanced attributes into `attributes`.
+   */
+  #copyInstanced(attributes: WTCGLGeometryAttributeCollection): void {
+    for (const key in this.attributes) {
+      const attr = this.attributes[key]
+      if (key === 'index' || !attr.divisor) continue
+      if (attr.external) warnExternalCopy(key)
+      else attributes[key] = copyVertices(attr, attr.count)
     }
   }
 

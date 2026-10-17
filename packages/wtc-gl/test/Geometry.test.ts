@@ -539,3 +539,169 @@ describe('Geometry.applyMatrix', () => {
     warn.mockRestore()
   })
 })
+
+// A unit quad as 4 vertices and 2 counter-clockwise triangles
+const indexedQuad = (gl: MockGL) =>
+  new Geometry(gl, {
+    position: position([0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0]),
+    uv: position([0, 0, 1, 0, 1, 1, 0, 1], 2),
+    index: new GeometryAttribute({ data: new Uint16Array([0, 1, 2, 0, 2, 3]) })
+  })
+
+// The positions of each drawn vertex, in draw order
+const drawnPositions = (geometry: Geometry) => {
+  const { position: p, index } = geometry.attributes
+  const ids = index
+    ? Array.from(index.data)
+    : Array.from({ length: p.count }, (_, i) => i)
+  return ids.map((v) => Array.from(p.data.slice(v * 3, v * 3 + 3)))
+}
+
+describe('Geometry.toNonIndexed', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  it('gives every index entry its own vertex', () => {
+    const geometry = indexedQuad(gl)
+    const flat = geometry.toNonIndexed()
+
+    expect(flat).not.toBe(geometry)
+    expect(flat.attributes.index).toBeUndefined()
+    expect(flat.drawRange.count).toBe(6)
+    expect(drawnPositions(flat)).toEqual(drawnPositions(geometry))
+    expect(Array.from(flat.attributes.uv.data)).toEqual([
+      0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1
+    ])
+
+    // The original is untouched
+    expect(geometry.attributes.position.count).toBe(4)
+    expect(Array.from(geometry.attributes.index.data)).toEqual([
+      0, 1, 2, 0, 2, 3
+    ])
+  })
+
+  it('packs interleaved attributes tightly', () => {
+    // Interleaved [x, y, z, u, v] floats: stride 20 bytes
+    const data = new Float32Array([0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1])
+    const geometry = new Geometry(gl, {
+      position: new GeometryAttribute({ size: 3, stride: 20, data }),
+      uv: new GeometryAttribute({ size: 2, stride: 20, offset: 12, data }),
+      index: new GeometryAttribute({ data: new Uint16Array([2, 1, 0]) })
+    })
+    const flat = geometry.toNonIndexed()
+
+    const { position: p, uv } = flat.attributes
+    expect([p.stride, p.offset, uv.stride, uv.offset]).toEqual([0, 0, 0, 0])
+    expect(Array.from(p.data)).toEqual([0, 1, 0, 1, 0, 0, 0, 0, 0])
+    expect(Array.from(uv.data)).toEqual([0, 1, 1, 0, 0, 0])
+  })
+
+  it('copies instanced attributes', () => {
+    const offsets = new GeometryAttribute({
+      size: 3,
+      instanced: 1,
+      data: new Float32Array([1, 2, 3, 4, 5, 6])
+    })
+    const geometry = indexedQuad(gl)
+    geometry.addAttribute('offset', offsets)
+    const copy = geometry.toNonIndexed().attributes.offset
+
+    expect(copy).not.toBe(offsets)
+    expect(copy.data).not.toBe(offsets.data)
+    expect(Array.from(copy.data)).toEqual([1, 2, 3, 4, 5, 6])
+    expect(copy.divisor).toBe(1)
+  })
+
+  it('copies geometry that has no index', () => {
+    const geometry = new Geometry(gl, { position: position(quadPositions) })
+    const copy = geometry.toNonIndexed()
+
+    expect(copy.attributes.position).not.toBe(geometry.attributes.position)
+    expect(Array.from(copy.attributes.position.data)).toEqual(quadPositions)
+  })
+})
+
+describe('Geometry.mergeVertices', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const vertexCount = (geometry: Geometry) => geometry.attributes.position.count
+
+  it('welds matching vertices back into an indexed geometry', () => {
+    const geometry = indexedQuad(gl)
+    const welded = geometry.toNonIndexed().mergeVertices()
+
+    expect(vertexCount(welded)).toBe(4)
+    expect(welded.attributes.index.data).toBeInstanceOf(Uint16Array)
+    expect(welded.attributes.index.count).toBe(6)
+    expect(drawnPositions(welded)).toEqual(drawnPositions(geometry))
+  })
+
+  it('keeps vertices with different uvs apart', () => {
+    const geometry = new Geometry(gl, {
+      position: position([
+        0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0
+      ]),
+      // The second triangle's copies of the shared vertices have new uvs
+      uv: position([0, 0, 1, 0, 0, 1, 0.5, 1, 1, 0.5, 1, 1], 2)
+    })
+    expect(vertexCount(geometry.mergeVertices())).toBe(6)
+  })
+
+  it('ignores normals when welding, then recomputes them', () => {
+    // A triangle of area 2 facing +z and one of area 1 facing -x, folded
+    // along the y axis, each with its own face normals
+    const geometry = new Geometry(gl, {
+      position: position([
+        0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, -1
+      ])
+    })
+    geometry.computeVertexNormals()
+    const welded = geometry.mergeVertices()
+
+    expect(vertexCount(welded)).toBe(4)
+    const { position: p, normal: n } = welded.attributes
+    const shared = [-1 / Math.sqrt(5), 0, 2 / Math.sqrt(5)]
+    for (let v = 0; v < 4; v++) {
+      if (p.data[v * 3] !== 0 || p.data[v * 3 + 2] !== 0) continue
+      shared.forEach((value, k) => expect(n.data[v * 3 + k]).toBeCloseTo(value))
+    }
+  })
+
+  it('merges values within the tolerance', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 0.5, 0, 0, 0.50001, 0, 0])
+    })
+    expect(vertexCount(geometry.mergeVertices())).toBe(2)
+    expect(vertexCount(geometry.mergeVertices(1e-6))).toBe(3)
+  })
+
+  it('drops vertices the index never uses', () => {
+    const geometry = new Geometry(gl, {
+      position: position([9, 9, 9, ...quadPositions, 8, 8, 8]),
+      index: new GeometryAttribute({ data: new Uint16Array([1, 2, 3]) })
+    })
+    const welded = geometry.mergeVertices()
+
+    expect(vertexCount(welded)).toBe(3)
+    expect(drawnPositions(welded)).toEqual(drawnPositions(geometry))
+  })
+
+  it('uses 32-bit indices past 65,536 vertices', () => {
+    const count = 65537
+    const data = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) data[i * 3] = i
+    const geometry = new Geometry(gl, {
+      position: new GeometryAttribute({ size: 3, data })
+    })
+    expect(geometry.mergeVertices().attributes.index.data).toBeInstanceOf(
+      Uint32Array
+    )
+  })
+})
