@@ -5,6 +5,8 @@ import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Program } from '../src/core/Program'
 import { createMockRenderer, type MockGL } from './mockGL'
 
+const last = <T>(items: T[]): T => items[items.length - 1]
+
 const position = (data: number[], size = 3) =>
   new GeometryAttribute({
     size,
@@ -131,5 +133,103 @@ describe('Geometry VAOs', () => {
     index.buffer = second
     geometry.draw({ program, mode: gl.TRIANGLES })
     expect(indexBinds()).toEqual([second])
+  })
+})
+
+describe('Geometry.setIndex', () => {
+  let gl: MockGL
+  let program: Program
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+    program = new Program(gl, { vertex: '', fragment: '' })
+  })
+
+  const indexBinds = () =>
+    vi
+      .mocked(gl.bindBuffer)
+      .mock.calls.filter(([target]) => target === gl.ELEMENT_ARRAY_BUFFER)
+      .map(([, buffer]) => buffer)
+
+  it('wraps a typed array in an attribute and uploads it', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0])
+    })
+    const data = new Uint32Array([0, 1, 2, 1, 3, 2])
+    geometry.setIndex(data)
+
+    const index = geometry.attributes.index
+    expect(index).toBeInstanceOf(GeometryAttribute)
+    expect(index.data).toBe(data)
+    expect(index.type).toBe(gl.UNSIGNED_INT)
+    expect(index.target).toBe(gl.ELEMENT_ARRAY_BUFFER)
+    expect(index.buffer).toBeTruthy()
+    expect(gl.bufferData).toHaveBeenCalledWith(
+      gl.ELEMENT_ARRAY_BUFFER,
+      data,
+      gl.STATIC_DRAW
+    )
+    expect(geometry.drawRange).toEqual({ start: 0, count: 6 })
+  })
+
+  it('binds the new index on the next draw and keeps the old buffer', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+      index: new GeometryAttribute({ data: new Uint16Array([0, 1, 2]) })
+    })
+    const old = geometry.attributes.index.buffer
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    geometry.setDrawRange(1, 2)
+
+    vi.mocked(gl.bindBuffer).mockClear()
+    geometry.setIndex(new Uint16Array([2, 1, 0]))
+    const next = geometry.attributes.index.buffer
+    geometry.draw({ program, mode: gl.TRIANGLES })
+
+    expect(next).not.toBe(old)
+    expect(last(indexBinds())).toBe(next)
+    expect(gl.deleteBuffer).not.toHaveBeenCalledWith(old)
+    expect(geometry.drawRange).toEqual({ start: 0, count: 3 })
+  })
+
+  it('switches a non-indexed geometry to indexed drawing', () => {
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0])
+    })
+    geometry.draw({ program, mode: gl.TRIANGLES })
+    expect(gl.drawArrays).toHaveBeenCalledWith(gl.TRIANGLES, 0, 4)
+
+    geometry.setIndex(new Uint16Array([0, 1, 2, 1, 3, 2]))
+    geometry.draw({ program, mode: gl.TRIANGLES })
+
+    expect(last(indexBinds())).toBe(geometry.attributes.index.buffer)
+    expect(gl.drawElements).toHaveBeenCalledWith(
+      gl.TRIANGLES,
+      6,
+      5123, // UNSIGNED_SHORT
+      0
+    )
+  })
+
+  it("uploads with no vertex array bound, so it can't overwrite another geometry's index", () => {
+    const other = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 0, 1, 0])
+    })
+    other.draw({ program, mode: gl.TRIANGLES })
+    const geometry = new Geometry(gl, {
+      position: position([0, 0, 0, 1, 0, 0, 0, 1, 0])
+    })
+    other.draw({ program, mode: gl.TRIANGLES })
+
+    vi.mocked(gl.bindVertexArray).mockClear()
+    vi.mocked(gl.bufferData).mockClear()
+    geometry.setIndex(new Uint16Array([0, 1, 2]))
+
+    const binds = vi.mocked(gl.bindVertexArray).mock
+    const lastBind = last(binds.invocationCallOrder)
+    expect(last(binds.calls)).toEqual([null])
+    expect(lastBind).toBeLessThan(
+      vi.mocked(gl.bufferData).mock.invocationCallOrder[0]
+    )
   })
 })

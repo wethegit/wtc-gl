@@ -7,6 +7,7 @@ import type {
   WTCGLBounds
 } from '../types'
 import { Program } from '../core/Program'
+import { GeometryAttribute } from './GeometryAttribute'
 
 let ID = 1
 
@@ -191,6 +192,26 @@ export class Geometry {
     } else if (!this.attributes.index) {
       this.drawRange.count = Math.max(this.drawRange.count, attr.count)
     }
+  }
+
+  /**
+   * Replace the index after construction. The old index buffer isn't
+   * deleted, because attributes can be shared between geometries; delete it
+   * yourself if nothing else uses it. To change indices in place at the same
+   * length, edit `attributes.index.data` and set `needsUpdate` instead.
+   * @param {WTCGLGeometryAttribute | Uint16Array | Uint32Array} index - The new index attribute, or the index data to wrap in one
+   */
+  setIndex(index: WTCGLGeometryAttribute | Uint16Array | Uint32Array): void {
+    const attr = ArrayBuffer.isView(index)
+      ? new GeometryAttribute({ data: index })
+      : index
+
+    // Uploading binds ELEMENT_ARRAY_BUFFER, which would overwrite the index
+    // recorded in whatever vertex array is bound, possibly another geometry's
+    this.gl.renderer.bindVertexArray(null)
+    this.addAttribute('index', attr)
+    // A start offset into the old index means nothing in the new one
+    this.drawRange.start = 0
   }
 
   /**
