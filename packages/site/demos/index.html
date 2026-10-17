@@ -617,6 +617,38 @@
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
         </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/building-geometry.jpg"
+              alt="Concentric rings of block and sphere modules in a shallow bowl, over a peach and mint sky"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Geometry</span>
+              <span class="demo__class">mergeGeometries</span>
+              <span class="demo__class">Box</span>
+              <span class="demo__class">Sphere</span>
+              <span class="demo__class">Triangle</span>
+              <span class="demo__class">DollyCamera</span>
+            </div>
+            <h3>Building geometry</h3>
+            <p>
+              Concentric rings of modules, built in code and drawn as one mesh.
+              Boxes and spheres placed with <code>applyMatrix</code> merge into
+              a module, copies of the module (every other one mirrored) merge
+              into a ring, and the rings merge into the sculpture. A regrow wave
+              rebuilds one ring at a time while the shader grows it and explodes
+              the sculpture, so it stays a single draw call. Flat and smooth
+              shading come from <code>toNonIndexed</code> and
+              <code>mergeVertices</code>.
+            </p>
+            <a class="btn" href="./building-geometry/">Open demo →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Getting started -->

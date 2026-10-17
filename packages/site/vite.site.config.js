@@ -50,6 +50,7 @@ export default defineConfig({
         scrollBlades: resolvePath('demos/scroll-blades/index.html'),
         stencilDepth: resolvePath('demos/stencil-depth/index.html'),
         manyMeshes: resolvePath('demos/many-meshes/index.html'),
+        buildingGeometry: resolvePath('demos/building-geometry/index.html'),
         swarm: resolvePath('demos/swarm/index.html'),
         manifoldMandala: resolvePath('demos/manifold-mandala/index.html'),
         progressiveRender: resolvePath('demos/progressive-render/index.html')

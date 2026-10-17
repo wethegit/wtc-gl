@@ -94,7 +94,7 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 - [x] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
 - [x] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. _New._
 - [x] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
-- [ ] Vitest coverage for all of the above. They're pure array work.
+- [x] Vitest coverage for all of the above. They're pure array work.
 
 ### Primitives and generators
 
