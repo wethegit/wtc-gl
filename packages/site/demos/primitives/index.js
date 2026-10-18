@@ -206,7 +206,7 @@ const params = {
   view: 'lit',
   shading: 'smooth',
   edges: true,
-  cull: true,
+  cull: false,
   spin: true
 }
 
