@@ -251,6 +251,37 @@ export class Path {
   }
 
   /**
+   * The path as a polyline that keeps its corners: every segment's start and
+   * end, and `curveDivisions - 1` points evenly spaced by distance inside each
+   * curved segment. A closed path doesn't repeat its start at the end. Use it
+   * for outlines, where `getPoints` would cut the corners.
+   */
+  toPolyline(curveDivisions = 12): Vec3[] {
+    const points: Vec3[] = []
+    for (const segment of this.#segments) {
+      points.push(segment.getPoint(0))
+      if (segment instanceof LineSegment) continue
+      const length = segment.length
+      for (let k = 1; k < curveDivisions; k++) {
+        points.push(
+          segment.getPoint(segment.lengthToT((length * k) / curveDivisions))
+        )
+      }
+    }
+
+    const last = this.#segments[this.#segments.length - 1]
+    if (last) {
+      const end = last.getPoint(1)
+      const start = points[0]
+      const loops =
+        this.closed &&
+        Math.hypot(end.x - start.x, end.y - start.y, end.z - start.z) <= 1e-9
+      if (!loops) points.push(end)
+    }
+    return points
+  }
+
+  /**
    * Rotation-minimising frames at `divisions + 1` evenly spaced points: the
    * normal is carried along the path, turning only as much as the tangent
    * does, so it doesn't flip or spin like true Frenet frames. Then each frame

@@ -10,6 +10,7 @@ import { Capsule } from '../src/geometry/Capsule'
 import { Tube } from '../src/geometry/Tube'
 import { Path } from '../src/path/Path'
 import { Curve } from '../src/path/Curve'
+import { Extrude } from '../src/geometry/Extrude'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 type Vec = [number, number, number]
@@ -675,5 +676,353 @@ describe('Tube', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const tube = new Tube(gl, { path: wave(), attributes: { extra } })
     expect(tube.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Extrude', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const square = (h: number): [number, number][] => [
+    [-h, -h],
+    [h, -h],
+    [h, h],
+    [-h, h]
+  ]
+
+  const circle = (r: number, n = 64): [number, number][] =>
+    Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2
+      return [Math.cos(a) * r, Math.sin(a) * r]
+    })
+
+  // Front-cap triangles: all three corners face +z
+  const capArea = (geometry: Geometry) => {
+    let area = 0
+    for (const [a, b, c] of triangles(geometry)) {
+      if (![a, b, c].every((i) => vertex(geometry, 'normal', i)[2] > 0.999)) {
+        continue
+      }
+      const pa = vertex(geometry, 'position', a)
+      const face = cross(
+        sub(vertex(geometry, 'position', b), pa),
+        sub(vertex(geometry, 'position', c), pa)
+      )
+      area += length(face) / 2
+    }
+    return area
+  }
+
+  // Indices of vertices on the side walls, whose normals are level
+  const sideVertices = (geometry: Geometry) =>
+    Array.from({ length: vertexCount(geometry) }, (_, i) => i).filter(
+      (i) => Math.abs(vertex(geometry, 'normal', i)[2]) < 1e-6
+    )
+
+  it('needs a shape with three points and some area', () => {
+    expect(() => new Extrude(gl)).toThrow(/shape/)
+    expect(
+      () =>
+        new Extrude(gl, {
+          shape: [
+            [0, 0],
+            [1, 0]
+          ]
+        })
+    ).toThrow(/three points/)
+    expect(
+      () =>
+        new Extrude(gl, {
+          shape: [
+            [0, 0],
+            [1, 0],
+            [2, 0]
+          ]
+        })
+    ).toThrow(/area/)
+  })
+
+  it('is well formed, with or without holes and bevels', () => {
+    expectWellFormed(new Extrude(gl, { shape: square(1) }))
+    expectWellFormed(
+      new Extrude(gl, { shape: square(1), holes: [square(0.25)] })
+    )
+    expectWellFormed(new Extrude(gl, { shape: circle(1), bevel: true }))
+    expectWellFormed(
+      new Extrude(gl, {
+        shape: square(1),
+        holes: [circle(0.3, 24)],
+        bevel: true,
+        bevelSegments: 1
+      })
+    )
+    expectWellFormed(
+      new Extrude(gl, { shape: square(1), bevel: true, bevelSegments: 4 })
+    )
+  })
+
+  it('handles outlines and holes wound either way', () => {
+    const forwards = new Extrude(gl, {
+      shape: square(1),
+      holes: [square(0.25)]
+    })
+    const backwards = new Extrude(gl, {
+      shape: [...square(1)].reverse(),
+      holes: [[...square(0.25)].reverse()]
+    })
+    expectWellFormed(backwards)
+    expect(capArea(backwards)).toBeCloseTo(capArea(forwards))
+  })
+
+  it('caps the outline minus its holes', () => {
+    const extrude = new Extrude(gl, {
+      shape: square(1),
+      holes: [square(0.25)]
+    })
+    expect(capArea(extrude)).toBeCloseTo(4 - 0.25)
+  })
+
+  it('takes a Path or Curve, keeping its corners', () => {
+    const path = new Path()
+      .moveTo([-1, -1])
+      .lineTo([1, -1])
+      .quadraticCurveTo([1.5, 0], [1, 1])
+      .lineTo([-1, 1])
+      .close()
+    const extrude = new Extrude(gl, { shape: path, curveDivisions: 6 })
+    expectWellFormed(extrude)
+    const [x, y] = size(extrude)
+    expect(y).toBeCloseTo(2)
+    expect(x).toBeGreaterThan(2.2)
+
+    const blob = new Curve({ points: circle(1, 6), closed: true })
+    expectWellFormed(new Extrude(gl, { shape: blob }))
+  })
+
+  it('keeps the outline in x and y, centred on z', () => {
+    const plain = new Extrude(gl, { shape: square(1), depth: 0.5 })
+    expect(size(plain).map((v) => +v.toFixed(6))).toEqual([2, 2, 0.5])
+    expect(plain.bounds!.center.z).toBeCloseTo(0)
+
+    const bevelled = new Extrude(gl, {
+      shape: square(1),
+      depth: 0.5,
+      bevel: true,
+      bevelThickness: 0.1,
+      bevelSize: 0.2
+    })
+    expect(size(bevelled).map((v) => +v.toFixed(6))).toEqual([2, 2, 0.7])
+  })
+
+  it('insets the cap by the bevel size, at the bevel thickness', () => {
+    const extrude = new Extrude(gl, {
+      shape: square(1),
+      depth: 0.5,
+      bevel: true,
+      bevelThickness: 0.1,
+      bevelSize: 0.2
+    })
+    const cap = Array.from(
+      { length: vertexCount(extrude) },
+      (_, i) => i
+    ).filter((i) => vertex(extrude, 'normal', i)[2] > 0.999)
+    for (const i of cap) {
+      const [x, y, z] = vertex(extrude, 'position', i)
+      expect(z).toBeCloseTo(0.35)
+      expect(Math.max(Math.abs(x), Math.abs(y))).toBeCloseTo(0.8)
+    }
+    // The widest ring, between the bevels, is the outline itself
+    const sides = Array.from(
+      { length: vertexCount(extrude) },
+      (_, i) => i
+    ).filter((i) => Math.abs(vertex(extrude, 'position', i)[2]) <= 0.25 + 1e-6)
+    expect(
+      Math.max(...sides.map((i) => Math.abs(vertex(extrude, 'position', i)[0])))
+    ).toBeCloseTo(1)
+  })
+
+  it('creases sharp corners and smooths gentle ones', () => {
+    // A square's walls meet at 90°, so every side normal is straight along an axis
+    const box = new Extrude(gl, { shape: square(1) })
+    for (const i of sideVertices(box)) {
+      const [nx, ny] = vertex(box, 'normal', i)
+      expect(Math.min(Math.abs(nx), Math.abs(ny))).toBeCloseTo(0, 6)
+    }
+
+    // A circle's walls meet at 5.6°, so its normals point straight out
+    const disc = new Extrude(gl, { shape: circle(1) })
+    for (const i of sideVertices(disc)) {
+      const [x, y] = vertex(disc, 'position', i)
+      const [nx, ny] = vertex(disc, 'normal', i)
+      expect(nx).toBeCloseTo(x, 5)
+      expect(ny).toBeCloseTo(y, 5)
+    }
+
+    // With no crease angle the circle is faceted instead
+    const faceted = new Extrude(gl, { shape: circle(1), creaseAngle: 0 })
+    expect(vertexCount(faceted)).toBeGreaterThan(vertexCount(disc))
+  })
+
+  describe('bevel shading', () => {
+    const bevelled = (bevelSegments: number) =>
+      new Extrude(gl, {
+        shape: circle(1, 32),
+        depth: 0.5,
+        bevel: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelSegments
+      })
+
+    // Side vertices (not on a cap) at height z
+    const ring = (geometry: Geometry, z: number) =>
+      Array.from({ length: vertexCount(geometry) }, (_, i) => i).filter(
+        (i) =>
+          Math.abs(vertex(geometry, 'position', i)[2] - z) < 1e-6 &&
+          Math.abs(vertex(geometry, 'normal', i)[2]) < 0.999999
+      )
+
+    it('rolls a rounded bevel smoothly into the face', () => {
+      const geometry = bevelled(3)
+      // Where the bevel meets the front cap, its normals face +z like the cap
+      const edge = Array.from(
+        { length: vertexCount(geometry) },
+        (_, i) => i
+      ).filter(
+        (i) => Math.abs(vertex(geometry, 'position', i)[2] - 0.35) < 1e-6
+      )
+      for (const i of edge) {
+        const [nx, ny, nz] = vertex(geometry, 'normal', i)
+        // + 0 turns -0 into 0
+        expect([nx, ny, nz].map((v) => +v.toFixed(6) + 0)).toEqual([0, 0, 1])
+      }
+      // And where it meets the straight side, they're level
+      for (const i of ring(geometry, 0.25)) {
+        expect(vertex(geometry, 'normal', i)[2]).toBeCloseTo(0, 6)
+      }
+      expectWellFormed(geometry)
+    })
+
+    it('follows the quarter-round between the face and the side', () => {
+      const geometry = bevelled(4)
+      // The ring halfway round: 45° along an ellipse with equal radii
+      const z = 0.25 + 0.1 * Math.sin(Math.PI / 4)
+      const middle = ring(geometry, z)
+      expect(middle.length).toBeGreaterThan(0)
+      for (const i of middle) {
+        expect(vertex(geometry, 'normal', i)[2]).toBeCloseTo(Math.SQRT1_2, 6)
+      }
+    })
+
+    it('keeps a chamfer flat, with hard edges', () => {
+      const geometry = bevelled(1)
+      // The chamfer faces 45° out from both the face and the side
+      const edge = ring(geometry, 0.35)
+      expect(edge.length).toBeGreaterThan(0)
+      for (const i of edge) {
+        expect(vertex(geometry, 'normal', i)[2]).toBeCloseTo(Math.SQRT1_2, 6)
+      }
+      expectWellFormed(geometry)
+    })
+  })
+
+  describe('uvs', () => {
+    const bevelled = (uvs?: 'projected' | 'separate') =>
+      new Extrude(gl, {
+        shape: circle(1, 32),
+        depth: 0.5,
+        bevel: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        uvs
+      })
+
+    const uvOf = (geometry: Geometry, i: number) => {
+      const d = data(geometry, 'uv')
+      return [d[i * 2], d[i * 2 + 1]]
+    }
+
+    // The uvs of the vertices at each point round the front cap's edge: the
+    // cap's own and the bevel's, which meet there
+    const capEdgeUVs = (geometry: Geometry) => {
+      const groups = new Map<string, number[][]>()
+      for (let i = 0; i < vertexCount(geometry); i++) {
+        const [x, y, z] = vertex(geometry, 'position', i)
+        if (Math.abs(z - 0.35) > 1e-6) continue
+        const key = `${x.toFixed(5)},${y.toFixed(5)}`
+        groups.set(key, [...(groups.get(key) ?? []), uvOf(geometry, i)])
+      }
+      return [...groups.values()]
+    }
+
+    it('projects the bevel like the caps by default, so the face has no seam', () => {
+      const groups = capEdgeUVs(bevelled())
+      expect(groups.length).toBe(32)
+      for (const [first, ...rest] of groups) {
+        expect(rest.length).toBeGreaterThan(0)
+        for (const uv of rest) {
+          expect(uv[0]).toBeCloseTo(first[0], 6)
+          expect(uv[1]).toBeCloseTo(first[1], 6)
+        }
+      }
+    })
+
+    it('gives the bevel the side uvs when separate', () => {
+      const groups = capEdgeUVs(bevelled('separate'))
+      expect(groups.length).toBe(32)
+      expect(
+        groups.some(([first, ...rest]) =>
+          rest.some((uv) => Math.abs(uv[0] - first[0]) > 0.01)
+        )
+      ).toBe(true)
+    })
+
+    it('splits the uvs, but not the normals, where the bevel meets the sides', () => {
+      const geometry = bevelled()
+      // Vertices on the front edge of the straight side, z = depth / 2
+      const edge = Array.from(
+        { length: vertexCount(geometry) },
+        (_, i) => i
+      ).filter(
+        (i) => Math.abs(vertex(geometry, 'position', i)[2] - 0.25) < 1e-6
+      )
+      // Each point there has a projected copy and a side copy
+      expect(edge.length).toBe(33 * 2)
+      const first = vertex(geometry, 'position', edge[0])
+      const twins = edge.filter(
+        (i) => length(sub(vertex(geometry, 'position', i), first)) < 1e-6
+      )
+      expect(twins.length).toBe(2)
+      const [a, b] = twins
+      expect(vertex(geometry, 'normal', a)).toEqual(
+        vertex(geometry, 'normal', b)
+      )
+      expect(uvOf(geometry, a)).not.toEqual(uvOf(geometry, b))
+      expectWellFormed(geometry)
+    })
+
+    it('makes no difference without a bevel', () => {
+      const a = new Extrude(gl, { shape: square(1), uvs: 'projected' })
+      const b = new Extrude(gl, { shape: square(1), uvs: 'separate' })
+      expect(data(a, 'uv')).toEqual(data(b, 'uv'))
+    })
+  })
+
+  it('switches to a 32-bit index past 65,536 vertices', () => {
+    const extrude = new Extrude(gl, {
+      shape: circle(1, 4000),
+      bevel: true,
+      bevelSegments: 8
+    })
+    expect(extrude.attributes.index.data).toBeInstanceOf(Uint32Array)
+  })
+
+  it('keeps extra attributes passed in', () => {
+    const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
+    const extrude = new Extrude(gl, { shape: square(1), attributes: { extra } })
+    expect(extrude.attributes.extra).toBe(extra)
   })
 })

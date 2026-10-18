@@ -322,3 +322,47 @@ describe('Path frames', () => {
     }
   })
 })
+
+describe('Path.toPolyline', () => {
+  it('keeps only the corners of straight lines', () => {
+    const open = new Path()
+      .moveTo([0, 0, 0])
+      .lineTo([1, 0, 0])
+      .lineTo([1, 1, 0])
+      .lineTo([0, 1, 0])
+    expect(open.toPolyline().map(xyz)).toEqual([
+      [0, 0, 0],
+      [1, 0, 0],
+      [1, 1, 0],
+      [0, 1, 0]
+    ])
+
+    // Closing doesn't repeat the start at the end
+    open.close()
+    expect(open.toPolyline().map(xyz)).toEqual([
+      [0, 0, 0],
+      [1, 0, 0],
+      [1, 1, 0],
+      [0, 1, 0]
+    ])
+  })
+
+  it('divides curves evenly by distance, keeping their ends', () => {
+    const path = new Path()
+      .moveTo([0, 0, 0])
+      .lineTo([1, 0, 0])
+      .bezierCurveTo([1.02, 0, 0], [1.05, 0.01, 0], [3, 2, 0])
+    const points = path.toPolyline(8)
+    // Line start, then the cubic's start and 7 points inside it, then its end
+    expect(points.length).toBe(1 + 8 + 1)
+    expect(xyz(points[1])).toEqual([1, 0, 0])
+    expectClose(points[9], [3, 2, 0])
+
+    const steps = points.slice(2).map((p, i) => dist(points[i + 1], p))
+    expect(Math.max(...steps) / Math.min(...steps)).toBeLessThan(1.01)
+  })
+
+  it('returns no points for an empty path', () => {
+    expect(new Path().toPolyline()).toEqual([])
+  })
+})

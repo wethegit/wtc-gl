@@ -33,6 +33,7 @@
     "vitest": "^5.0.4"
   },
   "dependencies": {
+    "earcut": "^3.2.4",
     "wtc-math": "^1.4.0"
   },
   "repository": {
