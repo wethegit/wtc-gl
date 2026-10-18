@@ -274,3 +274,154 @@ describe('Curve points', () => {
     expect(curve.points.length).toBe(3)
   })
 })
+
+// The second derivative of a cubic Bézier span at t = 0 or 1
+const secondDerivative = (span: CubicBezierSegment, end: 0 | 1): XYZ => {
+  const [a, b, c] = end
+    ? [span.p3, span.p2, span.p1]
+    : [span.p0, span.p1, span.p2]
+  return [0, 1, 2].map((k) => 6 * (a[k] - 2 * b[k] + c[k])) as XYZ
+}
+
+const polyline = (points: XYZ[]) =>
+  points
+    .slice(1)
+    .reduce(
+      (sum, p, i) =>
+        sum +
+        Math.hypot(
+          p[0] - points[i][0],
+          p[1] - points[i][1],
+          p[2] - points[i][2]
+        ),
+      0
+    )
+
+describe('Curve tension', () => {
+  it('is the plain Catmull-Rom at 0, the default', () => {
+    const plain = new Curve({ points: zigzag })
+    const zero = new Curve({ points: zigzag, tension: 0 })
+    expect(zero.tension).toBe(0)
+    expect(plain.tension).toBe(0)
+    expect(zero.getLength()).toBe(plain.getLength())
+  })
+
+  it('still passes through every point', () => {
+    for (const tension of [-0.5, 0.5, 1]) {
+      const { segments } = new Curve({ points: zigzag, tension })
+      segments.forEach((segment, i) => {
+        expectClose(segment.getPoint(0, new Vec3()), zigzag[i])
+        expectClose(segment.getPoint(1, new Vec3()), zigzag[i + 1])
+      })
+    }
+  })
+
+  it('tightens towards straight lines at 1, and loosens below 0', () => {
+    const length = (tension: number) =>
+      new Curve({ points: zigzag, tension }).getLength()
+    expect(length(1)).toBeCloseTo(polyline(zigzag), 6)
+    expect(length(0.5)).toBeLessThan(length(0))
+    expect(length(-0.5)).toBeGreaterThan(length(0))
+  })
+
+  it('keeps its tension through setPoints', () => {
+    const curve = new Curve({ points: zigzag, tension: 1 })
+    curve.setPoints(zigzag.slice(0, 3))
+    expect(curve.tension).toBe(1)
+    expect(curve.getLength()).toBeCloseTo(polyline(zigzag.slice(0, 3)), 6)
+  })
+})
+
+describe('Curve bspline', () => {
+  it('starts and ends on the end points, but only passes near the others', () => {
+    const curve = new Curve({ type: Curve.BSPLINE, points: zigzag })
+    expectClose(curve.getPointAt(0), zigzag[0])
+    expectClose(curve.getPointAt(1), zigzag[4])
+
+    // The middle point pulls the curve towards it, without reaching it
+    const nearest = Math.min(
+      ...curve
+        .getPoints(400)
+        .map((p) =>
+          Math.hypot(p.x - zigzag[2][0], p.y - zigzag[2][1], p.z - zigzag[2][2])
+        )
+    )
+    expect(nearest).toBeGreaterThan(0.1)
+    expect(nearest).toBeLessThan(1.5)
+  })
+
+  it('is curvature-continuous where spans join', () => {
+    for (const closed of [false, true]) {
+      const { segments } = new Curve({
+        type: 'bspline',
+        points: zigzag,
+        closed
+      })
+      const spans = segments as CubicBezierSegment[]
+      const count = closed ? spans.length : spans.length - 1
+      for (let i = 0; i < count; i++) {
+        const before = spans[i]
+        const after = spans[(i + 1) % spans.length]
+        expectClose(after.p0, before.p3)
+        expectClose(secondDerivative(after, 0), secondDerivative(before, 1), 6)
+      }
+    }
+  })
+
+  it('has a span per point when closed, looping smoothly', () => {
+    const curve = new Curve({ type: 'bspline', points: zigzag, closed: true })
+    expect(curve.closed).toBe(true)
+    expect(curve.segments.length).toBe(zigzag.length)
+    expectClose(curve.getPointAt(1), xyz(curve.getPointAt(0)))
+    expectClose(curve.getTangentAt(1), xyz(curve.getTangentAt(0)), 6)
+  })
+
+  it('needs two points, or three when closed', () => {
+    expect(() => new Curve({ type: 'bspline', points: [[0, 0, 0]] })).toThrow(
+      /two points/
+    )
+    expect(
+      () =>
+        new Curve({
+          type: 'bspline',
+          points: [
+            [0, 0],
+            [1, 0]
+          ],
+          closed: true
+        })
+    ).toThrow(/three points/)
+    const line = new Curve({
+      type: 'bspline',
+      points: [
+        [0, 0],
+        [2, 0]
+      ]
+    })
+    expectClose(line.getPointAt(0.5), [1, 0, 0])
+  })
+
+  it('is smoother than the Catmull-Rom through the same points', () => {
+    // Sum of how much the tangent turns between samples, squared: higher for
+    // a curve that bends sharply at points
+    const roughness = (curve: Curve) => {
+      const { tangents } = curve.computeFrames(200)
+      let sum = 0
+      for (let i = 1; i < tangents.length; i++) {
+        const d = Math.acos(
+          Math.min(
+            1,
+            tangents[i - 1].x * tangents[i].x +
+              tangents[i - 1].y * tangents[i].y +
+              tangents[i - 1].z * tangents[i].z
+          )
+        )
+        sum += d * d
+      }
+      return sum
+    }
+    expect(
+      roughness(new Curve({ type: 'bspline', points: zigzag }))
+    ).toBeLessThan(roughness(new Curve({ points: zigzag })))
+  })
+})

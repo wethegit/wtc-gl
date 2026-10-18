@@ -23,7 +23,8 @@ import tubeFrag from './tube.frag'
 import markerVert from './marker.vert'
 import markerFrag from './marker.frag'
 
-// A tube swept along a Catmull-Rom curve through points you can drag.
+// A tube swept along a curve through points you can drag: a Catmull-Rom
+// through them, or a smoother B-spline pulled towards them.
 //
 // - The markers show where the curve is sampled. "even" spaces them by
 //   distance along the curve, which is what Path does; "parametric" steps t
@@ -33,7 +34,9 @@ import markerFrag from './marker.frag'
 //   as the curve does, and on a closed curve the last one matches the first.
 // - alpha is the Catmull-Rom's knot spacing: 0 uniform, 0.5 centripetal, 1
 //   chordal. The "hairpin" preset shows uniform looping where centripetal
-//   doesn't.
+//   doesn't. tension tightens it towards straight lines, or loosens it.
+// - The B-spline's curvature doesn't jump at the points, so the tube's
+//   shading doesn't crease there, but it only passes near them.
 
 const TAU = Math.PI * 2
 
@@ -76,8 +79,10 @@ const PRESETS = {
 
 const params = {
   preset: 'wave',
+  type: 'catmullrom',
   closed: false,
   alpha: 0.5,
+  tension: 0,
   radius: 0.16,
   taper: 0,
   twist: 0,
@@ -238,7 +243,13 @@ const parametric = (count) => {
 }
 
 const rebuild = () => {
-  curve = new Curve({ points, closed: params.closed, alpha: params.alpha })
+  curve = new Curve({
+    points,
+    type: params.type,
+    closed: params.closed,
+    alpha: params.alpha,
+    tension: params.tension
+  })
   curve.tiltFunction = params.twist
     ? (tilt, u) => tilt + u * params.twist * TAU
     : null
@@ -409,9 +420,21 @@ pane
 pane.addButton({ title: 'Reset points' }).on('click', loadPreset)
 
 const curveFolder = pane.addFolder({ title: 'Curve' })
-curveFolder.addBinding(params, 'closed').on('change', rebuild)
 curveFolder
+  .addBinding(params, 'type', {
+    options: { 'Catmull-Rom': 'catmullrom', 'B-spline': 'bspline' }
+  })
+  .on('change', () => {
+    // alpha and tension only shape the Catmull-Rom
+    alphaBinding.hidden = tensionBinding.hidden = params.type !== 'catmullrom'
+    rebuild()
+  })
+curveFolder.addBinding(params, 'closed').on('change', rebuild)
+const alphaBinding = curveFolder
   .addBinding(params, 'alpha', { min: 0, max: 1, step: 0.05 })
+  .on('change', rebuild)
+const tensionBinding = curveFolder
+  .addBinding(params, 'tension', { min: -1, max: 1, step: 0.05 })
   .on('change', rebuild)
 curveFolder
   .addBinding(params, 'twist', {
