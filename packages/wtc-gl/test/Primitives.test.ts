@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Cylinder } from '../src/geometry/Cylinder'
+import { Torus } from '../src/geometry/Torus'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 type Vec = [number, number, number]
@@ -189,5 +190,84 @@ describe('Cylinder', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const cylinder = new Cylinder(gl, { attributes: { extra } })
     expect(cylinder.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Torus', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  it('is a grid around the ring and around the tube', () => {
+    const torus = new Torus(gl, { radialSegments: 5, tubularSegments: 12 })
+    expect(vertexCount(torus)).toBe(6 * 13)
+    expect(torus.attributes.index.data!.length).toBe(5 * 12 * 6)
+    expect(torus.attributes.index.data).toBeInstanceOf(Uint16Array)
+  })
+
+  it('is well formed, whole or partial', () => {
+    expectWellFormed(new Torus(gl))
+    expectWellFormed(new Torus(gl, { arc: Math.PI }))
+    expectWellFormed(new Torus(gl, { radius: 1, tube: 0.05 }))
+  })
+
+  it('lies in the xy plane with the given radius and tube', () => {
+    const torus = new Torus(gl, {
+      radius: 1,
+      tube: 0.25,
+      radialSegments: 16,
+      tubularSegments: 64
+    })
+    const [x, y, z] = size(torus)
+    expect(x).toBeCloseTo(2.5)
+    expect(y).toBeCloseTo(2.5, 2)
+    expect(z).toBeCloseTo(0.5)
+  })
+
+  it('points normals away from the ring at the middle of the tube', () => {
+    const torus = new Torus(gl, { radius: 1, tube: 0.25 })
+    for (let i = 0; i < vertexCount(torus); i++) {
+      const p = vertex(torus, 'position', i)
+      const angle = Math.atan2(p[1], p[0])
+      const offset = sub(p, [Math.cos(angle), Math.sin(angle), 0])
+      expect(length(offset)).toBeCloseTo(0.25, 5)
+      const n = vertex(torus, 'normal', i)
+      offset.forEach((v, k) => expect(n[k]).toBeCloseTo(v / 0.25, 5))
+    }
+  })
+
+  it('sweeps the ring through arc, starting on +x', () => {
+    const torus = new Torus(gl, {
+      radius: 1,
+      tube: 0.25,
+      tubularSegments: 4,
+      arc: Math.PI / 2
+    })
+    // The first row is the outer edge of the tube
+    const start = vertex(torus, 'position', 0)
+    const end = vertex(torus, 'position', 4)
+    expect(start.map((v) => +v.toFixed(6))).toEqual([1.25, 0, 0])
+    expect(end.map((v) => +v.toFixed(6))).toEqual([0, 1.25, 0])
+  })
+
+  it('maps u around the ring and v around the tube', () => {
+    const torus = new Torus(gl, { radialSegments: 2, tubularSegments: 4 })
+    const uv = data(torus, 'uv')
+    expect([uv[0], uv[1]]).toEqual([0, 0])
+    expect([uv[8], uv[9]]).toEqual([1, 0])
+    expect([uv[uv.length - 2], uv[uv.length - 1]]).toEqual([1, 1])
+  })
+
+  it('switches to a 32-bit index past 65,536 vertices', () => {
+    const torus = new Torus(gl, { radialSegments: 256, tubularSegments: 256 })
+    expect(torus.attributes.index.data).toBeInstanceOf(Uint32Array)
+  })
+
+  it('keeps extra attributes passed in', () => {
+    const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
+    const torus = new Torus(gl, { attributes: { extra } })
+    expect(torus.attributes.extra).toBe(extra)
   })
 })
