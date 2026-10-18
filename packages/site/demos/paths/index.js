@@ -9,6 +9,7 @@ import {
   Sphere,
   Curve,
   Tube,
+  Extrude,
   GeometryAttribute,
   mergeGeometries,
   Mat4,
@@ -35,6 +36,10 @@ import markerFrag from './marker.frag'
 // - alpha is the Catmull-Rom's knot spacing: 0 uniform, 0.5 centripetal, 1
 //   chordal. The "hairpin" preset shows uniform looping where centripetal
 //   doesn't. tension tightens it towards straight lines, or loosens it.
+// - The "extrude" preset is two closed curves in the z = 0 plane, an outline
+//   and a hole, extruded into a bevelled solid. Its handles stay on z = 0.
+//   With tension 1 the outline is straight lines, and the crease angle gives
+//   it hard corners.
 // - The B-spline's curvature doesn't jump at the points, so the tube's
 //   shading doesn't crease there, but it only passes near them.
 
@@ -74,6 +79,20 @@ const PRESETS = {
       [1.5, 0, 0],
       [-3, 2.5, 0]
     ]
+  },
+  // A ten-point star for the outline, then a hole in the middle
+  extrude: {
+    closed: true,
+    radius: 0.16,
+    points: Array.from({ length: 10 }, (_, i) => {
+      const a = (i / 10) * TAU + Math.PI / 2
+      const r = i % 2 ? 1.3 : 2.4
+      return [Math.cos(a) * r, Math.sin(a) * r, 0]
+    }),
+    hole: Array.from({ length: 5 }, (_, i) => {
+      const a = (i / 5) * TAU
+      return [Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0]
+    })
   }
 }
 
@@ -92,10 +111,23 @@ const params = {
   samples: 'even',
   count: 40,
   frames: false,
+  depth: 0.6,
+  bevel: true,
+  bevelSize: 0.12,
+  bevelThickness: 0.12,
+  bevelSegments: 3,
+  creaseAngle: 30,
+  uvs: 'projected',
+  checker: false,
+  curveDivisions: 12,
   length: 0
 }
 
+// The handles' points. In the extrude preset, the outline's points come
+// first, and the hole's from holeStart.
 let points = []
+let holeStart = 0
+const extruding = () => holeStart < points.length
 
 // ── Renderer and camera ───────────────────────────────────────────────────
 const renderer = new Renderer({
@@ -178,19 +210,35 @@ const scene = new Obj()
 const handleScene = new Obj()
 
 const u_opacity = new Uniform({ name: 'opacity', value: 1, kind: 'float' })
+const u_colour = new Uniform({
+  name: 'colour',
+  value: [0.42, 0.62, 0.9],
+  kind: 'float_vec3'
+})
 const tubeProgram = new Program(gl, {
   vertex: tubeVert,
   fragment: tubeFrag,
   uniforms: {
-    u_colour: new Uniform({
-      name: 'colour',
-      value: [0.42, 0.62, 0.9],
-      kind: 'float_vec3'
-    }),
-    u_opacity
+    u_colour,
+    u_opacity,
+    u_stripes: new Uniform({ name: 'stripes', value: 1, kind: 'float' }),
+    u_checker: new Uniform({ name: 'checker', value: 0, kind: 'float' })
   },
   transparent: true,
   depthWrite: false
+})
+// The extruded solid: the same shading, opaque and without stripes, with an
+// optional uv checker
+const u_checker = new Uniform({ name: 'checker', value: 0, kind: 'float' })
+const solidProgram = new Program(gl, {
+  vertex: tubeVert,
+  fragment: tubeFrag,
+  uniforms: {
+    u_colour,
+    u_opacity: new Uniform({ name: 'opacity', value: 1, kind: 'float' }),
+    u_stripes: new Uniform({ name: 'stripes', value: 0, kind: 'float' }),
+    u_checker
+  }
 })
 const markerProgram = new Program(gl, {
   vertex: markerVert,
@@ -205,6 +253,7 @@ const handleProgram = new Program(gl, {
 
 let curve = null
 let tubeMesh = null
+let solidMesh = null
 let overlayMesh = null
 const handles = []
 const handleGeometry = {
@@ -242,14 +291,24 @@ const parametric = (count) => {
   return out
 }
 
-const rebuild = () => {
-  curve = new Curve({
-    points,
+const makeCurve = (from, closed) =>
+  new Curve({
+    points: from,
     type: params.type,
-    closed: params.closed,
+    closed,
     alpha: params.alpha,
     tension: params.tension
   })
+
+const rebuild = () => {
+  if (extruding()) {
+    rebuildExtrude()
+    return
+  }
+  solidMesh = setMesh(solidMesh, null)
+  if (tubeMesh) tubeMesh.visible = true
+
+  curve = makeCurve(points, params.closed)
   curve.tiltFunction = params.twist
     ? (tilt, u) => tilt + u * params.twist * TAU
     : null
@@ -285,6 +344,30 @@ const rebuild = () => {
   overlayMesh = setMesh(overlayMesh, merge(parts), markerProgram, scene)
 }
 
+// The outline and hole as closed curves, extruded. The tube and markers hide.
+const rebuildExtrude = () => {
+  curve = makeCurve(points.slice(0, holeStart), true)
+  const hole = makeCurve(points.slice(holeStart), true)
+  params.length = curve.getLength()
+
+  const solid = new Extrude(gl, {
+    shape: curve,
+    holes: [hole],
+    depth: params.depth,
+    curveDivisions: params.curveDivisions,
+    bevel: params.bevel,
+    bevelSize: params.bevelSize,
+    bevelThickness: params.bevelThickness,
+    bevelSegments: params.bevelSegments,
+    creaseAngle: (params.creaseAngle * Math.PI) / 180,
+    uvs: params.uvs
+  })
+  solidMesh = setMesh(solidMesh, solid, solidProgram, scene)
+  solidMesh.visible = true
+  if (tubeMesh) tubeMesh.visible = false
+  overlayMesh = setMesh(overlayMesh, null)
+}
+
 const placeHandles = () => {
   while (handles.length < points.length) {
     const mesh = new Mesh(gl, {
@@ -304,16 +387,20 @@ const placeHandles = () => {
 const loadPreset = () => {
   const preset = PRESETS[params.preset]
   points = preset.points.map((p) => [...p])
+  holeStart = points.length
+  if (preset.hole) points.push(...preset.hole.map((p) => [...p]))
   params.closed = preset.closed
   params.radius = preset.radius
   setHot(-1)
   placeHandles()
+  showFolders()
   rebuild()
 }
 
 // ── Dragging ──────────────────────────────────────────────────────────────
 // No raycasting yet, so handles are picked by their projected position and
-// dragged in the plane facing the camera
+// dragged in the plane facing the camera. When extruding they're dragged on
+// the z = 0 plane instead, so the outline stays flat.
 const projected = new Vec4()
 const toScreen = ([x, y, z]) => {
   projected.reset(x, y, z, 1)
@@ -342,6 +429,23 @@ let hot = -1
 let dragging = -1
 let last = [0, 0]
 let dirty = false
+// When extruding: where the pointer hit z = 0, less the handle's position
+let grabOffset = [0, 0]
+
+// Where the ray under the pointer meets the z = 0 plane, or null if it doesn't
+const hitGround = (clientX, clientY) => {
+  const inverse = camera.projectionViewMatrix.invertNew()
+  const x = (clientX / window.innerWidth) * 2 - 1
+  const y = 1 - (clientY / window.innerHeight) * 2
+  const near = new Vec4(x, y, -1, 1).transformByMat4(inverse)
+  const far = new Vec4(x, y, 1, 1).transformByMat4(inverse)
+  const n = [near.x / near.w, near.y / near.w, near.z / near.w]
+  const f = [far.x / far.w, far.y / far.w, far.z / far.w]
+  if (Math.abs(f[2] - n[2]) < 1e-9) return null
+  const t = -n[2] / (f[2] - n[2])
+  if (t < 0) return null
+  return [n[0] + (f[0] - n[0]) * t, n[1] + (f[1] - n[1]) * t]
+}
 
 const setHot = (i) => {
   if (hot === i) return
@@ -361,6 +465,8 @@ window.addEventListener(
     if (i < 0) return
     dragging = i
     last = [e.clientX, e.clientY]
+    const hit = extruding() && hitGround(e.clientX, e.clientY)
+    if (hit) grabOffset = [hit[0] - points[i][0], hit[1] - points[i][1]]
     camera.enabled = false
     setHot(i)
     gl.canvas.style.cursor = 'grabbing'
@@ -374,9 +480,20 @@ window.addEventListener('pointermove', (e) => {
     return
   }
 
+  const p = points[dragging]
+  if (extruding()) {
+    const hit = hitGround(e.clientX, e.clientY)
+    if (hit) {
+      p[0] = hit[0] - grabOffset[0]
+      p[1] = hit[1] - grabOffset[1]
+      handles[dragging].position.reset(...p)
+      dirty = true
+    }
+    return
+  }
+
   // World units per pixel at the handle's depth
   const m = camera.worldMatrix
-  const p = points[dragging]
   const eye = camera.worldPosition
   const depth = -(
     (p[0] - eye.x) * m.a31 +
@@ -429,14 +546,16 @@ curveFolder
     alphaBinding.hidden = tensionBinding.hidden = params.type !== 'catmullrom'
     rebuild()
   })
-curveFolder.addBinding(params, 'closed').on('change', rebuild)
+const closedBinding = curveFolder
+  .addBinding(params, 'closed')
+  .on('change', rebuild)
 const alphaBinding = curveFolder
   .addBinding(params, 'alpha', { min: 0, max: 1, step: 0.05 })
   .on('change', rebuild)
 const tensionBinding = curveFolder
   .addBinding(params, 'tension', { min: -1, max: 1, step: 0.05 })
   .on('change', rebuild)
-curveFolder
+const twistBinding = curveFolder
   .addBinding(params, 'twist', {
     min: -3,
     max: 3,
@@ -487,6 +606,65 @@ sampleFolder
   .addBinding(params, 'count', { min: 4, max: 120, step: 1 })
   .on('change', rebuild)
 sampleFolder.addBinding(params, 'frames').on('change', rebuild)
+
+const extrudeFolder = pane.addFolder({ title: 'Extrude' })
+extrudeFolder
+  .addBinding(params, 'depth', { min: 0, max: 2 })
+  .on('change', rebuild)
+extrudeFolder.addBinding(params, 'bevel').on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'bevelSize', { label: 'bevel size', min: 0, max: 0.4 })
+  .on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'bevelThickness', {
+    label: 'bevel depth',
+    min: 0,
+    max: 0.4
+  })
+  .on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'bevelSegments', {
+    label: 'bevel steps',
+    min: 1,
+    max: 8,
+    step: 1
+  })
+  .on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'creaseAngle', {
+    label: 'crease',
+    min: 0,
+    max: 180,
+    step: 1,
+    format: (v) => `${v}°`
+  })
+  .on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'curveDivisions', {
+    label: 'divisions',
+    min: 1,
+    max: 32,
+    step: 1
+  })
+  .on('change', rebuild)
+
+extrudeFolder
+  .addBinding(params, 'uvs', {
+    options: { projected: 'projected', separate: 'separate' }
+  })
+  .on('change', rebuild)
+extrudeFolder
+  .addBinding(params, 'checker', { label: 'uv checker' })
+  .on('change', () => (u_checker.value = params.checker ? 1 : 0))
+
+// The extrude preset has its own folder in place of the tube's, and the
+// outline is always closed
+const showFolders = () => {
+  const solid = extruding()
+  extrudeFolder.hidden = !solid
+  tubeFolder.hidden = sampleFolder.hidden = solid
+  closedBinding.hidden = twistBinding.hidden = solid
+}
 
 const resize = () => {
   const width = window.innerWidth

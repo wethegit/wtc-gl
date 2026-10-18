@@ -7,6 +7,10 @@ in vec2 v_uv;
 
 uniform vec3 u_colour;
 uniform float u_opacity;
+// 1 for stripes around the tube, 0 for a plain colour
+uniform float u_stripes;
+// 1 for a checker from the uvs, in 0.25-unit squares, to show how they run
+uniform float u_checker;
 
 out vec4 colour;
 
@@ -25,7 +29,11 @@ void main() {
 
   // Four stripes around the tube (v) show how the frames twist along it
   float stripe = step(0.5, fract(v_uv.y * 4.0));
-  vec3 base = mix(u_colour, u_colour * 0.55, stripe);
+  vec3 base = mix(u_colour, u_colour * 0.55, stripe * u_stripes);
+
+  vec2 cell = floor(v_uv * 4.0);
+  float check = mod(cell.x + cell.y, 2.0);
+  base = mix(base, mix(vec3(0.95), vec3(0.25, 0.27, 0.33), check), u_checker);
 
   colour = vec4(shade(base, n), u_opacity);
 }
