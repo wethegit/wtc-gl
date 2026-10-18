@@ -25,6 +25,15 @@ export * from './geometry/Lathe'
 export * from './geometry/Capsule'
 export * from './geometry/PointCloud'
 
+export * from './path/Path'
+export {
+  PathSegment,
+  LineSegment,
+  QuadraticBezierSegment,
+  CubicBezierSegment
+} from './path/segments'
+export type { PathPoint } from './path/segments'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
