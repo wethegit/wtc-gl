@@ -104,7 +104,6 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 - [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
 - [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
 - [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). _New._
-- [ ] Optional CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves.
 
 ### Lines (MeshLine equivalent)
 
@@ -143,6 +142,7 @@ A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±
 
 - [ ] `Shadow` — shadow-map pass from a light camera (OGL).
 - [ ] OBJ/STL/GLB export, if models need to leave the browser. _New._
+- [ ] CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves. Ship it as a separate entry point so the WASM dependency stays opt-in.
 - glTF import stays under Future features item 6.
 
 ---
