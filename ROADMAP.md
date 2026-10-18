@@ -99,7 +99,7 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 ### Primitives and generators
 
 - [x] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
-- [ ] `Capsule`. _New._
+- [x] `Capsule`. _New._
 - [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
 - [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
 - [ ] `Tube` — sweep a circular profile along a `Path` (OGL).

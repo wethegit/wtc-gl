@@ -6,6 +6,7 @@ import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Cylinder } from '../src/geometry/Cylinder'
 import { Torus } from '../src/geometry/Torus'
 import { Lathe } from '../src/geometry/Lathe'
+import { Capsule } from '../src/geometry/Capsule'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 type Vec = [number, number, number]
@@ -422,5 +423,101 @@ describe('Lathe', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const lathe = new Lathe(gl, { points: vase, attributes: { extra } })
     expect(lathe.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Capsule', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  // Distance from p to the nearest point on the capsule's core, the segment
+  // of the y axis between the two cap centres
+  const fromCore = (p: Vec, middle: number): Vec => {
+    const y = Math.max(-middle / 2, Math.min(middle / 2, p[1]))
+    return sub(p, [0, y, 0])
+  }
+
+  it('has a quarter circle at each end and straight steps between', () => {
+    const capsule = new Capsule(gl, {
+      capSegments: 4,
+      radialSegments: 8,
+      heightSegments: 2
+    })
+    // Profile: 4 + 4 cap steps and 2 straight steps, so 11 points
+    expect(vertexCount(capsule)).toBe(9 * 11)
+    expect(capsule.attributes.index.data!.length).toBe(8 * 10 * 6)
+  })
+
+  it('is well formed', () => {
+    expectWellFormed(new Capsule(gl))
+    expectWellFormed(new Capsule(gl, { heightSegments: 3, capSegments: 2 }))
+    expectWellFormed(new Capsule(gl, { radius: 0.5, height: 0.4 }))
+  })
+
+  it('spans exactly height, tip to tip, and twice the radius across', () => {
+    const capsule = new Capsule(gl, {
+      radius: 0.3,
+      height: 2,
+      radialSegments: 8
+    })
+    const [x, y, z] = size(capsule)
+    expect(y).toBeCloseTo(2)
+    expect(x).toBeCloseTo(0.6)
+    expect(z).toBeCloseTo(0.6)
+    expect(capsule.bounds!.center.y).toBeCloseTo(0)
+  })
+
+  it('keeps every vertex radius from the core, with its normal pointing away', () => {
+    const capsule = new Capsule(gl, {
+      radius: 0.3,
+      height: 2,
+      heightSegments: 3
+    })
+    for (let i = 0; i < vertexCount(capsule); i++) {
+      const offset = fromCore(vertex(capsule, 'position', i), 2 - 0.6)
+      expect(length(offset)).toBeCloseTo(0.3, 5)
+      const n = vertex(capsule, 'normal', i)
+      offset.forEach((v, k) => expect(n[k]).toBeCloseTo(v / 0.3, 5))
+    }
+  })
+
+  it('has poles exactly on the axis', () => {
+    const capsule = new Capsule(gl, { radius: 0.25, height: 1, capSegments: 3 })
+    const column = 2 * 3 + 1 + 1
+    expect(vertex(capsule, 'position', 0)).toEqual([0, -0.5, 0])
+    expect(vertex(capsule, 'position', column - 1)).toEqual([0, 0.5, 0])
+  })
+
+  it('becomes a sphere when the height is less than twice the radius', () => {
+    const capsule = new Capsule(gl, {
+      radius: 0.25,
+      height: 0.1,
+      capSegments: 4,
+      heightSegments: 3
+    })
+    // No straight steps: just the two quarter circles
+    expect(vertexCount(capsule)).toBe(9 * 9)
+    for (let i = 0; i < vertexCount(capsule); i++) {
+      expect(length(vertex(capsule, 'position', i))).toBeCloseTo(0.25, 5)
+    }
+    expect(size(capsule)[1]).toBeCloseTo(0.5)
+  })
+
+  it('switches to a 32-bit index past 65,536 vertices', () => {
+    const capsule = new Capsule(gl, {
+      radialSegments: 256,
+      capSegments: 64,
+      heightSegments: 128
+    })
+    expect(capsule.attributes.index.data).toBeInstanceOf(Uint32Array)
+  })
+
+  it('keeps extra attributes passed in', () => {
+    const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
+    const capsule = new Capsule(gl, { attributes: { extra } })
+    expect(capsule.attributes.extra).toBe(extra)
   })
 })
