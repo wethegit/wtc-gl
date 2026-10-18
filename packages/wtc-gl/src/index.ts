@@ -23,6 +23,7 @@ export * from './geometry/Cylinder'
 export * from './geometry/Torus'
 export * from './geometry/Lathe'
 export * from './geometry/Capsule'
+export * from './geometry/Tube'
 export * from './geometry/PointCloud'
 
 export * from './path/Path'

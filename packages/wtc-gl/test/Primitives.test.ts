@@ -7,6 +7,9 @@ import { Cylinder } from '../src/geometry/Cylinder'
 import { Torus } from '../src/geometry/Torus'
 import { Lathe } from '../src/geometry/Lathe'
 import { Capsule } from '../src/geometry/Capsule'
+import { Tube } from '../src/geometry/Tube'
+import { Path } from '../src/path/Path'
+import { Curve } from '../src/path/Curve'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 type Vec = [number, number, number]
@@ -519,5 +522,158 @@ describe('Capsule', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const capsule = new Capsule(gl, { attributes: { extra } })
     expect(capsule.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Tube', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const wave = () =>
+    new Curve({
+      points: [
+        [0, 0, 0],
+        [1, 1, 0],
+        [2, 0, 1],
+        [3, 1, 1],
+        [4, 0, 0]
+      ]
+    })
+
+  const trefoil = () =>
+    new Curve({
+      points: Array.from({ length: 24 }, (_, i): Vec => {
+        const a = (i / 24) * Math.PI * 2
+        return [
+          Math.sin(a) + 2 * Math.sin(2 * a),
+          Math.cos(a) - 2 * Math.cos(2 * a),
+          -Math.sin(3 * a)
+        ]
+      }),
+      closed: true
+    })
+
+  const helix = () => {
+    const path = new Path()
+    for (let i = 0; i <= 100; i++) {
+      const a = (i / 100) * Math.PI * 4
+      const p: Vec = [Math.cos(a), i / 50, Math.sin(a)]
+      if (i === 0) path.moveTo(p)
+      else path.lineTo(p)
+    }
+    return path
+  }
+
+  it('needs a path', () => {
+    expect(() => new Tube(gl)).toThrow(/path/)
+  })
+
+  it('is a ring of vertices at each step along the path', () => {
+    const tube = new Tube(gl, {
+      path: wave(),
+      tubularSegments: 20,
+      radialSegments: 6
+    })
+    expect(vertexCount(tube)).toBe(21 * 7)
+    expect(tube.attributes.index.data!.length).toBe(20 * 6 * 6)
+    expect(tube.attributes.index.data).toBeInstanceOf(Uint16Array)
+  })
+
+  it('is well formed along open, closed and twisting paths', () => {
+    expectWellFormed(new Tube(gl, { path: wave() }))
+    expectWellFormed(new Tube(gl, { path: trefoil(), tubularSegments: 128 }))
+    expectWellFormed(new Tube(gl, { path: helix(), radius: 0.2 }))
+  })
+
+  it("keeps every vertex radius from its ring's point on the path", () => {
+    const path = wave()
+    const tube = new Tube(gl, {
+      path,
+      radius: 0.3,
+      tubularSegments: 10,
+      radialSegments: 5
+    })
+    for (let i = 0; i <= 10; i++) {
+      const centre = path.getPointAt(i / 10)
+      for (let j = 0; j <= 5; j++) {
+        const k = i * 6 + j
+        const offset = sub(vertex(tube, 'position', k), [
+          centre.x,
+          centre.y,
+          centre.z
+        ])
+        expect(length(offset)).toBeCloseTo(0.3, 5)
+        // With a constant radius the normal points straight out
+        const n = vertex(tube, 'normal', k)
+        offset.forEach((v, c) => expect(n[c]).toBeCloseTo(v / 0.3, 5))
+      }
+    }
+  })
+
+  it('tapers with a radius function, leaning the normals to suit', () => {
+    const path = new Path().moveTo([0, 0, 0]).lineTo([4, 0, 0])
+    const tube = new Tube(gl, {
+      path,
+      radius: (u) => 0.5 - 0.4 * u,
+      tubularSegments: 4,
+      radialSegments: 4
+    })
+    expectWellFormed(tube)
+    // Ring 0 is at x = 0 with radius 0.5; the last ring has radius 0.1
+    const first = vertex(tube, 'position', 0)
+    const last = vertex(tube, 'position', 4 * 5)
+    expect(Math.hypot(first[1], first[2])).toBeCloseTo(0.5)
+    expect(Math.hypot(last[1], last[2])).toBeCloseTo(0.1)
+    // The radius shrinks by 0.4 over 4 units, so the surface faces 0.1 forwards
+    const [nx, ny, nz] = vertex(tube, 'normal', 2 * 5)
+    expect(nx / Math.hypot(ny, nz)).toBeCloseTo(0.1, 5)
+  })
+
+  it('joins a closed tube with matching first and last rings', () => {
+    const tube = new Tube(gl, {
+      path: trefoil(),
+      tubularSegments: 64,
+      radialSegments: 8
+    })
+    const ring = 9
+    for (let j = 0; j < ring; j++) {
+      const a = vertex(tube, 'position', j)
+      const b = vertex(tube, 'position', 64 * ring + j)
+      a.forEach((v, c) => expect(b[c]).toBeCloseTo(v, 5))
+    }
+    // The uvs run on to 1 at the join
+    const uv = data(tube, 'uv')
+    expect(uv[64 * ring * 2]).toBe(1)
+  })
+
+  it('maps u along the path and v around the tube', () => {
+    const tube = new Tube(gl, {
+      path: wave(),
+      tubularSegments: 4,
+      radialSegments: 2
+    })
+    const uv = data(tube, 'uv')
+    expect([uv[0], uv[1]]).toEqual([0, 0])
+    expect([uv[4], uv[5]]).toEqual([0, 1])
+    expect([uv[6], uv[7]]).toEqual([0.25, 0])
+    expect([uv[uv.length - 2], uv[uv.length - 1]]).toEqual([1, 1])
+  })
+
+  it('switches to a 32-bit index past 65,536 vertices', () => {
+    const tube = new Tube(gl, {
+      path: wave(),
+      tubularSegments: 1024,
+      radialSegments: 64
+    })
+    expect(tube.attributes.index.data).toBeInstanceOf(Uint32Array)
+  })
+
+  it('keeps extra attributes passed in', () => {
+    const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
+    const tube = new Tube(gl, { path: wave(), attributes: { extra } })
+    expect(tube.attributes.extra).toBe(extra)
   })
 })
