@@ -100,7 +100,7 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 
 - [x] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
 - [x] `Capsule`. _New._
-- [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
+- [x] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL). Built as a `Path`, with centripetal Catmull-Rom and closed loops.
 - [x] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL). Sampling is by distance inside segments too, and the frames are rotation-minimising.
 - [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
 - [ ] `Extrude` (2D outline to a solid, with optional bevel). _New._

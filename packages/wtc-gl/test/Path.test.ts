@@ -98,6 +98,18 @@ describe('Path building', () => {
     expectClose(path.getPointAt(1), [0, 1, 2])
   })
 
+  it('clears back to an empty path', () => {
+    const path = new Path().moveTo([0, 0, 0]).lineTo([1, 0, 0]).close()
+    path.getLength()
+    path.clear()
+    expect(path.segments.length).toBe(0)
+    expect(path.closed).toBe(false)
+    expect(path.getLength()).toBe(0)
+    expect(() => path.lineTo([1, 0, 0])).toThrow(/moveTo/)
+    path.moveTo([0, 0, 0]).lineTo([0, 3, 0])
+    expect(path.getLength()).toBe(3)
+  })
+
   it('copies its points, so later changes to them do nothing', () => {
     const a = new Vec3(0, 0, 0)
     const b = new Vec3(2, 0, 0)

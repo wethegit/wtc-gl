@@ -164,6 +164,19 @@ export class Path {
     return this
   }
 
+  /** Empties the path, ready for a new `moveTo`. */
+  clear(): this {
+    this.#segments = []
+    this.#offsets = []
+    this.#length = -1
+    this.#start = null
+    this.#startTilt = 0
+    this.#last = null
+    this.#lastTilt = 0
+    this.closed = false
+    return this
+  }
+
   /** The total length of the path. */
   getLength(): number {
     if (this.#length < 0) {

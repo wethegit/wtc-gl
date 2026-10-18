@@ -26,6 +26,7 @@ export * from './geometry/Capsule'
 export * from './geometry/PointCloud'
 
 export * from './path/Path'
+export * from './path/Curve'
 export {
   PathSegment,
   LineSegment,
