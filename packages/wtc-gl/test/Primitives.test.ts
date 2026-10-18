@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { Vec2 } from 'wtc-math'
 
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Cylinder } from '../src/geometry/Cylinder'
 import { Torus } from '../src/geometry/Torus'
+import { Lathe } from '../src/geometry/Lathe'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 type Vec = [number, number, number]
@@ -269,5 +271,156 @@ describe('Torus', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const torus = new Torus(gl, { attributes: { extra } })
     expect(torus.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Lathe', () => {
+  let gl: MockGL
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+  })
+
+  const vase: [number, number][] = [
+    [0, 0],
+    [0.4, 0],
+    [0.5, 0.3],
+    [0.25, 0.8],
+    [0.35, 1]
+  ]
+
+  it('has a column of profile points per segment, plus the seam', () => {
+    const lathe = new Lathe(gl, { points: vase, segments: 6 })
+    expect(vertexCount(lathe)).toBe(7 * 5)
+    expect(lathe.attributes.index.data!.length).toBe(6 * 4 * 6)
+    expect(lathe.attributes.index.data).toBeInstanceOf(Uint16Array)
+  })
+
+  it('is well formed, up or down, whole or partial', () => {
+    expectWellFormed(new Lathe(gl, { points: vase }))
+    expectWellFormed(new Lathe(gl, { points: [...vase].reverse() }))
+    expectWellFormed(new Lathe(gl, { points: vase, phiLength: Math.PI }))
+    // Closed at both ends on the axis, like a sphere
+    const arc = Array.from({ length: 9 }, (_, i): [number, number] => {
+      const a = -Math.PI / 2 + (i / 8) * Math.PI
+      return [Math.cos(a), Math.sin(a)]
+    })
+    expectWellFormed(new Lathe(gl, { points: arc, segments: 16 }))
+  })
+
+  it('takes Vec2s as well as [r, y] pairs', () => {
+    const fromPairs = new Lathe(gl, { points: vase })
+    const fromVec2 = new Lathe(gl, {
+      points: vase.map(([r, y]) => new Vec2(r, y))
+    })
+    expect(data(fromVec2, 'position')).toEqual(data(fromPairs, 'position'))
+    expect(data(fromVec2, 'normal')).toEqual(data(fromPairs, 'normal'))
+  })
+
+  it('needs at least two points', () => {
+    expect(() => new Lathe(gl, { points: [[1, 0]] })).toThrow(/two points/)
+    expect(() => new Lathe(gl)).toThrow(/two points/)
+  })
+
+  it('spins a vertical profile into a cylinder', () => {
+    const lathe = new Lathe(gl, {
+      points: [
+        [1, -1],
+        [1, 1]
+      ],
+      segments: 8
+    })
+    for (let i = 0; i < vertexCount(lathe); i++) {
+      const [x, , z] = vertex(lathe, 'position', i)
+      expect(Math.hypot(x, z)).toBeCloseTo(1)
+      const n = vertex(lathe, 'normal', i)
+      ;[x, 0, z].forEach((v, k) => expect(n[k]).toBeCloseTo(v))
+    }
+    const [sx, sy, sz] = size(lathe)
+    expect([sx, sy, sz].map((v) => +v.toFixed(6))).toEqual([2, 2, 2])
+  })
+
+  it('sweeps from phiStart through phiLength, starting on +z', () => {
+    const lathe = new Lathe(gl, {
+      points: [
+        [1, 0],
+        [1, 1]
+      ],
+      segments: 4,
+      phiLength: Math.PI / 2
+    })
+    const start = vertex(lathe, 'position', 0)
+    const end = vertex(lathe, 'position', 4 * 2)
+    expect(start.map((v) => +v.toFixed(6))).toEqual([0, 0, 1])
+    expect(end.map((v) => +v.toFixed(6))).toEqual([1, 0, 0])
+  })
+
+  it('spaces v by distance along the profile', () => {
+    const lathe = new Lathe(gl, {
+      points: [
+        [1, 0],
+        [1, 1],
+        [1, 3]
+      ],
+      segments: 2
+    })
+    const uv = data(lathe, 'uv')
+    expect([uv[1], uv[3], uv[5]].map((v) => +v.toFixed(6))).toEqual([
+      0,
+      +(1 / 3).toFixed(6),
+      1
+    ])
+    // u runs around: the last column is the seam at u = 1
+    expect([uv[0], uv[uv.length - 2]]).toEqual([0, 1])
+  })
+
+  it('averages the normal at a corner in the profile', () => {
+    // Up the side, then in across the top
+    const lathe = new Lathe(gl, {
+      points: [
+        [1, 0],
+        [1, 1],
+        [0, 1]
+      ]
+    })
+    const [nx, ny, nz] = vertex(lathe, 'normal', 1)
+    expect(nx).toBeCloseTo(0)
+    expect(ny).toBeCloseTo(Math.SQRT1_2)
+    expect(nz).toBeCloseTo(Math.SQRT1_2)
+  })
+
+  it('builds raw arrays, with optional profile normals', () => {
+    const built = Lathe.build(
+      [
+        [1, 0],
+        [1, 1]
+      ],
+      4,
+      0,
+      Math.PI * 2,
+      [
+        [0, -1],
+        [0, 1]
+      ]
+    )
+    expect(built.position.length).toBe(5 * 2 * 3)
+    expect(built.uv.length).toBe(5 * 2 * 2)
+    expect(built.index.length).toBe(4 * 6)
+    expect(Array.from(built.normal.slice(0, 6))).toEqual([0, -1, 0, 0, 1, 0])
+  })
+
+  it('switches to a 32-bit index past 65,536 vertices', () => {
+    const points = Array.from({ length: 300 }, (_, i): [number, number] => [
+      1,
+      i
+    ])
+    const lathe = new Lathe(gl, { points, segments: 256 })
+    expect(lathe.attributes.index.data).toBeInstanceOf(Uint32Array)
+  })
+
+  it('keeps extra attributes passed in', () => {
+    const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
+    const lathe = new Lathe(gl, { points: vase, attributes: { extra } })
+    expect(lathe.attributes.extra).toBe(extra)
   })
 })

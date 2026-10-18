@@ -103,7 +103,8 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 - [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
 - [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
 - [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
-- [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). _New._
+- [ ] `Extrude` (2D outline to a solid, with optional bevel). _New._
+- [x] `Lathe` (spin a profile around an axis). _New._
 
 ### Lines (MeshLine equivalent)
 

@@ -21,6 +21,7 @@ export * from './geometry/Box'
 export * from './geometry/Sphere'
 export * from './geometry/Cylinder'
 export * from './geometry/Torus'
+export * from './geometry/Lathe'
 export * from './geometry/PointCloud'
 
 export * from './ext/Framebuffer'
