@@ -715,6 +715,58 @@
             <a class="btn" href="./paths/">Open demo →</a>
           </div>
         </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/lines.jpg"
+              alt="A tapered, dashed blue spiral line, with a short orange trail tapering to a point"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Polyline</span>
+            </div>
+            <h3>Lines</h3>
+            <p>
+              A spiral that draws itself on, tapered and dashed, with dashes
+              measured by the distance travelled so they keep their length. As a
+              billboard it always faces the camera, in pixels or world units.
+              Switch it to a ribbon and it becomes a flat strip in world space
+              that twists along its length and banks into its turns. Move the
+              pointer to draw a trail, which pushes a new point every frame.
+            </p>
+            <a class="btn" href="./lines/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/polyline-trails.jpg"
+              alt="A dense, swirling cluster of thin orange and teal particle trails on a dark background"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Polyline</span>
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">Framebuffer</span>
+            </div>
+            <h3>Polyline trails</h3>
+            <p>
+              16,384 particles swirl through a force field, each drawn as a
+              ribbon through its recent positions. A float simulation writes
+              into a history texture, and one instanced
+              <code>Polyline</code> with a custom vertex shader reads it back
+              and extrudes each trail with <code>polylineExtrude</code>. Click
+              for the next shot.
+            </p>
+            <a class="btn" href="./polyline-trails/">Open demo →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Getting started -->

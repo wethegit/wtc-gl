@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Lines</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      canvas {
+        touch-action: none;
+      }
+      #controls {
+        position: fixed;
+        top: calc(3em + 8px);
+        right: 8px;
+        z-index: 100;
+        width: 280px;
+        max-height: calc(100vh - 3em - 16px);
+        overflow-y: auto;
+      }
+      #hint {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        font:
+          500 12px/1 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        color: #3b3a44;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Lines</span>
+    </nav>
+    <div id="hint">Move the pointer to draw a trail · drag to orbit</div>
+    <div id="controls"></div>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
