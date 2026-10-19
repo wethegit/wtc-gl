@@ -4,7 +4,9 @@ import { Camera } from '../src/core/Camera'
 import { Mesh } from '../src/core/Mesh'
 import { Obj } from '../src/core/Object'
 import { Program } from '../src/core/Program'
+import { TransformFeedback } from '../src/core/TransformFeedback'
 import { Box } from '../src/geometry/Box'
+import { Geometry } from '../src/geometry/Geometry'
 import { createMockRenderer } from './mockGL'
 
 // Node built-ins, loaded by name since the package has no Node types
@@ -86,6 +88,73 @@ function createScene() {
   return frame
 }
 
+/**
+ * A transform feedback simulation stepped each frame, and drawn as points
+ * from its output.
+ */
+function createSimulation() {
+  // Report the active attributes, so the vertex arrays are actually built
+  let active: string[] = []
+  const { gl, renderer } = createMockRenderer({
+    getProgramParameter: (_program: unknown, pname: number) =>
+      pname === 35714 // LINK_STATUS
+        ? true
+        : pname === gl.ACTIVE_ATTRIBUTES
+          ? active.length
+          : 0,
+    getActiveAttrib: (_program: unknown, i: number) => ({
+      name: active[i],
+      type: 35664, // FLOAT_VEC2
+      size: 1
+    }),
+    getAttribLocation: (_program: unknown, name: string) => active.indexOf(name)
+  })
+
+  active = ['a_position', 'a_velocity']
+  const sim = new TransformFeedback(gl, {
+    program: new Program(gl, {
+      vertex: '',
+      fragment: '',
+      transformFeedbackVaryings: ['v_position', 'v_velocity']
+    }),
+    attributes: {
+      a_position: {
+        size: 2,
+        data: new Float32Array(2000),
+        varying: 'v_position'
+      },
+      a_velocity: {
+        size: 2,
+        data: new Float32Array(2000),
+        varying: 'v_velocity'
+      }
+    }
+  })
+
+  active = ['position']
+  const points = new Mesh(gl, {
+    geometry: new Geometry(gl, { position: sim.attribute('a_position') }),
+    program: new Program(gl, { vertex: '', fragment: '' }),
+    mode: gl.POINTS,
+    frustumCulled: false
+  })
+
+  const frame = () => {
+    sim.step()
+    renderer.render({ scene: points })
+  }
+
+  frame()
+  frame()
+  const target = gl as unknown as Record<string, unknown>
+  for (const key of Object.keys(target)) {
+    if (typeof target[key] === 'function') target[key] = noop
+  }
+  frame()
+
+  return frame
+}
+
 type ProfileNode = {
   callFrame: { url: string }
   selfSize: number
@@ -145,5 +214,12 @@ describe('Per-frame allocations', () => {
     )
     // Was ~7.8 KB per mesh before the matrix and render-list work
     expect(bytes / MESHES).toBeLessThan(400)
+  })
+
+  it('stay small for a transform feedback simulation', async () => {
+    const bytes = await bytesPerFrame(createSimulation())
+    console.info(`[allocations] simulation: ${bytes.toFixed(0)} B/frame`)
+    // About 50 B for the step and 100 B for drawing the one mesh
+    expect(bytes).toBeLessThan(300)
   })
 })

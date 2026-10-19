@@ -9,6 +9,8 @@ export interface GeometryAttributeOptions {
   type?: GLenum
   normalized?: boolean
   data: Float32Array | Float64Array | Uint16Array | Uint32Array
+  buffer?: WebGLBuffer | null
+  external?: boolean
 }
 
 /**
@@ -48,6 +50,14 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
    * The WebGL buffer containing the static attribute data
    */
   buffer: WebGLBuffer | null = null
+  /**
+   * Whether the buffer is managed by something else, such as a
+   * `TransformFeedback`. Geometry never uploads, recreates or deletes an
+   * external attribute's buffer, and re-points its vertex arrays when the
+   * buffer is swapped. Bounds aren't computed from an external position, so
+   * a mesh using one isn't frustum culled unless you set `geometry.bounds`.
+   */
+  external: boolean = false
 
   /**
    * default gl.UNSIGNED_SHORT for 'index', gl.FLOAT for others
@@ -77,6 +87,8 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
    * @param {number} instanced - The number of instances this attribute has
    * @param {GLenum} type - FLOAT, UNSIGNED_SHORT, or UNSIGNED_INT
    * @param {boolean} normalized - whether integer data values should be normalized into a certain range when being cast to a float.
+   * @param buffer - An existing buffer to use instead of creating one.
+   * @param external - Whether something other than the geometry manages `buffer`.
    */
   constructor({
     size = 1,
@@ -86,7 +98,9 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
     count,
     type,
     normalized = false,
-    data
+    data,
+    buffer = null,
+    external = false
   }: GeometryAttributeOptions) {
     this.size = size
     this.stride = stride
@@ -102,6 +116,8 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
           ? 5123 // UNSIGNED_SHORT
           : 5125) // UNSIGNED_INT
     this.normalized = normalized
+    this.buffer = buffer
+    this.external = external
 
     this.count =
       count || (stride ? data.byteLength / stride : data.length / size)
@@ -112,8 +128,9 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
    * @param {WTCGLRenderingContext} gl - The WTCGL rendering context.
    */
   updateAttribute(gl: WTCGLRenderingContext): void {
-    // Not added to a geometry yet, so there's nothing to upload to
-    if (!this.buffer) return
+    // Not added to a geometry yet, so there's nothing to upload to. External
+    // buffers are filled by whatever owns them.
+    if (!this.buffer || this.external) return
 
     if (gl.renderer.state.boundBuffer !== this.buffer) {
       gl.bindBuffer(this.target, this.buffer)

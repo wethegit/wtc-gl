@@ -95,15 +95,14 @@ export class RenderTarget {
    * two share a `DEPTH24_STENCIL8` texture or renderbuffer.
    * @param depthTexture - Whether the depth buffer is a texture you can
    * sample (`true`), a renderbuffer (`false`), or a `Texture` to use. A
-   * stencil buffer on its own is always a renderbuffer, as is depth-stencil
-   * under WebGL1.
+   * stencil buffer on its own is always a renderbuffer.
    * @param depthFormat - The depth buffer's internal format. Defaults to
-   * `DEPTH_COMPONENT24` (`DEPTH24_STENCIL8` with `stencil`) under WebGL2.
+   * `DEPTH_COMPONENT24` (`DEPTH24_STENCIL8` with `stencil`).
    * @param wrapS - Wrapping
    * @param wrapT - Wrapping
    * @param minFilter - The filter to use when rendering smaller
    * @param magFilter - The filter to use when enlarging
-   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, ext.HALF_FLOAT_OES
+   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
    * @param format - The texture format.
    * @param internalFormat - the texture internalFormat.
    * @param unpackAlignment - The unpack alignment for pixel stores.
@@ -141,12 +140,7 @@ export class RenderTarget {
     this.buffer = this.gl.createFramebuffer()!
     this.target = target
 
-    const e = gl.getExtension('OES_texture_half_float')
-    if (type === e?.HALF_FLOAT_OES || type === this.gl.HALF_FLOAT) {
-      if (gl?.renderer?.isWebgl2) {
-        internalFormat = this.gl.RGBA16F
-      }
-    }
+    if (type === gl.HALF_FLOAT) internalFormat = gl.RGBA16F
 
     this.textures = []
 
@@ -172,7 +166,6 @@ export class RenderTarget {
       )
     }
 
-    const isWebgl2 = gl.renderer.isWebgl2
     this.#depthAttachment =
       depth && stencil
         ? gl.DEPTH_STENCIL_ATTACHMENT
@@ -182,19 +175,9 @@ export class RenderTarget {
 
     if (depthTexture instanceof Texture) {
       this.depthTexture = depthTexture
-    } else if (
-      depth &&
-      depthTexture &&
-      (isWebgl2 ||
-        (!stencil && gl.renderer.getExtension('WEBGL_depth_texture')))
-    ) {
+    } else if (depth && depthTexture) {
       const internalFormat =
-        depthFormat ??
-        (isWebgl2
-          ? stencil
-            ? gl.DEPTH24_STENCIL8
-            : gl.DEPTH_COMPONENT24
-          : gl.DEPTH_COMPONENT)
+        depthFormat ?? (stencil ? gl.DEPTH24_STENCIL8 : gl.DEPTH_COMPONENT24)
       this.depthTexture = new Texture(gl, {
         width,
         height,
@@ -210,13 +193,7 @@ export class RenderTarget {
       this.#depthBufferFormat = !depth
         ? gl.STENCIL_INDEX8
         : (depthFormat ??
-          (stencil
-            ? isWebgl2
-              ? gl.DEPTH24_STENCIL8
-              : gl.DEPTH_STENCIL
-            : isWebgl2
-              ? gl.DEPTH_COMPONENT24
-              : gl.DEPTH_COMPONENT16))
+          (stencil ? gl.DEPTH24_STENCIL8 : gl.DEPTH_COMPONENT24))
     }
 
     this.#attach()
@@ -249,7 +226,7 @@ export class RenderTarget {
     })
 
     // For multi-render targets shader access
-    if (drawBuffers.length > 1) this.gl.renderer.drawBuffers(drawBuffers)
+    if (drawBuffers.length > 1) this.gl.drawBuffers(drawBuffers)
 
     if (this.depthTexture) {
       this.depthTexture.update()

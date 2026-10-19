@@ -4,7 +4,6 @@ import { Obj } from '../src/core/Object'
 import { Program } from '../src/core/Program'
 import { Texture } from '../src/core/Texture'
 import { RenderTarget } from '../src/core/RenderTarget'
-import { TransformFeedback } from '../src/core/TransformFeedback'
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import type { Renderer } from '../src/core/Renderer'
@@ -153,45 +152,6 @@ describe('Context loss', () => {
     )
     // Left bound to the canvas
     expect(renderer.state.framebuffer).toBe(null)
-  })
-
-  it('rebuilds transform feedback after relinking its program', () => {
-    const program = new Program(gl, { vertex: 'v', fragment: 'f' })
-    const tf = new TransformFeedback(gl, {
-      program,
-      transformFeedbacks: {
-        a_position: { size: 3, data: new Float32Array(9), varying: 'v' }
-      }
-    })
-    const VAOs = tf.VAOs
-
-    lose()
-    restore()
-
-    expect(tf.VAOs[0]).not.toBe(VAOs[0])
-    expect(gl.bindAttribLocation).toHaveBeenLastCalledWith(
-      program.program,
-      0,
-      'a_position'
-    )
-  })
-
-  it('skips bindAttribLocation for a raw WebGLProgram after restore', () => {
-    const program = new Program(gl, { vertex: 'v', fragment: 'f' })
-    new TransformFeedback(gl, {
-      program: program.program,
-      transformFeedbacks: {
-        a_position: { size: 3, data: new Float32Array(9), varying: 'v' }
-      }
-    })
-    vi.mocked(gl.bindAttribLocation).mockClear()
-    vi.mocked(gl.createVertexArray).mockClear()
-
-    lose()
-    restore()
-
-    expect(gl.createVertexArray).toHaveBeenCalledTimes(2)
-    expect(gl.bindAttribLocation).not.toHaveBeenCalled()
   })
 
   it('does not restore removed resources', () => {

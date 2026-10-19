@@ -3,7 +3,7 @@ import { Vec2 } from 'wtc-math'
 import type {
   WTCGLRendererState,
   WTCGLRenderingContext,
-  WTCGLExtensions,
+  WTCGLExtensionMap,
   WTCGLRendererParams,
   WTCGLRestorable
 } from '../types'
@@ -28,7 +28,6 @@ export interface RendererOptions {
   powerPreference: string
   autoClear: boolean
   clearColour: WTCGLColour
-  webgl: number
 }
 
 /**
@@ -92,10 +91,6 @@ export class Renderer {
    */
   autoClear: boolean
   #clearColour: WTCGLColour = [0, 0, 0, 0]
-  /**
-   * Whether the context we've retrieved is webGL2 or not.
-   */
-  isWebgl2: boolean
 
   /**
    * The WTCGL rendering context.
@@ -106,9 +101,9 @@ export class Renderer {
    */
   state: WTCGLRendererState
   /**
-   * Stores the enabled extensions
+   * Extensions looked up so far, so each is only requested once per context.
    */
-  extensions: WTCGLExtensions
+  #extensions = new Map<string, unknown>()
   /**
    * Stored device parameters such as max allowable units etc.
    */
@@ -118,47 +113,6 @@ export class Renderer {
    * Stores the current geometry being rendered. Used to otimise geo rendering.
    */
   currentGeometry = ''
-
-  /**
-   * The WebGL2RenderingContext.vertexAttribDivisor() method of the WebGL 2 API modifies the rate at which generic vertex attributes advance when rendering multiple instances of primitives with
-   */
-  vertexAttribDivisor: (index: number, divisor: number) => void
-  /**
-   * The WebGL2RenderingContext.drawArraysInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawArrays() method. In addition, it can execute multiple instances of the range of elements.
-   */
-  drawArraysInstanced: (
-    mode: GLenum,
-    first: number,
-    count: number,
-    instanceCound: number
-  ) => void
-  /**
-   * The WebGL2RenderingContext.drawElementsInstanced() method of the WebGL 2 API renders primitives from array data like the gl.drawElements() method. In addition, it can execute multiple instances of a set of elements.
-   */
-  drawElementsInstanced: (
-    mode: GLenum,
-    count: number,
-    type: GLenum,
-    offset: GLintptr,
-    instanceCount: number
-  ) => void
-
-  /**
-   * The WebGL2RenderingContext.createVertexArray() method of the WebGL 2 API creates and initializes a WebGLVertexArrayObject object that represents a vertex array object (VAO) pointing to vertex array data and which provides names for different sets of vertex data.
-   */
-  createVertexArray: () => WebGLVertexArrayObject
-  /**
-   * The WebGL2RenderingContext.bindVertexArray() method of the WebGL 2 API binds a passed WebGLVertexArrayObject object to the buffer.
-   */
-  bindVertexArray: (vertexArray: WebGLVertexArrayObject | null) => void
-  /**
-   * The WebGL2RenderingContext.deleteVertexArray() method of the WebGL 2 API deletes a given WebGLVertexArrayObject object.
-   */
-  deleteVertexArray: (vertexArray: WebGLVertexArrayObject) => void
-  /**
-   * The WebGL2RenderingContext.drawBuffers() method of the WebGL 2 API defines draw buffers to which fragment colors are written into. The draw buffer settings are part of the state of the currently bound framebuffer or the drawingbuffer if no framebuffer is bound.
-   */
-  drawBuffers: (buffers: GLenum[]) => void
 
   // Allows programs to optimise by determine if they're the currently rendering program and skipping some steps
   currentProgram = -1
@@ -204,7 +158,6 @@ export class Renderer {
    * @param powerPreference - WebGL power preference.
    * @param autoClear - Whether to clear the canvas between draw.
    * @param clearColour - The colour to clear to, as `[r, g, b, a]`.
-   * @param webgl - The webGL version to try to use - 1, or 2
    */
   constructor({
     canvas,
@@ -219,8 +172,7 @@ export class Renderer {
     preserveDrawingBuffer = false,
     powerPreference = 'default',
     autoClear = true,
-    clearColour,
-    webgl = 2
+    clearColour
   }: Partial<RendererOptions> = {}) {
     const attributes = {
       alpha,
@@ -242,13 +194,11 @@ export class Renderer {
     this.premultipliedAlpha = premultipliedAlpha
     this.autoClear = autoClear
 
-    let gl =
-      webgl === 2
-        ? (canvas.getContext('webgl2', attributes) as WTCGLRenderingContext)
-        : null
-    this.isWebgl2 = !!gl
-    gl ??= canvas.getContext('webgl', attributes) as WTCGLRenderingContext
-    if (!gl) throw new Error('Unable to create a WebGL context')
+    const gl = canvas.getContext(
+      'webgl2',
+      attributes
+    ) as WTCGLRenderingContext | null
+    if (!gl) throw new Error('Unable to create a WebGL2 context')
 
     this.gl = gl
     this.gl.renderer = this
@@ -258,17 +208,7 @@ export class Renderer {
 
     this.state = this.#createState()
 
-    // store requested extensions
-    this.extensions = {}
-    const extensionFunctions = this.#enableExtensions()
-    this.vertexAttribDivisor = extensionFunctions.vertexAttribDivisor
-    this.drawArraysInstanced = extensionFunctions.drawArraysInstanced
-    this.drawElementsInstanced = extensionFunctions.drawElementsInstanced
-    this.createVertexArray = extensionFunctions.createVertexArray
-    this.bindVertexArray = extensionFunctions.bindVertexArray
-    this.deleteVertexArray = extensionFunctions.deleteVertexArray
-    this.drawBuffers = extensionFunctions.drawBuffers
-
+    this.#enableExtensions()
     this.parameters = this.#getParameters()
 
     if (clearColour) this.clearColour = clearColour
@@ -304,68 +244,12 @@ export class Renderer {
   }
 
   /**
-   * Enable the extensions the library relies on, and look up the functions
-   * that are native in WebGL2 but come from extensions in WebGL1.
-   *
-   * Most of this, and the alias copying in the constructor and context
-   * restore, goes away once WebGL1 support is dropped (see ROADMAP Phase 4).
+   * Enable the optional extensions the library relies on: rendering to and
+   * filtering float textures.
    */
   #enableExtensions() {
-    // Initialise extra format types
-    if (this.isWebgl2) {
-      this.getExtension('EXT_color_buffer_float')
-      this.getExtension('OES_texture_float_linear')
-      this.getExtension('OES_standard_derivatives')
-    } else {
-      this.getExtension('OES_texture_float')
-      this.getExtension('OES_texture_float_linear')
-      this.getExtension('OES_texture_half_float')
-      this.getExtension('OES_texture_half_float_linear')
-      this.getExtension('OES_element_index_uint')
-      this.getExtension('OES_standard_derivatives')
-      this.getExtension('EXT_sRGB')
-      this.getExtension('WEBGL_depth_texture')
-      this.getExtension('WEBGL_draw_buffers')
-    }
-
-    // Create method aliases using extension (WebGL1) or native if available (WebGL2)
-    return {
-      vertexAttribDivisor: this.getExtension(
-        'ANGLE_instanced_arrays',
-        'vertexAttribDivisor',
-        'vertexAttribDivisorANGLE'
-      ),
-      drawArraysInstanced: this.getExtension(
-        'ANGLE_instanced_arrays',
-        'drawArraysInstanced',
-        'drawArraysInstancedANGLE'
-      ),
-      drawElementsInstanced: this.getExtension(
-        'ANGLE_instanced_arrays',
-        'drawElementsInstanced',
-        'drawElementsInstancedANGLE'
-      ),
-      createVertexArray: this.getExtension(
-        'OES_vertex_array_object',
-        'createVertexArray',
-        'createVertexArrayOES'
-      ),
-      bindVertexArray: this.getExtension(
-        'OES_vertex_array_object',
-        'bindVertexArray',
-        'bindVertexArrayOES'
-      ),
-      deleteVertexArray: this.getExtension(
-        'OES_vertex_array_object',
-        'deleteVertexArray',
-        'deleteVertexArrayOES'
-      ),
-      drawBuffers: this.getExtension(
-        'WEBGL_draw_buffers',
-        'drawBuffers',
-        'drawBuffersWEBGL'
-      )
-    }
+    this.getExtension('EXT_color_buffer_float')
+    this.getExtension('OES_texture_float_linear')
   }
 
   #getParameters(): WTCGLRendererParams {
@@ -373,13 +257,13 @@ export class Renderer {
       maxTextureUnits: this.gl.getParameter(
         this.gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS
       ),
-      maxAnisotropy: this.getExtension('EXT_texture_filter_anisotropic')
-        ? this.gl.getParameter(
-            this.getExtension('EXT_texture_filter_anisotropic')
-              .MAX_TEXTURE_MAX_ANISOTROPY_EXT
-          )
-        : 0
+      maxAnisotropy: this.#maxAnisotropy()
     }
+  }
+
+  #maxAnisotropy(): number {
+    const ext = this.getExtension('EXT_texture_filter_anisotropic')
+    return ext ? this.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 0
   }
 
   #handleContextLost = (event: Event) => {
@@ -393,8 +277,8 @@ export class Renderer {
     // A restored context starts from scratch, so reset every cache and
     // re-request the extensions before rebuilding resources
     this.state = this.#createState()
-    this.extensions = {}
-    Object.assign(this, this.#enableExtensions())
+    this.#extensions.clear()
+    this.#enableExtensions()
     this.parameters = this.#getParameters()
     this.currentProgram = -1
     this.currentGeometry = ''
@@ -463,8 +347,7 @@ export class Renderer {
     this.state.textureUnits = []
     this.currentProgram = -1
     this.currentGeometry = ''
-    if (this.#ownsCanvas)
-      this.gl.getExtension('WEBGL_lose_context')?.loseContext()
+    if (this.#ownsCanvas) this.getExtension('WEBGL_lose_context')?.loseContext()
   }
 
   set dimensions(v: Vec2) {
@@ -740,45 +623,32 @@ export class Renderer {
   }
 
   /**
-   * Finds and enables a webGL extension and, if it has a corresponding function, returns that.
-   * @param extension - The extension identifier.
-   * @param webgl2Func -The name of the webGL2 function to return.
-   * @param extFunc - The name of the webGL1 functiont to return.
-   * @returns - A WebGL function, bound to this renderer or null (if no function exists)
+   * Look up and enable a WebGL extension. Each extension is only requested
+   * once per context.
+   * @param name - The extension's name, e.g. `'EXT_texture_filter_anisotropic'`.
+   * @returns The extension object, or null if it isn't supported.
    */
-  getExtension(extension: string, webgl2Func?: string, extFunc?: string) {
-    // if webgl2 function supported, return func bound to gl context
-    const castedWebgl2Func = webgl2Func as keyof WTCGLRenderingContext
-    if (webgl2Func && this.gl[castedWebgl2Func]) {
-      const func = this.gl[castedWebgl2Func]
+  getExtension<K extends keyof WTCGLExtensionMap>(
+    name: K
+  ): WTCGLExtensionMap[K] | null
+  getExtension(name: string): unknown
+  getExtension(name: string): unknown {
+    if (!this.#extensions.has(name))
+      this.#extensions.set(name, this.gl.getExtension(name))
+    return this.#extensions.get(name)
+  }
 
-      if (typeof func === 'function') return func.bind(this.gl)
-      else return func
-    }
-
-    const castedExtension = extension as keyof WTCGLExtensions
-
-    // fetch extension once only
-    if (!this.extensions[castedExtension]) {
-      this.extensions[castedExtension] = this.gl.getExtension(extension)
-    }
-
-    // return extension if no function requested
-    if (!webgl2Func) return this.extensions[castedExtension]
-
-    // Return null if extension not supported
-    if (!this.extensions[castedExtension]) return null
-
-    // return extension function, bound to extension
-    if (extFunc) {
-      const ext = this.extensions[castedExtension]
-      // bit of type hacking here too unfortunately as I can't mapt the webgl1 function type names to the actual calls
-      const gl1Func = ext?.[
-        extFunc as unknown as number
-        // eslint-disable-next-line @typescript-eslint/ban-types
-      ] as unknown as Function
-      if (gl1Func) return gl1Func.bind(ext)
-    }
+  /**
+   * Bind a vertex array object, keeping the renderer's record of the bound
+   * geometry in sync.
+   * @param vao - The vertex array to bind, or null to unbind.
+   * @param key - The `currentGeometry` key this VAO belongs to. Leave it out
+   * for VAOs that aren't drawn through `Geometry`, so the next geometry draw
+   * rebinds its own.
+   */
+  bindVertexArray(vao: WebGLVertexArrayObject | null, key = '') {
+    this.gl.bindVertexArray(vao)
+    this.currentGeometry = key
   }
 
   /**

@@ -50,8 +50,14 @@ export default defineConfig({
         scrollBlades: resolvePath('demos/scroll-blades/index.html'),
         stencilDepth: resolvePath('demos/stencil-depth/index.html'),
         manyMeshes: resolvePath('demos/many-meshes/index.html'),
+        buildingGeometry: resolvePath('demos/building-geometry/index.html'),
+        swarm: resolvePath('demos/swarm/index.html'),
         manifoldMandala: resolvePath('demos/manifold-mandala/index.html'),
-        progressiveRender: resolvePath('demos/progressive-render/index.html')
+        progressiveRender: resolvePath('demos/progressive-render/index.html'),
+        primitives: resolvePath('demos/primitives/index.html'),
+        paths: resolvePath('demos/paths/index.html'),
+        lines: resolvePath('demos/lines/index.html'),
+        polylineTrails: resolvePath('demos/polyline-trails/index.html')
       }
     }
   }

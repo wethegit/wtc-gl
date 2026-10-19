@@ -145,7 +145,7 @@
           <div class="demo__body">
             <div class="demo__classes">
               <span class="demo__class">TransformFeedback</span>
-              <span class="demo__class">PointCloud</span>
+              <span class="demo__class">Geometry</span>
               <span class="demo__class">Camera</span>
             </div>
             <h3>GPU particle simulation</h3>
@@ -156,6 +156,34 @@
               each frame - zero CPU involvement per particle.
             </p>
             <a class="btn" href="./transform-feedback/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/swarm.jpg"
+              alt="A swarm of thousands of arrows gathering around the pointer"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">TransformFeedback</span>
+              <span class="demo__class">Geometry</span>
+              <span class="demo__class">Program</span>
+            </div>
+            <h3>Swarm</h3>
+            <p>
+              8,192 agents chase the pointer through a flow field. One
+              <code>TransformFeedback</code> simulation is stepped several times
+              a frame without drawing, then drawn twice from the same buffers:
+              as instanced arrows pointing along each agent's velocity, and as
+              an additive glow. Position and velocity are captured interleaved,
+              each agent's seed is a static attribute, and Reset restarts the
+              simulation.
+            </p>
+            <a class="btn" href="./swarm/">Open demo →</a>
           </div>
         </div>
 
@@ -587,6 +615,156 @@
               place, so the render loop makes almost no garbage.
             </p>
             <a class="btn" href="./many-meshes/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/building-geometry.jpg"
+              alt="Concentric rings of block and sphere modules in a shallow bowl, over a peach and mint sky"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Geometry</span>
+              <span class="demo__class">mergeGeometries</span>
+              <span class="demo__class">Box</span>
+              <span class="demo__class">Sphere</span>
+              <span class="demo__class">Triangle</span>
+              <span class="demo__class">DollyCamera</span>
+            </div>
+            <h3>Building geometry</h3>
+            <p>
+              Concentric rings of modules, built in code and drawn as one mesh.
+              Boxes and spheres placed with <code>applyMatrix</code> merge into
+              a module, copies of the module (every other one mirrored) merge
+              into a ring, and the rings merge into the sculpture. A regrow wave
+              rebuilds one ring at a time while the shader grows it and explodes
+              the sculpture, so it stays a single draw call. Flat and smooth
+              shading come from <code>toNonIndexed</code> and
+              <code>mergeVertices</code>.
+            </p>
+            <a class="btn" href="./building-geometry/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/primitives.jpg"
+              alt="A box, sphere, plane, cylinder, cone, torus, capsule and vase in two rows, with their triangle edges drawn"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Box</span>
+              <span class="demo__class">Sphere</span>
+              <span class="demo__class">Plane</span>
+              <span class="demo__class">Cylinder</span>
+              <span class="demo__class">Torus</span>
+              <span class="demo__class">Capsule</span>
+              <span class="demo__class">Lathe</span>
+            </div>
+            <h3>Primitives</h3>
+            <p>
+              Every built-in primitive side by side, with its options in the
+              pane: segments, radii, partial sweeps and open ends. Changing an
+              option rebuilds that shape. Switch between lit, normals and a uv
+              checker, flat and smooth shading, and turn off back-face culling
+              to see inside the open shapes. The vase is a <code>Lathe</code> of
+              a 2D profile, and a cone is a <code>Cylinder</code> with
+              <code>radiusTop: 0</code>.
+            </p>
+            <a class="btn" href="./primitives/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/paths.jpg"
+              alt="A translucent trefoil-knot tube with small red, green and blue axes along its centre line"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Curve</span>
+              <span class="demo__class">Path</span>
+              <span class="demo__class">Tube</span>
+              <span class="demo__class">Extrude</span>
+              <span class="demo__class">computeFrames</span>
+            </div>
+            <h3>Paths</h3>
+            <p>
+              A tube swept along a Catmull-Rom curve through points you can
+              drag. Markers compare samples spaced evenly by distance with
+              parametric ones that bunch up, and axes show the
+              rotation-minimising frames the tube follows, matched up around a
+              closed trefoil. Twist and taper the tube, and switch
+              <code>alpha</code> to see the uniform curve loop on a hairpin
+              where the centripetal one doesn't. Tension tightens or loosens the
+              curve, and the B-spline type is smoother still, pulled towards the
+              points rather than through them. The extrude preset turns a flat
+              outline and hole into a bevelled solid as you drag, with hard
+              edges wherever it turns sharper than the crease angle.
+            </p>
+            <a class="btn" href="./paths/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/lines.jpg"
+              alt="A tapered, dashed blue spiral line, with a short orange trail tapering to a point"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Polyline</span>
+            </div>
+            <h3>Lines</h3>
+            <p>
+              A spiral that draws itself on, tapered and dashed, with dashes
+              measured by the distance travelled so they keep their length. As a
+              billboard it always faces the camera, in pixels or world units.
+              Switch it to a ribbon and it becomes a flat strip in world space
+              that twists along its length and banks into its turns. Move the
+              pointer to draw a trail, which pushes a new point every frame.
+            </p>
+            <a class="btn" href="./lines/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/polyline-trails.jpg"
+              alt="A dense, swirling cluster of thin orange and teal particle trails on a dark background"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">Polyline</span>
+              <span class="demo__class">RenderTarget</span>
+              <span class="demo__class">Framebuffer</span>
+            </div>
+            <h3>Polyline trails</h3>
+            <p>
+              16,384 particles swirl through a force field, each drawn as a
+              ribbon through its recent positions. A float simulation writes
+              into a history texture, and one instanced
+              <code>Polyline</code> with a custom vertex shader reads it back
+              and extrudes each trail with <code>polylineExtrude</code>. Click
+              for the next shot.
+            </p>
+            <a class="btn" href="./polyline-trails/">Open demo →</a>
           </div>
         </div>
       </section>
