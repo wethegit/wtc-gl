@@ -133,12 +133,12 @@ A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±
 - [ ] `Camera.frustumIntersectsMesh(node, worldMatrix)` — the `worldMatrix` override is what allows per-instance culling (OGL).
 - [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
 - [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
+- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
 
 ### Interaction
 
 - [ ] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9.
   - Once it lands, regroup on the `paths` demo. Its handles are picked by their projected screen position and dragged in the plane facing the camera, as a stand-in. Decide whether to switch to raycast picking, and to dragging along a surface or constrained plane.
-- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
 
 ### Later
 
@@ -189,7 +189,7 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
    - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
    - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
-8. **Instancing helpers.** Moved to Phase 6 (Interaction).
+8. **Instancing helpers.** Moved to Phase 6 (Core additions).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
 10. **React parity.** `packages/react` only covers ScrollRenderer. Add:
     - [ ] `useFragmentShader`
