@@ -106,20 +106,25 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 - [x] `Extrude` (2D outline to a solid, with optional bevel). _New._ Caps triangulated with `earcut`, with crease-angle shading on the sides.
 - [x] `Lathe` (spin a profile around an axis). _New._
 
-### Lines (MeshLine equivalent)
+### Lines (Polyline)
 
-A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±1, prev/next attributes, extruded in screen space with mitred corners), extended with what three.js MeshLine adds.
+A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point is doubled with a `side` of ±1 and given prev/next attributes, then extruded in screen space with mitred corners. It's extended with what three.js MeshLine adds, and named after `Path.toPolyline()`, whose points it draws.
 
-- [ ] `Line extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
-- [ ] Width in pixels or world units (`sizeAttenuation`).
-- [ ] Per-vertex width from a callback (`t => 1 - t`) for tapers and trails.
-- [ ] Dashes: `dashArray`, `dashOffset`, `dashRatio`. Measure along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
-- [ ] Texture `map` with repeat along the line, `alphaTest`, `opacity`.
-- [ ] Closed loops and a mitre limit.
-- [ ] `setPoints()` that reuses buffers when the count is unchanged, plus a trail mode that pushes a new head point and drops the tail.
-- [ ] Export the extrusion as a GLSL function so custom shaders can reuse it.
-- [ ] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance) and a demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
-- Known limits, same as MeshLine: mitred joins only (no round joins or caps), and self-overlapping transparent lines double up unless depth writes are off or `alphaTest` is used.
+- [x] `Polyline extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
+- [x] Width in pixels or world units (`sizeAttenuation`).
+- [x] Per-vertex width from a `taper` callback (`(u, i) => 1 - u`) for tapers and trails.
+- [x] Dashes: `dashArray`, `dashOffset`, `dashRatio`. They're measured along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
+- [x] Texture `map` with repeat along the line, `alphaTest`, `opacity`, and `visibility` for drawing it on.
+- [x] Closed loops and a mitre limit.
+- [x] `setPoints()` that reuses buffers when the count is unchanged, plus `push()` for trails, which adds a new head point and drops the tail.
+- [x] Export the extrusion as a GLSL function (`polylineExtrude`) so custom shaders can reuse it. Extra `uniforms` and (instanced) `attributes` for custom shaders, as in the `polyline-trails` demo.
+- [x] From `Line` on `feature/polyline-and-demo`: resolution from the viewport (right in render targets), premultiplied output, a `map` that can be swapped at any time, and clip space without a camera.
+- [x] `billboard: false` for a flat ribbon in world space. It follows rotation-minimising frames (now `rotationMinimisingFrames`, shared with `Path`) from `facing`, which defaults to the plane of the points. `tilt` rolls it and `bank` leans it into turns.
+- [x] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance, ribbon frames, banking and mitres) and a `lines` demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
+- Known limits, same as MeshLine:
+  - Mitred joins only: no round joins or caps.
+  - Self-overlapping transparent lines double up, unless depth writes are off or `alphaTest` is used.
+  - A billboard line with a width in pixels is culled by its points alone.
 
 ### Shading and viewing
 

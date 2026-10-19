@@ -10,52 +10,16 @@ import {
   toXYZ
 } from './segments'
 import type { PathPoint, XYZ } from './segments'
+import { clamp, rotationMinimisingFrames } from './frames'
+import type { PathFrames } from './frames'
 
-export interface PathFrames {
-  tangents: Vec3[]
-  normals: Vec3[]
-  binormals: Vec3[]
-}
+export type { PathFrames }
 
 /**
  * Adjusts the tilt (radians) at each frame. `u` is the fraction of the way
  * along the path, from 0 to 1.
  */
 export type TiltFunction = (tilt: number, u: number, path: Path) => number
-
-const clamp = (v: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, v))
-
-const dot = (a: Vec3, b: Vec3) => a.x * b.x + a.y * b.y + a.z * b.z
-
-// out = a × b, normalised if asked
-const cross = (out: Vec3, a: Vec3, b: Vec3, normalise = false): Vec3 => {
-  const x = a.y * b.z - a.z * b.y
-  const y = a.z * b.x - a.x * b.z
-  const z = a.x * b.y - a.y * b.x
-  const l = normalise ? Math.hypot(x, y, z) || 1 : 1
-  out.x = x / l
-  out.y = y / l
-  out.z = z / l
-  return out
-}
-
-// Turns the normal towards the binormal by angle, about the tangent
-const twist = (angle: number, n: Vec3, b: Vec3) => {
-  const s = Math.sin(angle)
-  const c = Math.cos(angle)
-  const nx = c * n.x + s * b.x
-  const ny = c * n.y + s * b.y
-  const nz = c * n.z + s * b.z
-  b.x = c * b.x - s * n.x
-  b.y = c * b.y - s * n.y
-  b.z = c * b.z - s * n.z
-  n.x = nx
-  n.y = ny
-  n.z = nz
-}
-
-const copy = (v: Vec3) => new Vec3(v.x, v.y, v.z)
 
 /**
  * A continuous 3D path made of line, quadratic and cubic Bézier segments,
@@ -295,8 +259,6 @@ export class Path {
   computeFrames(divisions = 64, closed = this.closed): PathFrames {
     const length = this.getLength()
     const tangents: Vec3[] = []
-    const normals: Vec3[] = []
-    const binormals: Vec3[] = []
     const tilts: number[] = []
 
     for (let i = 0; i <= divisions; i++) {
@@ -305,73 +267,8 @@ export class Path {
       const tilt = this.getTiltAtLength(u * length)
       tilts.push(this.tiltFunction ? this.tiltFunction(tilt, u, this) : tilt)
     }
-    if (closed) tangents[divisions] = copy(tangents[0])
 
-    // Start with the axis least like the first tangent, made perpendicular
-    const t0 = tangents[0]
-    const ax = Math.abs(t0.x)
-    const ay = Math.abs(t0.y)
-    const az = Math.abs(t0.z)
-    const axis =
-      ax <= ay && ax <= az
-        ? new Vec3(1, 0, 0)
-        : ay <= az
-          ? new Vec3(0, 1, 0)
-          : new Vec3(0, 0, 1)
-    const side = cross(new Vec3(), t0, axis, true)
-    normals.push(cross(new Vec3(), t0, side))
-    binormals.push(cross(new Vec3(), t0, normals[0]))
-
-    // Carry the normal along: rotate it by however far the tangent turned
-    const k = new Vec3()
-    for (let i = 1; i <= divisions; i++) {
-      const a = tangents[i - 1]
-      const b = tangents[i]
-      const n = copy(normals[i - 1])
-
-      cross(k, a, b)
-      const sin = Math.hypot(k.x, k.y, k.z)
-      if (sin > Number.EPSILON) {
-        k.x /= sin
-        k.y /= sin
-        k.z /= sin
-        const cos = clamp(dot(a, b), -1, 1)
-        // Rodrigues: n cosθ + (k × n) sinθ + k (k · n)(1 - cosθ)
-        const kn = dot(k, n)
-        const kx = k.y * n.z - k.z * n.y
-        const ky = k.z * n.x - k.x * n.z
-        const kz = k.x * n.y - k.y * n.x
-        n.x = n.x * cos + kx * sin + k.x * kn * (1 - cos)
-        n.y = n.y * cos + ky * sin + k.y * kn * (1 - cos)
-        n.z = n.z * cos + kz * sin + k.z * kn * (1 - cos)
-        const l = Math.hypot(n.x, n.y, n.z)
-        n.x /= l
-        n.y /= l
-        n.z /= l
-      }
-
-      normals.push(n)
-      binormals.push(cross(new Vec3(), b, n))
-    }
-
-    for (let i = 0; i <= divisions; i++)
-      twist(tilts[i], normals[i], binormals[i])
-
-    if (closed) {
-      // How far the last normal has turned from the first, about the tangent
-      const first = normals[0]
-      const last = normals[divisions]
-      let step = Math.acos(clamp(dot(first, last), -1, 1)) / divisions
-      if (dot(t0, cross(k, first, last)) > 0) step = -step
-
-      for (let i = 1; i < divisions; i++) {
-        twist(step * i, normals[i], binormals[i])
-      }
-      normals[divisions] = copy(first)
-      binormals[divisions] = copy(binormals[0])
-    }
-
-    return { tangents, normals, binormals }
+    return rotationMinimisingFrames(tangents, { closed, tilts })
   }
 
   #from(): XYZ {

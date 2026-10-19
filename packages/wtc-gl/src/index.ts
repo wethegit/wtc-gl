@@ -36,6 +36,10 @@ export {
   CubicBezierSegment
 } from './path/segments'
 export type { PathPoint } from './path/segments'
+export { rotationMinimisingFrames } from './path/frames'
+export type { RotationMinimisingFramesOptions } from './path/frames'
+
+export * from './line/Polyline'
 
 export * from './ext/Framebuffer'
 
