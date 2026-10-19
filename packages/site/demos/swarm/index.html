@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" class="demo-fullscreen">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wtc-gl — Swarm</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .controls {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        color: rgba(221, 224, 238, 0.7);
+      }
+      .controls label {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .controls output {
+        min-width: 1ch;
+        color: #fff;
+      }
+      .controls button {
+        font: inherit;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        padding: 0.2em 0.6em;
+        cursor: pointer;
+      }
+      canvas {
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="demo-nav">
+      <a class="demo-nav__brand" href="../">wtc-gl</a>
+      <span class="demo-nav__sep">/</span>
+      <span class="demo-nav__title">Swarm</span>
+      <div class="controls">
+        <label>
+          Substeps
+          <input id="substeps" type="range" min="1" max="8" value="2" />
+          <output id="substeps-value">2</output>
+        </label>
+        <button id="reset" type="button">Reset</button>
+      </div>
+    </nav>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

@@ -1,8 +1,9 @@
 import { StrictMode, useRef, useState, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
+  Geometry,
+  GeometryAttribute,
   Mesh,
-  PointCloud,
   Program,
   TransformFeedback,
   Triangle,
@@ -16,6 +17,8 @@ import midFrag from '../scroll-renderer/mid.frag'
 import endFrag from '../scroll-renderer/end.frag'
 import particlesVert from '../scroll-renderer/particles.vert'
 import particlesFrag from '../scroll-renderer/particles.frag'
+import simulateVert from '../scroll-renderer/simulate.vert'
+import simulateFrag from '../scroll-renderer/simulate.frag'
 
 // ---------------------------------------------------------------------------
 // A full-element fragment shader scene
@@ -85,6 +88,7 @@ const N = 10000
 function ParticlePanel({ playing }: { playing: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const deltaRef = useRef<Uniform | null>(null)
+  const simulationRef = useRef<TransformFeedback | null>(null)
   const playingRef = useRef(playing)
   playingRef.current = playing
   const frozenTimeRef = useRef(0)
@@ -99,19 +103,6 @@ function ParticlePanel({ playing }: { playing: boolean }) {
       })
       deltaRef.current = u_delta
 
-      const program = new Program(gl, {
-        vertex: particlesVert,
-        fragment: particlesFrag,
-        uniforms: { ...scrollScene.uniforms, u_delta },
-        transformFeedbackVaryings: [
-          'v_position',
-          'v_velocity',
-          'v_life',
-          'v_seed'
-        ],
-        transparent: true
-      })
-
       const posData = new Float32Array(N * 2)
       const velData = new Float32Array(N * 2)
       const lifeData = new Float32Array(N)
@@ -125,53 +116,50 @@ function ParticlePanel({ playing }: { playing: boolean }) {
         lifeData[i] = Math.random()
         seedData[i] = Math.random()
       }
+      const seed = new GeometryAttribute({ size: 1, data: seedData })
 
-      const tf = new TransformFeedback(gl, {
-        program: program.program,
-        transformFeedbacks: {
-          a_position: {
-            data: posData,
-            size: 2,
-            usage: gl.DYNAMIC_COPY,
-            varying: 'v_position'
-          },
-          a_velocity: {
-            data: velData,
-            size: 2,
-            usage: gl.DYNAMIC_COPY,
-            varying: 'v_velocity'
-          },
-          a_life: {
-            data: lifeData,
-            size: 1,
-            usage: gl.DYNAMIC_COPY,
-            varying: 'v_life'
-          },
-          a_seed: {
-            data: seedData,
-            size: 1,
-            usage: gl.STATIC_DRAW,
-            varying: 'v_seed'
-          }
-        }
+      // The simulation advances every particle on the GPU each frame...
+      const simulation = new TransformFeedback(gl, {
+        program: new Program(gl, {
+          vertex: simulateVert,
+          fragment: simulateFrag,
+          uniforms: { ...scrollScene.uniforms, u_delta },
+          transformFeedbackVaryings: ['v_position', 'v_velocity', 'v_life']
+        }),
+        attributes: {
+          a_position: { data: posData, size: 2, varying: 'v_position' },
+          a_velocity: { data: velData, size: 2, varying: 'v_velocity' },
+          a_life: { data: lifeData, size: 1, varying: 'v_life' }
+        },
+        staticAttributes: { a_seed: seed }
       })
+      simulationRef.current = simulation
 
-      const cloud = new PointCloud(gl, {
-        particles: N,
-        dimensions: 2,
-        transformFeedbacks: tf
+      // ...and the points are drawn from its latest results
+      const geometry = new Geometry(gl, {
+        a_position: simulation.attribute('a_position'),
+        a_life: simulation.attribute('a_life'),
+        a_seed: seed
+      })
+      const program = new Program(gl, {
+        vertex: particlesVert,
+        fragment: particlesFrag,
+        uniforms: { ...scrollScene.uniforms },
+        transparent: true
       })
 
       new Mesh(gl, {
         mode: gl.POINTS,
-        geometry: cloud,
+        geometry,
         program
       }).setParent(scrollScene.scene)
 
       return () => {
-        cloud.remove()
-        tf.remove()
+        geometry.remove()
+        simulation.remove()
+        simulation.program.remove()
         program.remove()
+        simulationRef.current = null
         deltaRef.current = null
       }
     },
@@ -189,11 +177,11 @@ function ParticlePanel({ playing }: { playing: boolean }) {
             frozenTimeRef.current = scrollScene.u_time.value as number
           if (deltaRef.current)
             deltaRef.current.value = Math.min(delta * 0.001, 0.05)
+          simulationRef.current?.step()
         } else {
-          // Freeze u_time and feed the simulation a zero delta so the
-          // particles hold still while the loop keeps rendering.
+          // Freeze u_time and stop stepping the simulation so the particles
+          // hold still while the loop keeps rendering.
           if (scrollScene) scrollScene.u_time.value = frozenTimeRef.current
-          if (deltaRef.current) deltaRef.current.value = 0
         }
       }
     }

@@ -153,3 +153,64 @@ describe('Renderer clearing', () => {
     expect(gl.clear).toHaveBeenLastCalledWith(0x4000 | 0x100)
   })
 })
+
+describe('Renderer context and extensions', () => {
+  it('requires WebGL2', () => {
+    const contexts: string[] = []
+    const canvas = {
+      getContext: (type: string) => {
+        contexts.push(type)
+        return null
+      }
+    } as unknown as HTMLCanvasElement
+
+    expect(() => new Renderer({ canvas })).toThrow(/WebGL2/)
+    expect(contexts).toEqual(['webgl2'])
+  })
+
+  it('looks each extension up once per context', () => {
+    const ext = { MAX_TEXTURE_MAX_ANISOTROPY_EXT: 1 }
+    const { gl, renderer } = createMockRenderer({
+      getExtension: vi.fn(() => ext)
+    })
+    // Already requested by the constructor, to read the max anisotropy
+    expect(gl.getExtension).toHaveBeenCalledWith(
+      'EXT_texture_filter_anisotropic'
+    )
+    vi.mocked(gl.getExtension).mockClear()
+
+    expect(renderer.getExtension('EXT_texture_filter_anisotropic')).toBe(ext)
+    expect(gl.getExtension).not.toHaveBeenCalled()
+
+    // A restored context needs its extensions enabled again
+    const canvas = gl.canvas as unknown as EventTarget
+    canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true }))
+    canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(gl.getExtension).toHaveBeenCalledWith('EXT_color_buffer_float')
+    expect(gl.getExtension).toHaveBeenCalledWith(
+      'EXT_texture_filter_anisotropic'
+    )
+  })
+
+  it('caches unsupported extensions as null', () => {
+    const { gl, renderer } = createMockRenderer()
+    vi.mocked(gl.getExtension).mockClear()
+
+    expect(renderer.getExtension('WEBGL_multi_draw')).toBe(null)
+    expect(renderer.getExtension('WEBGL_multi_draw')).toBe(null)
+    expect(gl.getExtension).toHaveBeenCalledTimes(1)
+  })
+
+  it('tracks the bound geometry when binding a vertex array', () => {
+    const { gl, renderer } = createMockRenderer()
+    const vao = {} as WebGLVertexArrayObject
+
+    renderer.bindVertexArray(vao, '1_a')
+    expect(gl.bindVertexArray).toHaveBeenLastCalledWith(vao)
+    expect(renderer.currentGeometry).toBe('1_a')
+
+    // A VAO bound outside Geometry makes the next geometry draw rebind
+    renderer.bindVertexArray(vao)
+    expect(renderer.currentGeometry).toBe('')
+  })
+})

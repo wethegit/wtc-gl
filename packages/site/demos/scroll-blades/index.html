@@ -71,12 +71,13 @@
             <p class="blade__index">01 · How to</p>
             <h2 class="blade__title">Example.</h2>
             <p class="blade__body">
-              The WebGL program for each image is a simple mesh shader with
-              transform feedback, allowing the vertex shader to update the
-              position and velocity of each vertex on the fly. Scroll-linked
-              distortion and mouse interaction are added as uniform offsets to
-              the vertex positions, and a noise function is used to create an
-              organic erosion effect around the edges.
+              Each image is a grid mesh whose vertices are simulated on the
+              GPU with a <code>TransformFeedback</code>: every frame, a
+              simulation pass updates the position and velocity of each vertex,
+              and the image is drawn from the results. Scroll-linked distortion
+              and mouse interaction are fed to the simulation as uniforms, and
+              a noise function is used to create an organic erosion effect
+              around the edges.
             </p>
             <pre class="blade__code"><code>const renderer = new ScrollRenderer()
 document.body.appendChild(renderer.canvas)

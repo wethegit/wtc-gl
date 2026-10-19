@@ -54,10 +54,10 @@ The WebGL1 fallback adds a lot of code and, as far as I can tell, image textures
 - `Texture.update` uses the 9-argument `texImage2D(…, image)` form, which only exists in WebGL2, so WebGL1 would throw.
 - The WebGL1 power-of-two check also uses `image.width` rather than `naturalWidth`.
 
-- [ ] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
+- [x] Require WebGL2. This removes the `getExtension` aliasing in `Renderer`, the `HALF_FLOAT_OES` branches in `RenderTarget`/`Framebuffer`, and the depth-texture fallbacks. It should also greatly reduce the context-restore code in `Renderer`: the extension aliases are why `#enableExtensions()` returns functions that the constructor copies one by one (to satisfy `strictPropertyInitialization`) and restore re-assigns.
 - [x] Support WebGL2 uniform types that are currently ignored: `sampler3D`, `sampler2DArray`, `isampler*`/`usampler*`, `uint`/`uvec*` and the non-square matrices.
-- [ ] Support `INTERLEAVED_ATTRIBS` transform feedback (there's already a TODO in `Program.ts`).
-- [ ] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`).
+- [x] Support `INTERLEAVED_ATTRIBS` transform feedback (`Program`'s `transformFeedbackBufferMode`).
+- [x] Make `TransformFeedback` manage its own state instead of `Geometry`, and stop it binding VAOs directly (which bypasses `renderer.currentGeometry`). It's now a standalone simulation: `step()` runs it without drawing, and `attribute(name)` feeds the results to any geometry, optionally per instance. See the `swarm` demo.
 
 ### Fewer allocations per frame
 
@@ -67,7 +67,7 @@ The wtc-math getters (`.array`, `multiplyNew`, `translation`, `scaleNew`, `Mat3.
 - [x] Update matrices in place in `Obj.updateMatrix` / `updateMatrixWorld`.
 - [x] Reuse the frustum planes in `Camera.updateFrustum`.
 - [x] Stop allocating in `Renderer.render` and `ScrollRenderer.render`: the viewport `Vec2`s, the `resize()` read every frame, and the render-list arrays. (`resize()` no longer allocates, but still reads the canvas size each frame to catch changes the ResizeObserver hasn't reported yet.)
-- [ ] Fix allocation upstream in wtc-math, then remove wtc-gl's workarounds (likely for the next major version). wtc-math's "in place" methods still allocate: `multiply` and `invert` clone first, `invert` and `determinant` build intermediate objects, and `.array`, `.translation` and `Quat.fromEuler` return new objects. Its components are also stored in private fields behind getters and setters, which makes V8 box doubles in code that isn't optimised. Once wtc-math has truly in-place operations (e.g. `multiply(a, b, out)`, `invert(out)`, `fromRotationTranslationScale(..., out)`, `toArray(out)`), replace the copied formulas in `src/core/matrix.ts` with calls to it and delete that file. `test/allocations.test.ts` should keep passing throughout.
+- [ ] Fix allocation upstream in wtc-math, then remove wtc-gl's workarounds (likely for the next major version). wtc-math's "in place" methods still allocate: `multiply` and `invert` clone first, `invert` and `determinant` build intermediate objects, and `.array`, `.translation` and `Quat.fromEuler` return new objects. Its components are also stored in private fields behind getters and setters, which makes V8 box doubles in code that isn't optimised. Once wtc-math has truly in-place operations (e.g. `multiply(a, b, out)`, `invert(out)`, `fromRotationTranslationScale(..., out)`, `toArray(out)`), replace the copied formulas in `src/core/matrix.ts` with calls to it and delete that file. `test/allocations.test.ts` should keep passing throughout. wtc-math 1.4.0 ships its own type declarations, so wtc-gl's `types/wtc-math.d.ts` shim is gone, but it has no in-place operations yet, so `matrix.ts` stays.
 
 ## Phase 5 — Smaller improvements
 
@@ -89,37 +89,42 @@ Much of this can be ported from [OGL](https://github.com/oframe/ogl) (MIT; keep 
 
 ### Building geometry
 
-- [ ] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. _New._
-- [ ] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. _New._
-- [ ] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
-- [ ] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. _New._
-- [ ] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
-- [ ] Vitest coverage for all of the above. They're pure array work.
+- [x] `Geometry.computeVertexNormals()` — area-weighted normals for indexed and non-indexed geometry. _New._
+- [x] `Geometry.applyMatrix(mat4)` — transform positions in place and normals by the normal matrix, then reset bounds. _New._
+- [x] `mergeGeometries([...])` — combine geometries with matching attributes into one, rebasing indices. _New._
+- [x] `toNonIndexed()` for flat shading, and `mergeVertices(tolerance)` to weld vertices back together for smooth shading. _New._
+- [x] `Geometry.setIndex()` — replace the index buffer after construction (OGL).
+- [x] Vitest coverage for all of the above. They're pure array work.
 
 ### Primitives and generators
 
-- [ ] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
-- [ ] `Capsule`. _New._
-- [ ] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL).
-- [ ] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL).
-- [ ] `Tube` — sweep a circular profile along a `Path` (OGL).
-- [ ] `Extrude` (2D outline to a solid, with optional bevel) and `Lathe` (spin a profile around an axis). _New._
-- [ ] Optional CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves.
+- [x] `Cylinder` (a cylinder with `radiusTop: 0` is a cone) and `Torus` (OGL).
+- [x] `Capsule`. _New._
+- [x] `Curve` — Catmull-Rom and quadratic/cubic Bézier point generation (OGL). Built as a `Path`, with centripetal Catmull-Rom, `tension`, a smoother `bspline` type and closed loops.
+- [x] `Path` — `moveTo`/`lineTo`/`bezierCurveTo`, sampling by length, tangents and Frenet frames (OGL). Sampling is by distance inside segments too, and the frames are rotation-minimising.
+- [x] `Tube` — sweep a circular profile along a `Path` (OGL). The radius can be a function, for tapers.
+- [x] `Extrude` (2D outline to a solid, with optional bevel). _New._ Caps triangulated with `earcut`, with crease-angle shading on the sides.
+- [x] `Lathe` (spin a profile around an axis). _New._
 
-### Lines (MeshLine equivalent)
+### Lines (Polyline)
 
-A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±1, prev/next attributes, extruded in screen space with mitred corners), extended with what three.js MeshLine adds.
+A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point is doubled with a `side` of ±1 and given prev/next attributes, then extruded in screen space with mitred corners. It's extended with what three.js MeshLine adds, and named after `Path.toPolyline()`, whose points it draws.
 
-- [ ] `Line extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
-- [ ] Width in pixels or world units (`sizeAttenuation`).
-- [ ] Per-vertex width from a callback (`t => 1 - t`) for tapers and trails.
-- [ ] Dashes: `dashArray`, `dashOffset`, `dashRatio`. Measure along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
-- [ ] Texture `map` with repeat along the line, `alphaTest`, `opacity`.
-- [ ] Closed loops and a mitre limit.
-- [ ] `setPoints()` that reuses buffers when the count is unchanged, plus a trail mode that pushes a new head point and drops the tail.
-- [ ] Export the extrusion as a GLSL function so custom shaders can reuse it.
-- [ ] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance) and a demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
-- Known limits, same as MeshLine: mitred joins only (no round joins or caps), and self-overlapping transparent lines double up unless depth writes are off or `alphaTest` is used.
+- [x] `Polyline extends Mesh`, rather than wrapping a mesh like OGL, so it sits in the scene graph, frustum-culls from its bounds and works with `ScrollScene`.
+- [x] Width in pixels or world units (`sizeAttenuation`).
+- [x] Per-vertex width from a `taper` callback (`(u, i) => 1 - u`) for tapers and trails.
+- [x] Dashes: `dashArray`, `dashOffset`, `dashRatio`. They're measured along the real distance travelled rather than MeshLine's 0→1 counter, so dashes keep their size as the line grows.
+- [x] Texture `map` with repeat along the line, `alphaTest`, `opacity`, and `visibility` for drawing it on.
+- [x] Closed loops and a mitre limit.
+- [x] `setPoints()` that reuses buffers when the count is unchanged, plus `push()` for trails, which adds a new head point and drops the tail.
+- [x] Export the extrusion as a GLSL function (`polylineExtrude`) so custom shaders can reuse it. Extra `uniforms` and (instanced) `attributes` for custom shaders, as in the `polyline-trails` demo.
+- [x] From `Line` on `feature/polyline-and-demo`: resolution from the viewport (right in render targets), premultiplied output, a `map` that can be swapped at any time, and clip space without a camera.
+- [x] `billboard: false` for a flat ribbon in world space. It follows rotation-minimising frames (now `rotationMinimisingFrames`, shared with `Path`) from `facing`, which defaults to the plane of the points. `tilt` rolls it and `bank` leans it into turns.
+- [x] Vitest for buffer building (end-point prev/next, closed loops, cumulative distance, ribbon frames, banking and mitres) and a `lines` demo: a tapered, dashed spiral that draws itself on, plus a mouse trail.
+- Known limits, same as MeshLine:
+  - Mitred joins only: no round joins or caps.
+  - Self-overlapping transparent lines double up, unless depth writes are off or `alphaTest` is used.
+  - A billboard line with a width in pixels is culled by its points alone.
 
 ### Shading and viewing
 
@@ -133,16 +138,18 @@ A `Line` class based on OGL's `Polyline` (each point doubled with a `side` of ±
 - [ ] `Camera.frustumIntersectsMesh(node, worldMatrix)` — the `worldMatrix` override is what allows per-instance culling (OGL).
 - [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
 - [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
+- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
 
 ### Interaction
 
 - [ ] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9.
-- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
+  - Once it lands, regroup on the `paths` demo. Its handles are picked by their projected screen position and dragged in the plane facing the camera, as a stand-in. Decide whether to switch to raycast picking, and to dragging along a surface or constrained plane.
 
 ### Later
 
 - [ ] `Shadow` — shadow-map pass from a light camera (OGL).
 - [ ] OBJ/STL/GLB export, if models need to leave the browser. _New._
+- [ ] CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves. Ship it as a separate entry point so the WASM dependency stays opt-in.
 - glTF import stays under Future features item 6.
 
 ---
@@ -186,7 +193,8 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
    - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
-8. **Instancing helpers.** Moved to Phase 6 (Interaction).
+   - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
+8. **Instancing helpers.** Moved to Phase 6 (Core additions).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
 10. **React parity.** `packages/react` only covers ScrollRenderer. Add:
     - [ ] `useFragmentShader`

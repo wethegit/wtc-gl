@@ -19,7 +19,27 @@ export * from './geometry/Triangle'
 export * from './geometry/Plane'
 export * from './geometry/Box'
 export * from './geometry/Sphere'
+export * from './geometry/Cylinder'
+export * from './geometry/Torus'
+export * from './geometry/Lathe'
+export * from './geometry/Capsule'
+export * from './geometry/Tube'
+export * from './geometry/Extrude'
 export * from './geometry/PointCloud'
+
+export * from './path/Path'
+export * from './path/Curve'
+export {
+  PathSegment,
+  LineSegment,
+  QuadraticBezierSegment,
+  CubicBezierSegment
+} from './path/segments'
+export type { PathPoint } from './path/segments'
+export { rotationMinimisingFrames } from './path/frames'
+export type { RotationMinimisingFramesOptions } from './path/frames'
+
+export * from './line/Polyline'
 
 export * from './ext/Framebuffer'
 
