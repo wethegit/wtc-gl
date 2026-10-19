@@ -1,5 +1,161 @@
 # wtc-gl
 
+## 2.0.0
+
+### Major Changes
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`e32bebb`](https://github.com/wethegit/wtc-gl/commit/e32bebb12d1d685e46f5723ba87c821d8fd1fe60) Thanks [@liamegan](https://github.com/liamegan)! - Require WebGL2. `Renderer` now only asks for a `webgl2` context and throws `Unable to create a WebGL2 context` if it can't get one. It no longer falls back to WebGL1, which was already broken for image textures.
+
+  **Migrating**
+
+  - **`webgl` option removed.** Delete `webgl: 1` / `webgl: 2` from `new Renderer({...})`.
+  - **`renderer.isWebgl2` removed.** It was always true for working code. Remove the checks.
+  - **Extension aliases removed.** `renderer.vertexAttribDivisor`, `drawArraysInstanced`, `drawElementsInstanced`, `createVertexArray`, `deleteVertexArray` and `drawBuffers` are gone. Call the same methods on `gl` instead, e.g. `gl.drawBuffers([...])`.
+  - **`renderer.bindVertexArray(vao, key?)`** still exists, but now also resets `renderer.currentGeometry` (or sets it to `key`), so a VAO you bind yourself doesn't stop the next `Geometry` draw from binding its own. Use it, rather than `gl.bindVertexArray`, for VAOs you bind between wtc-gl draws.
+  - **`renderer.getExtension(name)`** takes just the extension name and returns the extension object or `null`. The second and third arguments (the WebGL2 function name and WebGL1 alias) are gone. Known WebGL2 extensions are typed through the new `WTCGLExtensionMap`. Lookups are cached per context, and the cache is cleared when the context is restored.
+  - **`renderer.extensions` removed.** Use `renderer.getExtension(name)`.
+  - **Types:** `WTCGLRenderingContext` is now `WebGL2RenderingContext & { renderer, canvas }`. `WTCGLExtensions` is replaced by `WTCGLExtensionMap`.
+  - **`Framebuffer.TEXTYPE_HALF_FLOAT_OES`** is deprecated in favour of `Framebuffer.TEXTYPE_HALF_FLOAT` (same value). Half-float framebuffers and render targets always use `gl.HALF_FLOAT` with `RGBA16F`.
+  - **`RenderTarget`** depth buffers always default to `DEPTH_COMPONENT24`, or `DEPTH24_STENCIL8` with `stencil`. The WebGL1 `DEPTH_COMPONENT16` / `DEPTH_STENCIL` fallbacks are gone, and `depthTexture` no longer depends on `WEBGL_depth_texture`.
+  - **`Texture`** always generates mipmaps when `generateMipmaps` is set, including for non-power-of-two images. Under WebGL1 these silently fell back to no mipmaps, clamped wrapping and linear filtering. An `anisotropy` value on a device without `EXT_texture_filter_anisotropic` is now ignored instead of throwing.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`efbee48`](https://github.com/wethegit/wtc-gl/commit/efbee480923885b392a4970e4578815e21ab5f90) Thanks [@liamegan](https://github.com/liamegan)! - Redesign `TransformFeedback` as a standalone GPU simulation. It now owns its ping-pong state, and simulating is separate from drawing. `step()` runs the simulation program once with rasterisation turned off, and `attribute(name)` gives you an attribute that always holds the latest results, ready to draw with any geometry and program. Simulations can now run without being drawn, be drawn by a different program (and more than one mesh), and be stepped more or less often than they're drawn.
+
+  New:
+
+  - **`staticAttributes`** for per-vertex inputs the simulation reads but doesn't change, such as a rest position or a random seed. They're uploaded once and restored with the context.
+  - **Interleaved capture.** Pass `transformFeedbackBufferMode: 'interleaved'` to `Program` to capture every varying into one buffer.
+  - **`reset()`** starts the simulation again from the attributes' `data`.
+  - **Instanced outputs.** `attribute(name, { instanced: 1 })` returns a per-instance version of an output, for example to draw one instanced shape per simulated vertex. Each option set gets its own attribute, and they all follow the latest results.
+  - **Attribute locations come from the linked program**, so simulation shaders no longer need `layout(location = …)`.
+  - **`GeometryAttribute` takes `buffer` and `external` options.** An external attribute's buffer is managed elsewhere: `Geometry` never uploads, recreates or deletes it, and re-points its vertex arrays when the buffer is swapped. Bounds aren't computed from an external `position`, since its values live on the GPU, so a mesh using one isn't frustum culled unless you set `geometry.bounds` yourself.
+  - **`Program.transformFeedbackVaryings` and `Program.transformFeedbackBufferMode`** are now public and read-only.
+
+  **Migrating**
+
+  Split the vertex shader in two: a simulation shader that writes the captured varyings (with a fragment shader that outputs nothing), and a render shader that reads the simulated attributes. Then:
+
+  ```js
+  // Before
+  const program = new Program(gl, {
+    vertex,
+    fragment,
+    transformFeedbackVaryings: ['v_position', 'v_velocity']
+  })
+  const tf = new TransformFeedback(gl, {
+    program: program.program,
+    transformFeedbacks: {
+      a_position: { data: positions, size: 2, varying: 'v_position' },
+      a_velocity: { data: velocities, size: 2, varying: 'v_velocity' }
+    }
+  })
+  const mesh = new Mesh(gl, {
+    mode: gl.POINTS,
+    geometry: new PointCloud(gl, { particles: N, transformFeedbacks: tf }),
+    program
+  })
+
+  // After
+  const simulation = new TransformFeedback(gl, {
+    program: new Program(gl, {
+      vertex: simulateVertex,
+      fragment: simulateFragment,
+      transformFeedbackVaryings: ['v_position', 'v_velocity']
+    }),
+    attributes: {
+      a_position: { data: positions, size: 2, varying: 'v_position' },
+      a_velocity: { data: velocities, size: 2, varying: 'v_velocity' }
+    }
+  })
+  const mesh = new Mesh(gl, {
+    mode: gl.POINTS,
+    geometry: new Geometry(gl, {
+      a_position: simulation.attribute('a_position')
+    }),
+    program: new Program(gl, { vertex: renderVertex, fragment })
+  })
+
+  // Each frame, before rendering
+  simulation.step()
+  ```
+
+  - **`program`** must be a `Program`. A raw `WebGLProgram` is no longer accepted.
+  - **`transformFeedbacks` is renamed `attributes`.** Its per-attribute `type`, `normalize`, `stride`, `offset`, `buffer`, `usage` and `buffertype` options are gone. Attributes are `Float32Array` data, and a single `usage` option (default `gl.DYNAMIC_COPY`) covers all of them.
+  - **The attributes must match the program's `transformFeedbackVaryings` exactly.** The constructor throws if a varying has no attribute, more than one attribute, or an attribute's varying isn't captured.
+  - **Values that never change**, like a seed that was fed straight back each frame, should move to `staticAttributes`.
+  - **`VAOs`, `TFBs` and `BufferRefs` are gone.** Use `attribute(name)` to read the results.
+  - **`Geometry`** no longer takes a transform feedback as its third argument, and loses `transformFeedbacks`, `transformFeedbackIndex` and `bindTransformFeedbacks()`.
+  - **`PointCloud`** loses its `transformFeedbacks` option.
+  - **`remove()`** also deletes the static attributes' buffers. It leaves the program alone, so call `simulation.program.remove()` if nothing else uses it.
+
+### Minor Changes
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`844248c`](https://github.com/wethegit/wtc-gl/commit/844248c09fb0c032b40b6409da983e6de86c1457) Thanks [@liamegan](https://github.com/liamegan)! - Add two ways to smooth a `Curve`:
+
+  - `tension` for `catmullrom` curves (default 0). Higher values shorten the tangents, tightening the curve towards straight lines at 1; values below 0 loosen it. It still passes through every point.
+  - A `bspline` type (`Curve.BSPLINE`): a uniform cubic B-spline. Its curvature doesn't change where spans join, so it's smoother than a Catmull-Rom, but it only passes near the points between the ends. An open one starts and ends on the end points, and `closed` makes a smooth loop.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`b1922d7`](https://github.com/wethegit/wtc-gl/commit/b1922d79c0847273bc84d22bf5eb2d87fcb019b1) Thanks [@liamegan](https://github.com/liamegan)! - Add `Curve`, a `Path` through or around a list of points, so it samples evenly by distance and has frames like any path. `new Curve({ points, type, closed, alpha })`:
+
+  - `catmullrom` (the default) passes smoothly through every point. `alpha` sets the knot spacing: 0 is the uniform Catmull-Rom, 0.5 (the default) is centripetal, which doesn't form cusps or loops within a span, and 1 is chordal. `closed` joins the end back to the start, smoothly. Repeated points are skipped.
+  - `quadraticbezier` (`p0, c, p1, c, p2, …`) and `cubicbezier` (`p0, c1, c2, p1, …`) chain Bézier spans that share their end points. A point count that doesn't make whole spans throws, rather than dropping points. `closed` adds a straight line back to the start.
+
+  `setPoints(points)` rebuilds a curve with the same options. Also adds `Path.clear()`, which empties a path ready for a new `moveTo`.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`40fed37`](https://github.com/wethegit/wtc-gl/commit/40fed37382dad9abe5f39a673d90b7833253a580) Thanks [@liamegan](https://github.com/liamegan)! - Add an `Extrude` primitive, which turns a 2D outline, with optional `holes`, into a solid along z. It keeps the outline's x and y and centres the solid on z. Outlines can be a `Path` or `Curve`, or a list of points, wound either way. Caps are triangulated with `earcut`, which is now a dependency of wtc-gl.
+
+  - `depth` sets the thickness, and `curveDivisions` how finely curves in a `Path` are sampled.
+  - `bevel` rounds the edges between the caps and the sides: `bevelThickness` adds to each end, `bevelSize` insets the caps, and `bevelSegments` sets the roundness (1 is a chamfer).
+  - The sides are smooth where they turn by less than `creaseAngle` (default 30°) and hard-edged at sharper corners, both around the outline and across the bevel.
+  - UVs are in world units. Caps are projected flat as (x, y), and the straight sides run around the outline and from the back. By default (`uvs: 'projected'`) the bevel is projected like the caps, so a texture runs on from the face over the bevel without a seam. `uvs: 'separate'` maps the bevel like the sides instead.
+
+  Also adds `Path.toPolyline(curveDivisions)`, which samples a path as a polyline that keeps its corners.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`951a223`](https://github.com/wethegit/wtc-gl/commit/951a223a6ef67077b23ab3f32fe7a36d52c5bb58) Thanks [@liamegan](https://github.com/liamegan)! - Add `Geometry.applyMatrix(mat4)`, which bakes a transform into the geometry's data. Positions are transformed by the matrix, and normals by its normal matrix and then re-normalised. 2D and interleaved attributes are supported. A mirroring matrix (negative determinant) also reverses each triangle's winding, so mirrored faces aren't back-face culled. Existing bounds are recomputed. External positions are skipped with a warning.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`c226e68`](https://github.com/wethegit/wtc-gl/commit/c226e68b6267a1ddeab74b789818b2e6c5970d70) Thanks [@liamegan](https://github.com/liamegan)! - Add a `Capsule` primitive: a cylinder with a hemisphere on each end, along the y axis and centred on the origin. `height` is the whole length, tip to tip, like `Cylinder`'s, and a height under twice the `radius` gives a sphere. It also takes `capSegments` (steps in each quarter circle), `radialSegments` and `heightSegments`. It's built with `Lathe.build`, with exact normals.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`555be69`](https://github.com/wethegit/wtc-gl/commit/555be69bbc7235e21888593ea9cae2b235acddf9) Thanks [@liamegan](https://github.com/liamegan)! - Add a `Cylinder` primitive, ported from OGL. It's centred on the origin along the y axis, with separate `radiusTop` and `radiusBottom`, so `radiusTop: 0` gives a cone. It also takes `radialSegments`, `heightSegments`, `thetaStart`/`thetaLength` for a partial sweep, and `openEnded` to leave out the caps. A cap with zero radius is always left out. Side normals lean with the slope between the two radii, and each cap has flat normals and circular uvs.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`bc592ec`](https://github.com/wethegit/wtc-gl/commit/bc592ecb66b683efa7d850b690cdb5168de4889c) Thanks [@liamegan](https://github.com/liamegan)! - Add a `Lathe` primitive, which spins a 2D profile around the y axis. `points` takes `[r, y]` pairs or `Vec2`s, listed bottom to top for outward-facing triangles. It also takes `segments`, plus `phiStart`/`phiLength` for a partial sweep starting from +z, like `Cylinder`. v is spaced by distance along the profile, so textures don't stretch where points are unevenly spaced. Normals are smooth, including at corners in the profile. `Lathe.build()` returns the raw arrays, with optional per-point profile normals, for primitives built from a profile.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`6af1e81`](https://github.com/wethegit/wtc-gl/commit/6af1e81a0282ec8343fe317038e9b0a1bdc6ff31) Thanks [@liamegan](https://github.com/liamegan)! - Add `Geometry.setIndex(index)` to replace a geometry's index after construction. It takes a `GeometryAttribute` or a `Uint16Array`/`Uint32Array`, resets the draw range to the whole new index, and also turns a non-indexed geometry into an indexed one. The old index buffer isn't deleted, because attributes can be shared between geometries.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`47d58fc`](https://github.com/wethegit/wtc-gl/commit/47d58fca7ab0e356ef5ab2815cd560012ecdc595) Thanks [@liamegan](https://github.com/liamegan)! - Add a `Torus` primitive, ported from OGL. It lies in the xy plane, centred on the origin. `radius` goes from the centre to the middle of the tube and `tube` is the tube's radius. `radialSegments` go around the tube and `tubularSegments` around the ring. An `arc` below 2π leaves the ring open, sweeping from +x towards +y.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`0d7a809`](https://github.com/wethegit/wtc-gl/commit/0d7a809ad0244b995a71be8aa7b3b5cc1821686c) Thanks [@liamegan](https://github.com/liamegan)! - Add `Geometry.computeVertexNormals()`, which computes area-weighted normals from the positions for geometry drawn as triangles. Indexed geometry gets smooth normals across shared vertices, and non-indexed geometry gets one normal per face. It writes into the existing `normal` attribute when it's a plain size-3 `Float32Array` of the right length, and adds one otherwise. 2D and interleaved positions are supported; external positions are skipped with a warning.
+
+  `Geometry.addAttribute` now rebuilds the geometry's vertex arrays when it adds or replaces an attribute after the geometry has been drawn. Previously, those vertex arrays kept pointing at the old attributes and ignored the new one.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`cae3472`](https://github.com/wethegit/wtc-gl/commit/cae347270e7f7cfb3050714f173af86260bb617f) Thanks [@liamegan](https://github.com/liamegan)! - Add `Geometry.toNonIndexed()` and `Geometry.mergeVertices(tolerance = 1e-4)`, for switching between flat and smooth shading. Both return a new `Geometry` with its own tightly packed copies of the attributes, including instanced ones, and leave the original unchanged.
+
+  - `toNonIndexed()` gives every index entry its own vertex, so `computeVertexNormals()` then gives one normal per face.
+  - `mergeVertices()` welds vertices whose attributes, apart from `normal`, match within the tolerance, so UV seams are kept. It drops vertices the index never uses, keeps the triangle order and winding, and picks a 16- or 32-bit index depending on the vertex count. If the source had normals, they're recomputed, so shared vertices come out smooth.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`8719756`](https://github.com/wethegit/wtc-gl/commit/8719756786bdcf5a4d7a37cead640aa10035acad) Thanks [@liamegan](https://github.com/liamegan)! - Add `mergeGeometries(geometries)`, which combines geometries into one new `Geometry` so they draw in a single call. Use it with `applyMatrix` to build a model from transformed parts. Every input needs the same attributes with the same size, type and normalisation; anything else throws, as do instanced and external attributes. If any input is indexed, the result is indexed: the non-indexed inputs get a sequential index, and indices are rebased onto the merged vertices, 32-bit past 65,536 vertices. The inputs are left unchanged.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`39ab382`](https://github.com/wethegit/wtc-gl/commit/39ab382dbf94d1d16582aaa09c5bfa699124fad1) Thanks [@liamegan](https://github.com/liamegan)! - Add `Path`, a continuous 3D path drawn like a canvas path: `moveTo`, then `lineTo`, `quadraticCurveTo` and `bezierCurveTo`, and optionally `close()`. Points can be `Vec3`s, `Vec2`s (z = 0) or `[x, y]`/`[x, y, z]` arrays, and they're copied, never mutated.
+
+  - Sampling is by distance along the path, including inside curved segments, so `getPoints(divisions)` and `getPointAt(u)` give evenly spaced points. There are also `getPointAtLength`, `getTangentAt`/`getTangentAtLength`, `getTiltAt` and `getLength`. The samplers take an optional `out` vector and don't allocate.
+  - `computeFrames(divisions, closed)` returns rotation-minimising tangents, normals and binormals. Each frame is twisted by the per-point tilt (radians, interpolated along each segment) and by an optional `tiltFunction`. On a closed path, the leftover twist is spread around the loop so the last frame matches the first.
+  - The segment classes (`LineSegment`, `QuadraticBezierSegment`, `CubicBezierSegment`) are exported for `addSegment`.
+
+  Based on OGL's `Path`, with arc-length sampling inside segments and corrected tilt interpolation.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`15be538`](https://github.com/wethegit/wtc-gl/commit/15be53846026963c98d8f3c000e2907b1cd5b232) Thanks [@liamegan](https://github.com/liamegan)! - Add `Polyline`, a MeshLine for wtc-gl: a line drawn as a strip of triangles that can be any width, taper, dash, carry a texture and draw itself on.
+
+  - By default it's a billboard, extruded in screen space with mitred corners so it always faces the camera. `width` is in CSS pixels, or in world units with `sizeAttenuation`, and `taper: (u, i) => number` scales it along the line. Pixels are measured from the viewport being drawn to, so widths are right in a render target too. Drawn without a camera, the points are in clip space.
+  - With `billboard: false` it's a flat ribbon in world space that follows rotation-minimising frames. It starts out facing `facing` (by default the plane its points lie in), `tilt` rolls it about the line, and `bank` leans it into turns in proportion to how tightly it curves.
+  - Dashes (`dashArray`, `dashRatio`, `dashOffset`) are measured by the distance travelled. `visibility` draws the line on, and it also supports `map` (settable at any time), `repeat`, `alphaTest` and `opacity`. It turns `transparent` on by default for a map or an opacity below 1, and premultiplies its output when the renderer uses premultiplied alpha.
+  - `points` can be a point list, or a `Path` or `Curve` sampled with `toPolyline`. `setPoints` reuses the buffers when the count is unchanged, and `push` adds a point and drops the oldest, for trails. `closed` loops it, and `miterLimit` caps sharp corners.
+  - `vertex` and `fragment` take custom shaders, and `uniforms` and `attributes` add to the line's own, including instanced attributes, to draw many lines at once. `polylineExtrude` exports the billboard extrusion as GLSL for custom vertex shaders.
+
+  `Path.computeFrames` now uses the new `rotationMinimisingFrames(tangents, { closed, tilts, normal })`, which works on any list of tangents. Its results are unchanged.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`3263fad`](https://github.com/wethegit/wtc-gl/commit/3263fadaea6ea71672dffcdd3b362da9ea805b92) Thanks [@liamegan](https://github.com/liamegan)! - Add a `Tube` primitive, which sweeps a circle along a `Path` or `Curve`. `new Tube(gl, { path, radius, tubularSegments, radialSegments, closed })`. The rings are spaced evenly by distance and oriented by `path.computeFrames`, so the path's tilt twists the tube. `radius` can be a function of `u` (0 to 1 along the path) for tapers, and the normals lean with the taper so it lights correctly. `closed` defaults to the path's own and joins the last ring onto the first. The ends are open. Based on OGL's `Tube`.
+
+- [#171](https://github.com/wethegit/wtc-gl/pull/171) [`7f68588`](https://github.com/wethegit/wtc-gl/commit/7f68588605f06cb2a69fda3fad98459d8c7ed77d) Thanks [@liamegan](https://github.com/liamegan)! - Require `wtc-math@^1.4.0` and use the type declarations it now ships. wtc-gl no longer bundles its own loose `wtc-math` declarations, so the wtc-math classes it re-exports are now fully typed. Code that relied on the old `[key: string]: any` index signatures may see new type errors, for example `Mat3.fromMat4()` is typed as returning `Mat3 | null`.
+
 ## 1.5.0
 
 ### Minor Changes
