@@ -2,7 +2,7 @@
    reordered in the build, letting the shared rules override this file's */
 @import '../styles.css';
 
-/* Light, manifold-ish page. The provider's canvas is fixed at z-index 0;
+/* Light, manifold-ish page. The provider's canvas is absolute at z-index 0;
    content here stays unpositioned so the canvas paints above section
    backgrounds (dividers never overlap text, and the canvas ignores pointers). */
 :root {
@@ -24,6 +24,16 @@ body {
 .demo-nav__sep,
 .demo-nav__title {
   color: var(--muted);
+}
+
+/* The canvas is absolute and translated to follow the viewport, so at the
+   bottom of the page it overscans past the content and would make the page
+   longer on every scroll down. #root starts at the top of the document, so
+   positioning against it is the same as positioning against the document,
+   and clipping it keeps the canvas out of the page height. */
+#root {
+  position: relative;
+  overflow: clip;
 }
 
 .content {

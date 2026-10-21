@@ -11,7 +11,7 @@ import {
   Uniform,
   Vec3
 } from 'wtc-gl'
-import { useScrollScene } from '@wethegit/react-wtc-gl'
+import { useScrollRenderer, useScrollScene } from '@wethegit/react-wtc-gl'
 
 import helixVert from './helix.vert'
 import moduleFrag from './module.frag'
@@ -193,6 +193,9 @@ export function ManifoldDivider({
   className = ''
 }: ManifoldDividerProps) {
   const ref = useRef<HTMLDivElement>(null)
+  // In absolute layout the canvas extends past the viewport, so scenes start
+  // drawing before they scroll into view. 0 in fixed layout.
+  const overscan = useScrollRenderer()?.overscanPx ?? 0
   const playingRef = useRef(playing)
   playingRef.current = playing
 
@@ -629,8 +632,9 @@ export function ManifoldDivider({
       useViewport: false,
       clipToViewport: false,
       elementSpace: true,
-      // keep rendering while overflow above/below may still be on screen
-      margin: clip ? 0 : OVERFLOW_MARGIN,
+      // keep rendering while the band, or its overflow above/below, may still
+      // be on the canvas
+      margin: Math.max(overscan, clip ? 0 : OVERFLOW_MARGIN),
       onBeforeRender: (delta, rect) => frameRef.current?.(delta, rect)
     }
   )
