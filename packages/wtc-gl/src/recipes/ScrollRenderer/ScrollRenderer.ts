@@ -41,11 +41,16 @@ export interface ScrollRendererOptions {
    *   frames the compositor scrolls the canvas *with* the page, so scenes stay
    *   attached to their elements. The one-frame lag instead shows at the
    *   canvas edge, which is hidden by rendering the canvas taller than the
-   *   viewport (see {@link ScrollRendererOptions.overscan}). In this mode the
-   *   renderer owns the canvas `height` and `transform` styles; you still
-   *   position it (`position: absolute; top: 0; left: 0; width: 100%;
+   *   viewport (see {@link ScrollRendererOptions.overscan}). The canvas never
+   *   reaches past the end of the content, so it doesn't make the page longer:
+   *   near the end it moves up instead, giving up only the part of the band
+   *   below that can't be scrolled to. In this mode the renderer owns the
+   *   canvas `height` and `transform` styles; you still position it
+   *   (`position: absolute; top: 0; left: 0; width: 100%;
    *   pointer-events: none`) and should append it to `document.body` or
-   *   another non-positioned ancestor so it is document-relative.
+   *   another non-positioned ancestor so it is document-relative. `<body>`
+   *   itself must not be positioned, since the end of the content is measured
+   *   with `document.body.scrollHeight`.
    *
    *   Avoid this mode for scenes anchored to viewport-pinned elements (e.g. a
    *   `position: fixed` background) — those will exhibit the lag instead. To
@@ -132,6 +137,10 @@ export class ScrollRenderer {
   #overscan: number
   /** Viewport size in CSS px. In absolute layout this differs from `renderer.dimensions`. */
   #viewport: Vec2 = new Vec2(0, 0)
+  /** Absolute layout: the canvas height in CSS px. */
+  #canvasHeight: number = 0
+  /** Absolute layout: how far the canvas top sits above the viewport top, in CSS px. */
+  #offsetY: number = 0
   // Reused for each scene's viewport, rather than allocated per scene per frame
   #sceneViewport: [Vec2, Vec2] = [new Vec2(), new Vec2()]
 
@@ -181,7 +190,9 @@ export class ScrollRenderer {
 
   /**
    * Height of the overscan band above (and below) the viewport, in CSS px.
-   * `0` in fixed layout. Useful as a {@link ScrollScene} `margin`.
+   * Near the end of the page the band below shrinks to what's left to scroll
+   * and the band above grows by the same amount. `0` in fixed layout. Useful
+   * as a {@link ScrollScene} `margin`.
    */
   get overscanPx(): number {
     return this.#viewport.height * this.#overscan
@@ -216,6 +227,7 @@ export class ScrollRenderer {
       this.#viewport.x = width
       this.#viewport.y = vh
       height = Math.round(vh * (1 + 2 * this.#overscan))
+      this.#canvasHeight = height
       canvas.style.height = `${height}px`
       this.#positionCanvas()
     } else {
@@ -238,11 +250,27 @@ export class ScrollRenderer {
   /**
    * Absolute layout only: translates the canvas so its overscan band sits
    * just above the current viewport.
+   *
+   * The canvas never reaches past the end of the content, or the viewport's
+   * bottom on a page shorter than the viewport. Below that it would add to
+   * the page's scrollable height, so every scroll to the bottom would make
+   * the page longer. Near the end it moves up instead, which only gives up
+   * the part of the lower band that can't be scrolled to. Scenes are offset
+   * by however far the canvas top then sits above the viewport.
    */
   #positionCanvas() {
-    this.canvas.style.transform = `translate(${window.scrollX}px, ${
-      window.scrollY - this.overscanPx
-    }px)`
+    const { scrollX, scrollY } = window
+    const { body } = document
+    // body.scrollHeight leaves out the canvas, which is positioned against
+    // the document rather than the body, and still measures content that
+    // overflows a body with a set height
+    const contentBottom = Math.floor(
+      body.getBoundingClientRect().top + scrollY + body.scrollHeight
+    )
+    const bottom = Math.max(contentBottom, scrollY + this.#viewport.height)
+    const top = Math.min(scrollY - this.overscanPx, bottom - this.#canvasHeight)
+    this.#offsetY = scrollY - top
+    this.canvas.style.transform = `translate(${scrollX}px, ${top}px)`
   }
 
   /**
@@ -302,9 +330,9 @@ export class ScrollRenderer {
     this.resize()
 
     // Absolute layout: slide the canvas back over the viewport. Element rects
-    // are viewport-relative, so they are offset by the overscan band above it.
-    const offsetY = this.overscanPx
+    // are viewport-relative, so they are offset by the band above it.
     if (this.#layout === 'absolute') this.#positionCanvas()
+    const offsetY = this.#offsetY
 
     const { gl } = this
     const { dpr } = this.renderer
