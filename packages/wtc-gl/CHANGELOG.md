@@ -1,5 +1,11 @@
 # wtc-gl
 
+## 2.0.1
+
+### Patch Changes
+
+- [#178](https://github.com/wethegit/wtc-gl/pull/178) [`2b6e0be`](https://github.com/wethegit/wtc-gl/commit/2b6e0bee9b0b15642d753f5d0eed75d9f89ef843) Thanks [@liamegan](https://github.com/liamegan)! - Fix `ScrollRenderer`'s absolute layout making the page longer. The canvas is drawn taller than the viewport, so near the end of the page it reached past the content, and every scroll to the bottom added to the page's scroll height. It now stops at the end of the content (or the viewport's bottom on a page shorter than the viewport): near the end it moves up instead, giving up only the part of the lower overscan band that can't be scrolled to, and scenes are offset to match. The end of the content is measured with `document.body.scrollHeight`, so `<body>` must not be positioned.
+
 ## 2.0.0
 
 ### Major Changes
