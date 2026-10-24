@@ -29,9 +29,9 @@
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "typescript": "~6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vite-plugin-dts": "~5.1.2",
     "wtc-gl": "workspace:*"
   },
