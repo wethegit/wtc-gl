@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { Vec3 } from 'wtc-math'
 
 import { Camera } from '../src/core/Camera'
 import { Mesh } from '../src/core/Mesh'
@@ -214,6 +215,63 @@ describe('Per-frame allocations', () => {
     )
     // Was ~7.8 KB per mesh before the matrix and render-list work
     expect(bytes / MESHES).toBeLessThan(400)
+  })
+
+  it('are none for camera projection and per-instance culling', async () => {
+    const { gl } = createMockRenderer()
+    const mesh = new Mesh(gl, {
+      geometry: new Box(gl),
+      program: new Program(gl, { vertex: '', fragment: '' })
+    })
+    const camera = new Camera({ fov: 60, aspect: 1, near: 0.1, far: 100 })
+    camera.position.z = 40
+    camera.updateMatrixWorld()
+    camera.updateFrustum()
+    const matrices = Array.from({ length: MESHES }, (_, i) => {
+      const m = mesh.worldMatrix.clone()
+      m.a41 = (i % 40) - 20
+      m.a43 = Math.floor(i / 40) - 12
+      return m
+    })
+    const point = new Vec3()
+    const ndc = new Vec3()
+
+    // Measured one method at a time. Calling them together in one frame
+    // makes V8 box doubles between the inlined calls, which shifts with JIT
+    // state rather than anything the methods do.
+    const project = () => {
+      for (let i = 0; i < MESHES; i++) {
+        // Fields, not reset(), whose rest parameter allocates an array
+        point.x = i % 40
+        point.y = i % 7
+        point.z = -(i % 13) - 1
+        camera.project(point)
+      }
+    }
+    const unproject = () => {
+      for (let i = 0; i < MESHES; i++) {
+        ndc.x = (i % 40) / 20 - 1
+        ndc.y = (i % 7) / 3.5 - 1
+        ndc.z = (i % 13) / 6.5 - 1
+        camera.unproject(ndc)
+      }
+    }
+    let visible = 0
+    const cull = () => {
+      visible = 0
+      for (let i = 0; i < MESHES; i++) {
+        if (camera.frustumIntersects(mesh, matrices[i])) visible++
+      }
+    }
+
+    for (const [name, frame] of Object.entries({ project, unproject, cull })) {
+      const bytes = await bytesPerFrame(frame)
+      console.info(
+        `[allocations] ${MESHES}× ${name}: ${bytes.toFixed(0)} B/frame`
+      )
+      expect(bytes).toBeLessThan(100)
+    }
+    expect(visible).toBeGreaterThan(0)
   })
 
   it('stay small for a transform feedback simulation', async () => {

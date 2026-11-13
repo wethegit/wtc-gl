@@ -14,8 +14,7 @@ import {
   mergeGeometries,
   Mat4,
   Vec2,
-  Vec3,
-  Vec4
+  Vec3
 } from 'wtc-gl'
 import { Pane } from 'tweakpane'
 
@@ -401,13 +400,12 @@ const loadPreset = () => {
 // No raycasting yet, so handles are picked by their projected position and
 // dragged in the plane facing the camera. When extruding they're dragged on
 // the z = 0 plane instead, so the outline stays flat.
-const projected = new Vec4()
+const projected = new Vec3()
 const toScreen = ([x, y, z]) => {
-  projected.reset(x, y, z, 1)
-  projected.transformByMat4(camera.projectionViewMatrix)
+  camera.project(projected.reset(x, y, z))
   return [
-    ((projected.x / projected.w) * 0.5 + 0.5) * window.innerWidth,
-    (0.5 - (projected.y / projected.w) * 0.5) * window.innerHeight
+    (projected.x * 0.5 + 0.5) * window.innerWidth,
+    (0.5 - projected.y * 0.5) * window.innerHeight
   ]
 }
 
@@ -433,18 +431,17 @@ let dirty = false
 let grabOffset = [0, 0]
 
 // Where the ray under the pointer meets the z = 0 plane, or null if it doesn't
+const rayNear = new Vec3()
+const rayFar = new Vec3()
 const hitGround = (clientX, clientY) => {
-  const inverse = camera.projectionViewMatrix.invertNew()
   const x = (clientX / window.innerWidth) * 2 - 1
   const y = 1 - (clientY / window.innerHeight) * 2
-  const near = new Vec4(x, y, -1, 1).transformByMat4(inverse)
-  const far = new Vec4(x, y, 1, 1).transformByMat4(inverse)
-  const n = [near.x / near.w, near.y / near.w, near.z / near.w]
-  const f = [far.x / far.w, far.y / far.w, far.z / far.w]
-  if (Math.abs(f[2] - n[2]) < 1e-9) return null
-  const t = -n[2] / (f[2] - n[2])
+  const n = camera.unproject(rayNear.reset(x, y, -1))
+  const f = camera.unproject(rayFar.reset(x, y, 1))
+  if (Math.abs(f.z - n.z) < 1e-9) return null
+  const t = -n.z / (f.z - n.z)
   if (t < 0) return null
-  return [n[0] + (f[0] - n[0]) * t, n[1] + (f[1] - n[1]) * t]
+  return [n.x + (f.x - n.x) * t, n.y + (f.y - n.y) * t]
 }
 
 const setHot = (i) => {

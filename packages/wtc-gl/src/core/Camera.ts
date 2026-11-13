@@ -103,6 +103,9 @@ export class Camera extends Obj {
    */
   type: 'orthographic' | 'perspective'
 
+  /** Scratch space for `unproject()`, so it doesn't allocate. */
+  #inverseProjectionView = new Mat4()
+
   frustum: { [key: string]: { pos: Vec3; constant: number } } = {
     xNeg: { pos: new Vec3(), constant: 0 },
     xPos: { pos: new Vec3(), constant: 0 },
@@ -111,6 +114,9 @@ export class Camera extends Obj {
     zNeg: { pos: new Vec3(), constant: 0 },
     zPos: { pos: new Vec3(), constant: 0 }
   }
+
+  /** The frustum planes as a list, for looping over in `frustumIntersects`. */
+  #planes: FrustumPlane[] = Object.values(this.frustum)
 
   /**
    * Create a camera object
@@ -175,17 +181,9 @@ export class Camera extends Obj {
     aspect = this.aspect
   }: Partial<PerspectiveOptions> = {}): Camera {
     Object.assign(this, { near, far, fov, aspect })
-
-    this.projectionMatrix = Mat4.perspective(
-      (fov * Math.PI) / 180,
-      aspect,
-      near,
-      far
-    )
-
     this.type = 'perspective'
 
-    return this
+    return this.updateProjectionMatrix()
   }
 
   /**
@@ -209,17 +207,79 @@ export class Camera extends Obj {
     zoom = this.zoom
   }: Partial<OrtographicOptions> = {}): Camera {
     Object.assign(this, { near, far, left, right, bottom, top, zoom })
-
-    left /= zoom
-    right /= zoom
-    bottom /= zoom
-    top /= zoom
-
-    this.projectionMatrix = Mat4.ortho(left, right, bottom, top, near, far)
-
     this.type = 'orthographic'
 
+    return this.updateProjectionMatrix()
+  }
+
+  /**
+   * Rebuild the projection matrix from the camera's current fields: `near`,
+   * `far`, `fov` and `aspect` for a perspective camera, or `left`, `right`,
+   * `top`, `bottom` and `zoom` for an orthographic one. Call it after changing
+   * any of them directly. `projectionViewMatrix` is refreshed too, so
+   * `project()` and `unproject()` are right straight away.
+   *
+   * The matrix is written in place, so `projectionMatrix` keeps its reference.
+   * @chainable
+   * @returns The camera operated on to make function chainable
+   */
+  updateProjectionMatrix(): Camera {
+    const { near, far } = this
+    const projection =
+      this.type === 'orthographic'
+        ? Mat4.ortho(
+            this.left / this.zoom,
+            this.right / this.zoom,
+            this.bottom / this.zoom,
+            this.top / this.zoom,
+            near,
+            far
+          )
+        : Mat4.perspective((this.fov * Math.PI) / 180, this.aspect, near, far)
+    this.projectionMatrix.resetToMat4(projection)
+
+    multiplyMat4(
+      this.projectionViewMatrix,
+      this.projectionMatrix,
+      this.viewMatrix
+    )
+
     return this
+  }
+
+  /**
+   * Project a point from world space into normalised device coordinates. A
+   * visible point has x, y and z between -1 and 1: z is -1 on the near plane
+   * and 1 on the far plane. A z outside that range means the point is past
+   * near or far, or behind the camera.
+   *
+   * Uses `projectionViewMatrix`, which `updateMatrixWorld()` (run by the
+   * renderer every frame) and `updateProjectionMatrix()` keep up to date.
+   * Doesn't allocate.
+   * @param {Vec3} v - The world-space point
+   * @param {Vec3} out - Where to write the result. Defaults to `v`, projecting it in place
+   * @returns `out`
+   */
+  project(v: Vec3, out: Vec3 = v): Vec3 {
+    return transformPoint(out, this.projectionViewMatrix, v)
+  }
+
+  /**
+   * Unproject a point from normalised device coordinates back into world
+   * space: the inverse of `project()`. A z of -1 gives the point on the near
+   * plane and 1 the point on the far plane, so unprojecting both gives the ray
+   * under a screen position.
+   *
+   * Uses `projectionViewMatrix`, like `project()`. Doesn't allocate. If the
+   * matrix can't be inverted, `out` is returned unchanged.
+   * @param {Vec3} v - The point in normalised device coordinates
+   * @param {Vec3} out - Where to write the result. Defaults to `v`, unprojecting it in place
+   * @returns `out`
+   */
+  unproject(v: Vec3, out: Vec3 = v): Vec3 {
+    if (!invertMat4(this.#inverseProjectionView, this.projectionViewMatrix))
+      return out
+    return transformPoint(out, this.#inverseProjectionView, v)
   }
 
   /**
@@ -289,10 +349,17 @@ export class Camera extends Obj {
 
   /**
    * Determines whether the camera frustum intersects the supplied drawable object. Used mainly for frustum culling.
+   *
+   * Pass a `worldMatrix` to test the node's bounds somewhere else, such as at
+   * each instance of an instanced mesh. Its scale grows the bounds as well.
    * @param {Drawable} node - The node to test intersection against
+   * @param {Mat4} worldMatrix - The matrix to place the node's bounds with. Defaults to the node's own world matrix
    * @returns Boolean indicating intersection
    */
-  frustumIntersects(node: Drawable): boolean {
+  frustumIntersects(
+    node: Drawable,
+    worldMatrix: Mat4 = node.worldMatrix
+  ): boolean {
     if (node instanceof Mesh) {
       const position = node.geometry.attributes.position
       // If no position attribute, treat as frustumCulled false
@@ -311,16 +378,27 @@ export class Camera extends Obj {
       // The bounds centre in world space, as plain numbers so nothing is
       // allocated
       const { x, y, z } = node.geometry.bounds.center
-      const m = node.worldMatrix
+      const m = worldMatrix
       const w = m.a14 * x + m.a24 * y + m.a34 * z + m.a44 || 1
       const cx = (m.a11 * x + m.a21 * y + m.a31 * z + m.a41) / w
       const cy = (m.a12 * x + m.a22 * y + m.a32 * z + m.a42) / w
       const cz = (m.a13 * x + m.a23 * y + m.a33 * z + m.a43) / w
 
+      // maxAxisScale() and the sphere test, inline: passing or returning
+      // doubles across a call boxes them, which would allocate per node
+      const sx = m.a11 * m.a11 + m.a12 * m.a12 + m.a13 * m.a13
+      const sy = m.a21 * m.a21 + m.a22 * m.a22 + m.a23 * m.a23
+      const sz = m.a31 * m.a31 + m.a32 * m.a32 + m.a33 * m.a33
       const radius =
-        node.geometry.bounds.radius * this.maxAxisScale(node.worldMatrix)
+        node.geometry.bounds.radius * Math.sqrt(Math.max(sx, sy, sz))
 
-      return this.#intersectsSphere(cx, cy, cz, radius)
+      const planes = this.#planes
+      for (let i = 0; i < planes.length; i++) {
+        const n = planes[i].pos
+        if (n.x * cx + n.y * cy + n.z * cz + planes[i].constant < -radius)
+          return false
+      }
+      return true
     }
 
     return false
@@ -379,6 +457,22 @@ function setPlane(
   plane.pos.y = y * invLen
   plane.pos.z = z * invLen
   plane.constant = constant * invLen
+}
+
+/**
+ * `out = v` transformed by `m`, with the perspective divide. `out` can be `v`.
+ * Takes the vector rather than its components: passing doubles as arguments
+ * boxes each one, which allocates.
+ */
+function transformPoint(out: Vec3, m: Mat4, v: Vec3): Vec3 {
+  const x = v.x
+  const y = v.y
+  const z = v.z
+  const w = m.a14 * x + m.a24 * y + m.a34 * z + m.a44
+  out.x = (m.a11 * x + m.a21 * y + m.a31 * z + m.a41) / w
+  out.y = (m.a12 * x + m.a22 * y + m.a32 * z + m.a42) / w
+  out.z = (m.a13 * x + m.a23 * y + m.a33 * z + m.a43) / w
+  return out
 }
 
 /**

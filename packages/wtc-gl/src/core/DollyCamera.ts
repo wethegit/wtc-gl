@@ -268,8 +268,7 @@ export class DollyCamera extends Camera {
     if (this.zoomStyle === 'dolly') this.sphericalDelta.radius /= dollyScale
     else {
       this.fov /= dollyScale
-      if (this.type === 'orthographic') this.orthographic()
-      else this.perspective()
+      this.updateProjectionMatrix()
     }
   }
 

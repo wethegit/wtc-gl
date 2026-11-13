@@ -144,8 +144,8 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 
 ### Core additions this depends on
 
-- [ ] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL).
-- [ ] `Camera.frustumIntersectsMesh(node, worldMatrix)` — the `worldMatrix` override is what allows per-instance culling (OGL).
+- [x] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL). They return the vector rather than the camera, take an optional `out`, and don't allocate. The `paths` demo uses them for picking and dragging.
+- [x] Per-instance culling, as an optional `worldMatrix` argument to `Camera.frustumIntersects(node, worldMatrix)` rather than OGL's separate `frustumIntersectsMesh` (OGL).
 - [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
 - [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
 - [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
