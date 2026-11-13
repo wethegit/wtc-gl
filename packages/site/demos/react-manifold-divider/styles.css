@@ -26,16 +26,6 @@ body {
   color: var(--muted);
 }
 
-/* The canvas is absolute and translated to follow the viewport, so at the
-   bottom of the page it overscans past the content and would make the page
-   longer on every scroll down. #root starts at the top of the document, so
-   positioning against it is the same as positioning against the document,
-   and clipping it keeps the canvas out of the page height. */
-#root {
-  position: relative;
-  overflow: clip;
-}
-
 .content {
   position: static;
   z-index: auto;

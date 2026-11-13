@@ -132,6 +132,16 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 - [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
 - [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
 
+### Import
+
+For the occasional hero model from Blender. It lands after the lit program, which is what it draws with. Moved here from Future features item 6.
+
+- [ ] Async `Texture.fromURL`, decoded with `createImageBitmap`. GLB textures need it, and it's useful on its own.
+- [ ] `GLTFLoader` for `.glb` and `.gltf` (embedded or external buffers) (OGL). Nodes become `Transform`s, meshes become `Geometry` and `Mesh`, with every accessor type, indices and multiple primitives per mesh. Cameras are imported too.
+- [ ] Materials map the base colour factor and texture, normals and UVs onto the lit program. glTF materials are PBR and the lit program is Blinn-Phong, so this is an approximation, and the docs should say so.
+- [ ] `EXT_mesh_gpu_instancing` creates an `InstancedMesh`, once that exists.
+- Out of scope: skinning, morph targets and animation (a whole animation system, and three.js territory); PBR materials and IBL; Draco/meshopt compression. If compression is ever needed, it ships as an opt-in entry point, like the CSG adapter, so the decoder dependency stays optional.
+
 ### Core additions this depends on
 
 - [ ] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL).
@@ -148,9 +158,8 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 ### Later
 
 - [ ] `Shadow` — shadow-map pass from a light camera (OGL).
-- [ ] OBJ/STL/GLB export, if models need to leave the browser. _New._
 - [ ] CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves. Ship it as a separate entry point so the WASM dependency stays opt-in.
-- glTF import stays under Future features item 6.
+- Model export moved to Future features item 11.
 
 ---
 
@@ -188,10 +197,8 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
 
 ### Worth considering
 
-6. **Loaders.**
-   - [ ] Async `Texture.fromURL`, decoded with `createImageBitmap`.
+6. **Loaders.** `Texture.fromURL` and the glTF loader moved to Phase 6 (Import).
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
-   - [ ] A minimal glTF loader for the occasional 3D hero model.
 7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
    - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
 8. **Instancing helpers.** Moved to Phase 6 (Core additions).
@@ -200,6 +207,8 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
     - [ ] `useFragmentShader`
     - [ ] `useUniform`, for reactive uniform values without React re-renders
     - [ ] `useTexture`
+11. **Model export.** Moved here from Phase 6 (Later). Only worth doing if a project needs models to leave the browser, for example to 3D-print or hand off something generated in code.
+    - [ ] OBJ/STL/GLB export from a `Geometry` or a scene graph. _New._ GLB export can share its accessor and buffer layout code with the Phase 6 glTF loader.
 
 ### Longer term
 
