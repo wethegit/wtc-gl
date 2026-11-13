@@ -28,9 +28,10 @@ import { Pane } from 'tweakpane'
 // highlights move with the camera. The small sun shows where the light is
 // coming from; it has its own Lights, set to flat ambient so it isn't shaded.
 // A GridHelper lies on the ground, an AxesHelper marks the origin, and the
-// wireframe adds a WireMesh to each shape. Hovering a shape casts a Raycast
-// into it: a dot marks the hit point, a line shows the surface normal, and
-// the label gives the uv.
+// wireframe adds a WireMesh to each shape. Each shape's flat shading and
+// double-sided options can be switched, recompiling its program in place
+// with setShaders. Hovering a shape casts a Raycast into it: a dot marks the
+// hit point, a line shows the surface normal, and the label gives the uv.
 
 const SPACING = 1.7
 const LABEL_DROP = 0.95
@@ -290,7 +291,9 @@ for (const shape of SHAPES) {
   const material = {
     colour: { r, g, b },
     specular: shape.program.specular,
-    shininess: shape.program.shininess
+    shininess: shape.program.shininess,
+    flatShading: shape.program.flatShading,
+    doubleSided: shape.program.doubleSided
   }
   folder
     .addBinding(material, 'colour', colour)
@@ -301,6 +304,13 @@ for (const shape of SHAPES) {
   folder
     .addBinding(material, 'shininess', { min: 1, max: 128 })
     .on('change', () => (shape.program.shininess = material.shininess))
+  // These change the shaders, which the program recompiles in place
+  folder
+    .addBinding(material, 'flatShading', { label: 'flat shading' })
+    .on('change', () => (shape.program.flatShading = material.flatShading))
+  folder
+    .addBinding(material, 'doubleSided', { label: 'double sided' })
+    .on('change', () => (shape.program.doubleSided = material.doubleSided))
 }
 
 const resize = () => {
@@ -358,9 +368,9 @@ const hover = () => {
   if (!hit) return
 
   const shape = SHAPES.find((s) => s.mesh === hit.mesh)
-  // The flat-shaded sphere's geometry still has smooth normals; it's shaded
-  // by its faces, so show the face normal there
-  const n = shape.material.flatShading ? hit.faceNormal : hit.normal
+  // Flat-shaded geometry still has smooth normals; it's shaded by its faces,
+  // so show the face normal there
+  const n = shape.program.flatShading ? hit.faceNormal : hit.normal
   const p = hit.point
   hitDot.position.reset(p.x, p.y, p.z)
   normalLine.setPoints([

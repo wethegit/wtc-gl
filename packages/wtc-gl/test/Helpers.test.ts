@@ -319,4 +319,32 @@ describe('NormalProgram', () => {
     expect(new NormalProgram(gl).cullFace).toBe(gl.BACK)
     expect(new NormalProgram(gl, { doubleSided: true }).cullFace).toBe(0)
   })
+
+  it('recompiles when an option is changed', () => {
+    const { gl } = createMockRenderer()
+    const program = new NormalProgram(gl)
+    const before = program.program
+    program.space = 'world'
+    expect(program.space).toBe('world')
+    expect(program.program).not.toBe(before)
+    expect(sources(gl).fragment).toContain('#define WORLD_SPACE\n')
+
+    program.flatShading = true
+    program.instanced = true
+    expect(sources(gl).vertex).toContain('#define FLAT_SHADING\n')
+    expect(sources(gl).vertex).toContain('#define INSTANCED\n')
+
+    program.doubleSided = true
+    expect(program.cullFace).toBe(0)
+    expect(sources(gl).fragment).toContain('#define DOUBLE_SIDED\n')
+  })
+
+  it('doesn’t recompile for an unchanged option', () => {
+    const { gl } = createMockRenderer()
+    const program = new NormalProgram(gl, { space: 'world' })
+    const calls = (gl.shaderSource as unknown as Mock).mock.calls.length
+    program.space = 'world'
+    program.flatShading = false
+    expect((gl.shaderSource as unknown as Mock).mock.calls.length).toBe(calls)
+  })
 })

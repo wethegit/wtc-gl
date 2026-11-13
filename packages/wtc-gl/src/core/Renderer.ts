@@ -44,6 +44,12 @@ export interface RenderOptions {
   frustumCull?: boolean
   clear?: boolean
   viewport?: [Vec2, Vec2]
+  /**
+   * Keep the clear and the drawing inside a rect: `true` for the viewport, or
+   * `[size, position]` in pixels (GL style, from the bottom left). The
+   * scissor test is turned off again afterwards.
+   */
+  scissor?: boolean | [Vec2, Vec2]
 }
 
 /**
@@ -236,6 +242,7 @@ export class Renderer {
       unpackAlignment: 4,
       framebuffer: null,
       viewport: { width: null, height: null, x: 0, y: 0 },
+      scissor: { width: null, height: null, x: null, y: null },
       textureUnits: [],
       activeTextureUnit: 0,
       boundBuffer: null,
@@ -383,6 +390,28 @@ export class Renderer {
       dimensions.width,
       dimensions.height
     )
+  }
+
+  /**
+   * Set the scissor rect, which the scissor test (`gl.SCISSOR_TEST`) clips
+   * clears and drawing to. `render({ scissor })` sets and turns it on for you.
+   * @param dimensions - The size of the rect, in pixels
+   * @param position - Its bottom-left corner, in pixels
+   */
+  setScissor(dimensions: Vec2, position: Vec2): void {
+    const scissor = this.state.scissor
+    if (
+      scissor.width === dimensions.width &&
+      scissor.height === dimensions.height &&
+      scissor.x === position.x &&
+      scissor.y === position.y
+    )
+      return
+    scissor.width = dimensions.width
+    scissor.height = dimensions.height
+    scissor.x = position.x
+    scissor.y = position.y
+    this.gl.scissor(position.x, position.y, dimensions.width, dimensions.height)
   }
 
   /**
@@ -738,6 +767,9 @@ export class Renderer {
   #renderDepth = 0
   #viewportSize = new Vec2()
   #viewportPosition = new Vec2()
+  // Scratch for render({ scissor: true }), so it doesn't allocate
+  #scissorSize = new Vec2()
+  #scissorPosition = new Vec2()
 
   /**
    * Fill `lists.list` with the visible drawables in `scene`, culled and
@@ -830,7 +862,8 @@ export class Renderer {
     sort = true,
     frustumCull = true,
     clear,
-    viewport
+    viewport,
+    scissor
   }: RenderOptions) {
     // Nothing can be drawn until the browser restores the context
     if (this.contextLost) return
@@ -854,6 +887,23 @@ export class Renderer {
         this.#viewportSize.y = target.height
         this.setViewport(this.#viewportSize, this.#viewportPosition)
       }
+    }
+
+    // Before the clear, so that stays inside the rect too
+    const scissoring =
+      !!scissor && this.state[this.gl.SCISSOR_TEST as never] !== true
+    if (scissor) {
+      if (scissor === true) {
+        const v = this.state.viewport
+        this.#scissorSize.x = v.width ?? 0
+        this.#scissorSize.y = v.height ?? 0
+        this.#scissorPosition.x = v.x ?? 0
+        this.#scissorPosition.y = v.y ?? 0
+        this.setScissor(this.#scissorSize, this.#scissorPosition)
+      } else {
+        this.setScissor(...scissor)
+      }
+      this.enable(this.gl.SCISSOR_TEST)
     }
 
     if (clear || (this.autoClear && clear !== false)) {
@@ -906,6 +956,8 @@ export class Renderer {
     } finally {
       this.#renderDepth--
       props.camera = undefined
+      // Off again, unless it was already on before this render
+      if (scissoring) this.disable(this.gl.SCISSOR_TEST)
     }
   }
 }

@@ -357,11 +357,14 @@ const hover = () => {
 }
 
 // ── Loop ─────────────────────────────────────────────────────────────────
-const renderPane = (i, root, view) => {
-  const [size, position] = viewports[i]
-  gl.scissor(position.x, position.y, size.x, size.y)
-  renderer.render({ scene: root, camera: view, viewport: viewports[i] })
-}
+// Each pane clears and draws only inside its own rectangle
+const renderPane = (i, root, view) =>
+  renderer.render({
+    scene: root,
+    camera: view,
+    viewport: viewports[i],
+    scissor: true
+  })
 
 const run = (now) => {
   requestAnimationFrame(run)
@@ -391,9 +394,6 @@ const run = (now) => {
     }
   }
 
-  // Each pane clears and draws only inside its own rectangle
-  gl.enable(gl.SCISSOR_TEST)
-
   // 1. The camera you control. The renderer frustum-culls as it draws.
   renderPane(0, scene, camera)
 
@@ -416,8 +416,6 @@ const run = (now) => {
   marker.matrix.resetToMat4(camera.worldMatrix)
   marker.worldMatrixNeedsUpdate = true
   renderPane(1, overview, overviewCamera)
-
-  gl.disable(gl.SCISSOR_TEST)
 
   cpuTotal += performance.now() - start
   // Outside the timing, which compares drawing the two ways. The highlight

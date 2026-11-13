@@ -204,6 +204,43 @@ describe('LitProgram', () => {
     expect(new LitProgram(gl).cullFace).toBe(gl.BACK)
     expect(new LitProgram(gl, { doubleSided: true }).cullFace).toBe(0)
   })
+
+  it.each([
+    ['flatShading', 'FLAT_SHADING'],
+    ['vertexColours', 'VERTEX_COLOURS'],
+    ['doubleSided', 'DOUBLE_SIDED'],
+    ['instanced', 'INSTANCED']
+  ] as const)('recompiles when %s is changed', (option, define) => {
+    const { gl } = createMockRenderer()
+    const program = new LitProgram(gl)
+    const before = program.program
+    program[option] = true
+    expect(program[option]).toBe(true)
+    expect(program.program).not.toBe(before)
+    expect(sources(gl).fragment).toContain(`#define ${define}\n`)
+    expect(program.fragment).toContain(`#define ${define}\n`)
+
+    program[option] = false
+    expect(sources(gl).fragment).not.toContain(`#define ${define}\n`)
+  })
+
+  it('updates face culling with doubleSided', () => {
+    const { gl } = createMockRenderer()
+    const program = new LitProgram(gl)
+    program.doubleSided = true
+    expect(program.cullFace).toBe(0)
+    program.doubleSided = false
+    expect(program.cullFace).toBe(gl.BACK)
+  })
+
+  it('doesn’t recompile for an unchanged option', () => {
+    const { gl } = createMockRenderer()
+    const program = new LitProgram(gl, { flatShading: true })
+    const calls = (gl.shaderSource as unknown as Mock).mock.calls.length
+    program.flatShading = true
+    program.doubleSided = false
+    expect((gl.shaderSource as unknown as Mock).mock.calls.length).toBe(calls)
+  })
 })
 
 describe('litShading', () => {

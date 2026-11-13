@@ -9,6 +9,26 @@ import shadingSource from './lit-shading.glsl'
 import litVertex from './lit.vert'
 import litFragment from './lit.frag'
 
+type LitShaderOptions = {
+  flatShading: boolean
+  vertexColours: boolean
+  doubleSided: boolean
+  instanced: boolean
+}
+
+/** The vertex and fragment sources for a set of shader options. */
+function litSources(options: LitShaderOptions) {
+  const defines =
+    (options.flatShading ? '#define FLAT_SHADING\n' : '') +
+    (options.vertexColours ? '#define VERTEX_COLOURS\n' : '') +
+    (options.doubleSided ? '#define DOUBLE_SIDED\n' : '') +
+    (options.instanced ? '#define INSTANCED\n' : '')
+  return {
+    vertex: `#version 300 es\n${defines}${litVertex}`,
+    fragment: `#version 300 es\n${defines}precision highp float;\n${shadingSource}\n${litFragment}`
+  }
+}
+
 /**
  * The lighting `LitProgram` uses, as GLSL for custom shaders: the `Lights`
  * uniforms and
@@ -71,16 +91,19 @@ export interface LitProgramOptions {
  * ```
  *
  * It needs a camera to draw: the lighting is done in view space, from the
- * matrices the mesh sets. `vertexColours`, `flatShading`, `doubleSided` and
- * `instanced` (for `InstancedMesh`) change the shaders, so they're fixed when
- * the program is made. The colour, opacity, map, specular and shininess can
- * be changed at any time.
+ * matrices the mesh sets. Everything can be changed after the program is
+ * made: changing `vertexColours`, `flatShading`, `doubleSided` or `instanced`
+ * (for `InstancedMesh`) recompiles the shaders with `setShaders`, while the
+ * colour, opacity, map, specular and shininess are just uniforms.
  *
  * For a custom shader with the same lighting, use `litShading`.
  */
 export class LitProgram extends Program {
   /** The lights, whose uniforms this program shares. */
   readonly lights: Lights
+
+  // The options the shaders are built from
+  #shader: LitShaderOptions
 
   constructor(
     gl: WTCGLRenderingContext,
@@ -145,15 +168,9 @@ export class LitProgram extends Program {
       })
     }
 
-    const defines =
-      (flatShading ? '#define FLAT_SHADING\n' : '') +
-      (vertexColours ? '#define VERTEX_COLOURS\n' : '') +
-      (doubleSided ? '#define DOUBLE_SIDED\n' : '') +
-      (instanced ? '#define INSTANCED\n' : '')
-
+    const shader = { flatShading, vertexColours, doubleSided, instanced }
     super(gl, {
-      vertex: `#version 300 es\n${defines}${litVertex}`,
-      fragment: `#version 300 es\n${defines}precision highp float;\n${litShading}\n${litFragment}`,
+      ...litSources(shader),
       uniforms,
       transparent,
       depthTest,
@@ -162,6 +179,49 @@ export class LitProgram extends Program {
     })
 
     this.lights = lights
+    this.#shader = shader
+  }
+
+  /** Shade each triangle flat, from its face normal. Recompiles. */
+  get flatShading(): boolean {
+    return this.#shader.flatShading
+  }
+  set flatShading(value: boolean) {
+    this.#setShader('flatShading', value)
+  }
+
+  /** Multiply by a `colour` attribute. Recompiles. */
+  get vertexColours(): boolean {
+    return this.#shader.vertexColours
+  }
+  set vertexColours(value: boolean) {
+    this.#setShader('vertexColours', value)
+  }
+
+  /** Draw and light the back faces too. Recompiles. */
+  get doubleSided(): boolean {
+    return this.#shader.doubleSided
+  }
+  set doubleSided(value: boolean) {
+    if (this.#setShader('doubleSided', value)) {
+      this.cullFace = value ? 0 : this.gl.BACK
+    }
+  }
+
+  /** Read each instance's matrix and colour from `InstancedMesh`. Recompiles. */
+  get instanced(): boolean {
+    return this.#shader.instanced
+  }
+  set instanced(value: boolean) {
+    this.#setShader('instanced', value)
+  }
+
+  /** Change one shader option and recompile. Returns whether it changed. */
+  #setShader(key: keyof LitShaderOptions, value: boolean): boolean {
+    if (this.#shader[key] === value) return false
+    this.#shader = { ...this.#shader, [key]: value }
+    this.setShaders(litSources(this.#shader))
+    return true
   }
 
   /** The surface colour. */

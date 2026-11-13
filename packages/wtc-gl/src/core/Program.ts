@@ -143,9 +143,9 @@ export class Program {
   blendEquation: WTCGLBlendEquation
 
   /**
-   * The webgl program store
+   * The webgl program store. Set when the shaders are compiled.
    */
-  program: WebGLProgram
+  program!: WebGLProgram
 
   /**
    * A map of uniform locations in use within the program shaders
@@ -258,20 +258,87 @@ export class Program {
     this.transformFeedbackVaryings = transformFeedbackVaryings
     this.transformFeedbackBufferMode = transformFeedbackBufferMode
     this.#contextVersion = gl.renderer.contextVersion
-    this.program = this.#compile()
+    this.#commit(this.#compile(vertex, fragment))
 
     gl.renderer.track(this)
   }
 
+  /** The vertex shader source. */
+  get vertex(): string {
+    return this.#vertex
+  }
+
+  /** The fragment shader source. */
+  get fragment(): string {
+    return this.#fragment
+  }
+
   /**
-   * Compile and link the shaders, then read the active uniforms and
-   * attributes. Returns the program even if linking failed, in which case
-   * `linked` stays false.
+   * Replace the shaders, keeping the uniforms and state. Either source can be
+   * left out to keep the current one. If the new shaders fail to compile or
+   * link, the reason is logged and the program keeps drawing with the old
+   * ones, so a broken edit (in hot reloading, say) never blanks what's on
+   * screen.
+   * @param shaders - The new vertex and/or fragment source.
+   * @returns Whether the new shaders linked and are now in use.
    */
-  #compile(): WebGLProgram {
+  setShaders({
+    vertex = this.#vertex,
+    fragment = this.#fragment
+  }: {
+    vertex?: string
+    fragment?: string
+  }): boolean {
+    const compiled = this.#compile(vertex, fragment)
+    if (!compiled.linked) {
+      this.gl.deleteProgram(compiled.program)
+      return false
+    }
+
+    const renderer = this.gl.renderer
+    this.#forgetLocations()
+    this.gl.deleteProgram(this.program)
+    // So the next use binds the new program
+    if (renderer.currentProgram === this.id) renderer.currentProgram = -1
+
+    this.#vertex = vertex
+    this.#fragment = fragment
+    this.#commit(compiled)
+    return true
+  }
+
+  /** Make a compile result this program's. */
+  #commit(compiled: CompiledProgram) {
+    this.program = compiled.program
+    this.linked = compiled.linked
+    this.uniformLocations = compiled.uniformLocations
+    this.attributeLocations = compiled.attributeLocations
+    this.attributeOrder = compiled.attributeOrder
+  }
+
+  /** Drop this program's uniform values from the renderer's cache. */
+  #forgetLocations() {
+    const cache = this.gl.renderer.state.uniformLocations
+    this.uniformLocations.forEach((location) => cache.delete(location))
+  }
+
+  /**
+   * Compile and link shaders, then read the active uniforms and attributes.
+   * Doesn't change the program: the result is committed separately, so a
+   * failed recompile can be thrown away. Returns the program even if linking
+   * failed, with `linked` false.
+   */
+  #compile(vertex: string, fragment: string): CompiledProgram {
     const gl = this.gl
-    const vertex = this.#vertex
-    const fragment = this.#fragment
+    const uniformLocations: WTCGLUniformMap = new Map()
+    const attributeLocations: WTCGLAttributeMap = new Map()
+    const failed = (program: WebGLProgram): CompiledProgram => ({
+      program,
+      linked: false,
+      uniformLocations,
+      attributeLocations,
+      attributeOrder: ''
+    })
     const transformFeedbackVaryings = this.transformFeedbackVaryings
 
     // compile vertex shader and log errors
@@ -327,16 +394,15 @@ export class Program {
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       console.warn(gl.getProgramInfoLog(program))
-      return program
+      return failed(program)
     }
-    this.linked = true
 
     // Get active uniform locations
     const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
       const uniform: WTCGLActiveInfo = gl.getActiveUniform(program, uIndex)!
 
-      this.uniformLocations.set(
+      uniformLocations.set(
         uniform,
         gl.getUniformLocation(program, uniform.name)!
       )
@@ -366,11 +432,16 @@ export class Program {
       const attribute = gl.getActiveAttrib(program, aIndex)!
       const location = gl.getAttribLocation(program, attribute.name)
       locations[location] = attribute.name
-      this.attributeLocations.set(attribute, location)
+      attributeLocations.set(attribute, location)
     }
-    this.attributeOrder = locations.join('')
 
-    return program
+    return {
+      program,
+      linked: true,
+      uniformLocations,
+      attributeLocations,
+      attributeOrder: locations.join('')
+    }
   }
 
   /**
@@ -381,11 +452,7 @@ export class Program {
     if (this.#contextVersion === this.gl.renderer.contextVersion) return
     this.#contextVersion = this.gl.renderer.contextVersion
 
-    this.linked = false
-    this.uniformLocations = new Map()
-    this.attributeLocations = new Map()
-    this.attributeOrder = ''
-    this.program = this.#compile()
+    this.#commit(this.#compile(this.#vertex, this.#fragment))
   }
 
   /**
@@ -508,13 +575,20 @@ export class Program {
   remove() {
     if (this.gl.renderer.currentProgram === this.id)
       this.gl.renderer.currentProgram = -1
-    this.uniformLocations.forEach((location) =>
-      this.gl.renderer.state.uniformLocations.delete(location)
-    )
+    this.#forgetLocations()
     this.uniformLocations.clear()
     this.gl.deleteProgram(this.program)
     this.gl.renderer.untrack(this)
   }
+}
+
+/** The result of compiling and linking a pair of shaders. */
+type CompiledProgram = {
+  program: WebGLProgram
+  linked: boolean
+  uniformLocations: WTCGLUniformMap
+  attributeLocations: WTCGLAttributeMap
+  attributeOrder: string
 }
 
 function addLineNumbers(string: string) {

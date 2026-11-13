@@ -604,9 +604,8 @@ export function ManifoldDivider({
           strand.hB[2] = flow % len
         }
 
-        // G-buffer pass. The shared renderer leaves its scissor on between
-        // scenes; the offscreen target needs all of it.
-        gl.disable(gl.SCISSOR_TEST)
+        // G-buffer pass, into the whole offscreen target. The scroll
+        // renderer only scissors a scene's own render, so nothing clips it.
         renderer.renderer.clearColour = [0, 0, 0, 0]
         renderer.renderer.render({
           scene: gScene,
@@ -614,7 +613,6 @@ export function ManifoldDivider({
           target,
           clear: true
         })
-        gl.enable(gl.SCISSOR_TEST)
       }
 
       return () => {

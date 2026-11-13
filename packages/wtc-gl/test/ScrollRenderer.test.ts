@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { Obj } from '../src/core/Object'
 import { ScrollRenderer } from '../src/recipes/ScrollRenderer/ScrollRenderer'
 import type { ScrollScene } from '../src/recipes/ScrollRenderer/ScrollScene'
 import { createMockGL } from './mockGL'
@@ -147,5 +148,49 @@ describe('ScrollRenderer absolute layout', () => {
     page.content = 5000
     renderer.render(32)
     expect(canvasTop(canvas)).toBe(2000)
+  })
+})
+
+describe('ScrollRenderer scissoring', () => {
+  it('scissors each clipped scene to its rect through the renderer', () => {
+    const gl = createMockGL()
+    const canvas = gl.canvas as unknown as Record<string, unknown>
+    canvas.getContext = () => gl
+    canvas.clientWidth = 1000
+    const renderer = new ScrollRenderer({
+      layout: 'absolute',
+      rendererProps: { canvas: canvas as unknown as HTMLCanvasElement, dpr: 1 }
+    })
+    const uniform = (value: unknown) => ({ value })
+    renderer.addScene({
+      visible: true,
+      element: { classList: { add: () => {} } },
+      glRect: () => ({ x: 10, y: 20, width: 100, height: 50, rect: {} }),
+      clipToViewport: true,
+      clearOnRender: true,
+      useViewport: false,
+      scene: new Obj(),
+      u_time: uniform(0),
+      u_resolution: uniform([0, 0]),
+      u_origin: uniform([0, 0, 0, 0]),
+      onBeforeRender: () => {},
+      onAfterRender: () => {}
+    } as unknown as ScrollScene)
+
+    renderer.render(1)
+    renderer.render(16)
+    expect(gl.scissor).toHaveBeenLastCalledWith(10, 20, 100, 50)
+    // Off at the end of the frame, and the renderer knows it
+    const r = renderer.renderer
+    expect(
+      r.state[gl.SCISSOR_TEST as unknown as keyof typeof r.state]
+    ).toBeFalsy()
+    const disables = vi
+      .mocked(gl.disable)
+      .mock.calls.filter((c) => c[0] === gl.SCISSOR_TEST).length
+    const enables = vi
+      .mocked(gl.enable)
+      .mock.calls.filter((c) => c[0] === gl.SCISSOR_TEST).length
+    expect(enables).toBe(disables)
   })
 })

@@ -25,11 +25,12 @@ export interface NormalProgramOptions {
  * pink-red, +y is light green and +z is lilac-blue.
  *
  * One `NormalProgram` can be shared by any number of meshes, and swapped onto
- * a mesh in place of its own program to check its normals. The options change
- * the shaders, so they're fixed when the program is made. It needs a camera
- * to draw.
+ * a mesh in place of its own program to check its normals. Changing an option
+ * recompiles the shaders with `setShaders`. It needs a camera to draw.
  */
 export class NormalProgram extends Program {
+  #options: NormalProgramOptions
+
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -39,16 +40,69 @@ export class NormalProgram extends Program {
       instanced = false
     }: Partial<NormalProgramOptions> = {}
   ) {
-    const defines =
-      (space === 'world' ? '#define WORLD_SPACE\n' : '') +
-      (flatShading ? '#define FLAT_SHADING\n' : '') +
-      (doubleSided ? '#define DOUBLE_SIDED\n' : '') +
-      (instanced ? '#define INSTANCED\n' : '')
-
+    const options = { space, flatShading, doubleSided, instanced }
     super(gl, {
-      vertex: `#version 300 es\n${defines}${normalVertex}`,
-      fragment: `#version 300 es\n${defines}${normalFragment}`,
+      ...normalSources(options),
       cullFace: doubleSided ? 0 : gl.BACK
     })
+    this.#options = options
+  }
+
+  /** The space the normals are shown in. Recompiles. */
+  get space(): 'view' | 'world' {
+    return this.#options.space
+  }
+  set space(value: 'view' | 'world') {
+    this.#set('space', value)
+  }
+
+  /** Show each triangle's face normal. Recompiles. */
+  get flatShading(): boolean {
+    return this.#options.flatShading
+  }
+  set flatShading(value: boolean) {
+    this.#set('flatShading', value)
+  }
+
+  /** Draw the back faces too, with their normals flipped. Recompiles. */
+  get doubleSided(): boolean {
+    return this.#options.doubleSided
+  }
+  set doubleSided(value: boolean) {
+    if (this.#set('doubleSided', value)) {
+      this.cullFace = value ? 0 : this.gl.BACK
+    }
+  }
+
+  /** Read each instance's matrix from `InstancedMesh`. Recompiles. */
+  get instanced(): boolean {
+    return this.#options.instanced
+  }
+  set instanced(value: boolean) {
+    this.#set('instanced', value)
+  }
+
+  /** Change one option and recompile. Returns whether it changed. */
+  #set<K extends keyof NormalProgramOptions>(
+    key: K,
+    value: NormalProgramOptions[K]
+  ): boolean {
+    if (this.#options[key] === value) return false
+    this.#options = { ...this.#options, [key]: value }
+    this.setShaders(normalSources(this.#options))
+    return true
+  }
+}
+
+/** The vertex and fragment sources for a set of options. */
+function normalSources(options: NormalProgramOptions) {
+  const defines =
+    (options.space === 'world' ? '#define WORLD_SPACE\n' : '') +
+    (options.flatShading ? '#define FLAT_SHADING\n' : '') +
+    (options.doubleSided ? '#define DOUBLE_SIDED\n' : '') +
+    (options.instanced ? '#define INSTANCED\n' : '')
+  return {
+    vertex: `#version 300 es\n${defines}${normalVertex}`,
+    fragment: `#version 300 es\n${defines}${normalFragment}`
   }
 }

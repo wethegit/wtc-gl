@@ -141,8 +141,10 @@ export class ScrollRenderer {
   #canvasHeight: number = 0
   /** Absolute layout: how far the canvas top sits above the viewport top, in CSS px. */
   #offsetY: number = 0
-  // Reused for each scene's viewport, rather than allocated per scene per frame
+  // Reused for each scene's viewport and scissor rect, rather than allocated
+  // per scene per frame
   #sceneViewport: [Vec2, Vec2] = [new Vec2(), new Vec2()]
+  #sceneScissor: [Vec2, Vec2] = [new Vec2(), new Vec2()]
 
   constructor({
     rendererProps = {},
@@ -344,8 +346,6 @@ export class ScrollRenderer {
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-    gl.enable(gl.SCISSOR_TEST)
-
     for (const scrollScene of this.#scenes) {
       if (!scrollScene.visible) continue
 
@@ -391,28 +391,30 @@ export class ScrollRenderer {
       }
 
       if (scrollScene.clipToViewport) {
-        gl.scissor(x, y, width, height)
+        // Through the renderer, so its record of the scissor test stays true
+        const scissor = this.#sceneScissor
+        scissor[0].x = width
+        scissor[0].y = height
+        scissor[1].x = x
+        scissor[1].y = y
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
           clear: scrollScene.clearOnRender,
-          viewport: vp
+          viewport: vp,
+          scissor
         })
       } else {
-        gl.disable(gl.SCISSOR_TEST)
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
           clear: false,
           viewport: vp
         })
-        gl.enable(gl.SCISSOR_TEST)
       }
 
       scrollScene.onAfterRender(delta, rect)
     }
-
-    gl.disable(gl.SCISSOR_TEST)
 
     this.onAfterRender(delta)
   }

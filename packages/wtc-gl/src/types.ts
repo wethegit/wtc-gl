@@ -159,6 +159,15 @@ export interface WTCGLRendererState {
     height: number | null
   }
   /**
+   * The scissor rect last set with `setScissor`
+   */
+  scissor: {
+    x: number | null
+    y: number | null
+    width: number | null
+    height: number | null
+  }
+  /**
    * The store of all texture units currently in memory and use.
    */
   textureUnits: number[]
