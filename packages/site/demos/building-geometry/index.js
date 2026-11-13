@@ -10,6 +10,8 @@ import {
   Triangle,
   GeometryAttribute,
   mergeGeometries,
+  Lights,
+  litShading,
   Mat4,
   Quat,
   Vec2,
@@ -174,10 +176,25 @@ const u_ringScale = new Uniform({
 })
 // How far each module moves out from the centre, as a fraction of its distance
 const u_explode = new Uniform({ name: 'explode', value: 0, kind: 'float' })
+// Close to the old hand-written shading: mostly flat light, with the
+// directional light and a sky on top
+const lights = new Lights({
+  direction: [-0.45, 0.65, 0.6],
+  intensity: 0.55,
+  sky: [0.12, 0.12, 0.12],
+  ground: [0, 0, 0],
+  ambient: 0.5
+})
 const program = new Program(gl, {
   vertex: sceneVert,
-  fragment: sceneFrag,
-  uniforms: { u_mode, u_ringScale, u_explode, u_fogColour: u_bgA }
+  fragment: `#version 300 es\nprecision highp float;\n${litShading}\n${sceneFrag}`,
+  uniforms: {
+    ...lights.uniforms,
+    u_mode,
+    u_ringScale,
+    u_explode,
+    u_fogColour: u_bgA
+  }
 })
 
 // ── Building ──────────────────────────────────────────────────────────────

@@ -13,6 +13,8 @@ import {
   Capsule,
   Lathe,
   GeometryAttribute,
+  Lights,
+  litShading,
   Mat4,
   Vec2,
   Vec3,
@@ -230,6 +232,17 @@ const camera = new DollyCamera(
 camera.setPosition(0, 2.6, 9.5)
 
 // ── Shapes ────────────────────────────────────────────────────────────────
+// Shared by every shape. Close to the old hand-written shading: mostly flat
+// light, with the directional light and a sky on top.
+const lights = new Lights({
+  direction: [-0.45, 0.7, 0.55],
+  intensity: 0.6,
+  sky: [0.14, 0.14, 0.14],
+  ground: [0, 0, 0],
+  ambient: 0.42
+})
+const fragment = `#version 300 es\nprecision highp float;\n${litShading}\n${shapeFrag}`
+
 const u_mode = new Uniform({ name: 'mode', value: 0, kind: 'int' })
 const u_edges = new Uniform({ name: 'edges', value: 1, kind: 'float' })
 
@@ -272,8 +285,9 @@ SHAPES.forEach((shape, i) => {
     geometry: build(shape),
     program: new Program(gl, {
       vertex: shapeVert,
-      fragment: shapeFrag,
+      fragment,
       uniforms: {
+        ...lights.uniforms,
         u_mode,
         u_edges,
         u_colour: new Uniform({

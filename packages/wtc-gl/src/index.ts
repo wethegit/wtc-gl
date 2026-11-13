@@ -41,6 +41,9 @@ export type { RotationMinimisingFramesOptions } from './path/frames'
 
 export * from './line/Polyline'
 
+export * from './lighting/Lights'
+export * from './lighting/LitProgram'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'

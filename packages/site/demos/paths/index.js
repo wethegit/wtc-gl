@@ -12,6 +12,8 @@ import {
   Extrude,
   GeometryAttribute,
   mergeGeometries,
+  Lights,
+  litShading,
   Mat4,
   Vec2,
   Vec3
@@ -214,10 +216,22 @@ const u_colour = new Uniform({
   value: [0.42, 0.62, 0.9],
   kind: 'float_vec3'
 })
+// Shared by the tube and the solid. Close to the old hand-written shading:
+// mostly flat light, with the directional light and a sky on top.
+const lights = new Lights({
+  direction: [-0.45, 0.7, 0.55],
+  intensity: 0.6,
+  sky: [0.14, 0.14, 0.14],
+  ground: [0, 0, 0],
+  ambient: 0.42
+})
+const tubeFragment = `#version 300 es\nprecision highp float;\n${litShading}\n${tubeFrag}`
+
 const tubeProgram = new Program(gl, {
   vertex: tubeVert,
-  fragment: tubeFrag,
+  fragment: tubeFragment,
   uniforms: {
+    ...lights.uniforms,
     u_colour,
     u_opacity,
     u_stripes: new Uniform({ name: 'stripes', value: 1, kind: 'float' }),
@@ -231,8 +245,9 @@ const tubeProgram = new Program(gl, {
 const u_checker = new Uniform({ name: 'checker', value: 0, kind: 'float' })
 const solidProgram = new Program(gl, {
   vertex: tubeVert,
-  fragment: tubeFrag,
+  fragment: tubeFragment,
   uniforms: {
+    ...lights.uniforms,
     u_colour,
     u_opacity: new Uniform({ name: 'opacity', value: 1, kind: 'float' }),
     u_stripes: new Uniform({ name: 'stripes', value: 0, kind: 'float' }),

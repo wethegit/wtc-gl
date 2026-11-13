@@ -128,7 +128,7 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 
 ### Shading and viewing
 
-- [ ] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. Ship the lighting as GLSL snippets alongside the `#include` work in Future features item 2. _New._
+- [x] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. _New._ `LitProgram`, lit by a shared `Lights` object in world space, with `flatShading`, `vertexColours` and `doubleSided`. The lighting ships as the `litShading` GLSL string for custom shaders, the way `polylineExtrude` does; the `#include` work in Future features item 2 can register it as a named chunk later. The `lighting` demo shows each option, and the primitives, building-geometry and paths demos now use `litShading`.
 - [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
 - [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
 

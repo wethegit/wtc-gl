@@ -7,6 +7,7 @@ import { Mesh } from '../core/Mesh'
 import { Program } from '../core/Program'
 import { Uniform } from '../core/Uniform'
 import { Texture } from '../core/Texture'
+import { blankTexture } from '../core/blankTexture'
 import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { Path } from '../path/Path'
@@ -93,23 +94,6 @@ const OWN = new Set([
   'across',
   'normal'
 ])
-
-// A white pixel per context, bound in place of a missing map: a sampler
-// always needs a texture
-const blanks = new WeakMap<WTCGLRenderingContext, Texture>()
-const blank = (gl: WTCGLRenderingContext) => {
-  let texture = blanks.get(gl)
-  if (!texture) {
-    texture = new Texture(gl, {
-      data: new Uint8Array([255, 255, 255, 255]),
-      width: 1,
-      height: 1,
-      generateMipmaps: false
-    })
-    blanks.set(gl, texture)
-  }
-  return texture
-}
 
 // The normal of the plane a point set lies in (Newell's method), or undefined
 // when the points aren't flat or don't span a plane
@@ -289,7 +273,7 @@ export class Polyline extends Mesh {
       }),
       u_map: new Uniform({
         name: 'map',
-        value: map ?? blank(gl),
+        value: map ?? blankTexture(gl),
         kind: 'texture'
       }),
       u_useMap: new Uniform({
@@ -567,7 +551,7 @@ export class Polyline extends Mesh {
       : null
   }
   set map(value: Texture | null) {
-    this.uniforms.u_map.value = value ?? blank(this.gl)
+    this.uniforms.u_map.value = value ?? blankTexture(this.gl)
     this.uniforms.u_useMap.value = value ? 1 : 0
   }
 
