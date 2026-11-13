@@ -159,6 +159,25 @@ describe('LitProgram', () => {
     expect(program.uniforms.u_useMap.value).toBe(0)
   })
 
+  it('adds emissive light, with an optional map', () => {
+    const { gl } = createMockRenderer()
+    const program = new LitProgram(gl, { emissive: [1, 0.5, 0] })
+    expect(program.uniforms.u_emissive.value).toEqual([1, 0.5, 0])
+    expect(program.uniforms.u_emissiveMap.value).toBe(blankTexture(gl))
+    expect(program.uniforms.u_useEmissiveMap.value).toBe(0)
+    expect(program.emissiveMap).toBeNull()
+
+    const map = new Texture(gl)
+    program.emissiveMap = map
+    program.emissive = [0, 0, 1]
+    expect(program.uniforms.u_emissiveMap.value).toBe(map)
+    expect(program.uniforms.u_useEmissiveMap.value).toBe(1)
+    expect(program.emissive).toEqual([0, 0, 1])
+    expect(program.emissiveMap).toBe(map)
+
+    expect(new LitProgram(gl).uniforms.u_emissive.value).toEqual([0, 0, 0])
+  })
+
   it('is transparent by default only below full opacity', () => {
     const { gl } = createMockRenderer()
     expect(new LitProgram(gl).transparent).toBe(false)

@@ -11,6 +11,11 @@ export class Obj {
    */
   parent?: Obj | null
   /**
+   * A name for the object, for finding it again. Set from the node names
+   * when loading a glTF.
+   */
+  name: string = ''
+  /**
    * The children of this object
    */
   children: Obj[]

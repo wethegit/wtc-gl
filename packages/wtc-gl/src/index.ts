@@ -54,6 +54,9 @@ export * from './helpers/FaceNormalsHelper'
 
 export * from './interaction/Raycast'
 
+export * from './loaders/GLTFLoader'
+export { materialProgram } from './loaders/gltf/materials'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'

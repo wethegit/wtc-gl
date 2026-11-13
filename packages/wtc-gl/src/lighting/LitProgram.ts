@@ -57,6 +57,10 @@ export interface LitProgramOptions {
   shininess: number
   /** Discard fragments with a lower alpha. @default 0 */
   alphaTest: number
+  /** Light the surface gives off, added after the lighting. @default [0, 0, 0] */
+  emissive: [number, number, number]
+  /** A texture multiplied with `emissive`, read with the `uv` attribute. */
+  emissiveMap: Texture | null
   /** Multiply by a `colour` attribute (vec3). @default false */
   vertexColours: boolean
   /** Shade each triangle flat, from its face normal. @default false */
@@ -94,7 +98,7 @@ export interface LitProgramOptions {
  * matrices the mesh sets. Everything can be changed after the program is
  * made: changing `vertexColours`, `flatShading`, `doubleSided` or `instanced`
  * (for `InstancedMesh`) recompiles the shaders with `setShaders`, while the
- * colour, opacity, map, specular and shininess are just uniforms.
+ * colour, opacity, map, emissive, specular and shininess are just uniforms.
  *
  * For a custom shader with the same lighting, use `litShading`.
  */
@@ -115,6 +119,8 @@ export class LitProgram extends Program {
       specular = 0,
       shininess = 32,
       alphaTest = 0,
+      emissive = [0, 0, 0],
+      emissiveMap = null,
       vertexColours = false,
       flatShading = false,
       doubleSided = false,
@@ -159,6 +165,21 @@ export class LitProgram extends Program {
       u_alphaTest: new Uniform({
         name: 'alphaTest',
         value: alphaTest,
+        kind: 'float'
+      }),
+      u_emissive: new Uniform({
+        name: 'emissive',
+        value: [...emissive],
+        kind: 'float_vec3'
+      }),
+      u_emissiveMap: new Uniform({
+        name: 'emissiveMap',
+        value: emissiveMap ?? blankTexture(gl),
+        kind: 'texture'
+      }),
+      u_useEmissiveMap: new Uniform({
+        name: 'useEmissiveMap',
+        value: emissiveMap ? 1 : 0,
         kind: 'float'
       }),
       u_premultiplied: new Uniform({
@@ -258,6 +279,32 @@ export class LitProgram extends Program {
   }
 
   /** The strength of the Blinn-Phong highlight. 0 is plain Lambert. */
+  /** Light the surface gives off, added after the lighting. */
+  get emissive(): [number, number, number] {
+    return [...(this.uniforms.u_emissive.value as number[])] as [
+      number,
+      number,
+      number
+    ]
+  }
+  set emissive(value: ArrayLike<number>) {
+    const e = this.uniforms.u_emissive.value as number[]
+    e[0] = value[0]
+    e[1] = value[1]
+    e[2] = value[2]
+  }
+
+  /** The texture multiplied with `emissive`, or null for none. */
+  get emissiveMap(): Texture | null {
+    return this.uniforms.u_useEmissiveMap.value
+      ? (this.uniforms.u_emissiveMap.value as Texture)
+      : null
+  }
+  set emissiveMap(value: Texture | null) {
+    this.uniforms.u_emissiveMap.value = value ?? blankTexture(this.gl)
+    this.uniforms.u_useEmissiveMap.value = value ? 1 : 0
+  }
+
   get specular(): number {
     return this.uniforms.u_specular.value as number
   }

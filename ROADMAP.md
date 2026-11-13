@@ -136,10 +136,10 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 
 For the occasional hero model from Blender. It lands after the lit program, which is what it draws with. Moved here from Future features item 6.
 
-- [ ] Async `Texture.fromURL`, decoded with `createImageBitmap`. GLB textures need it, and it's useful on its own.
-- [ ] `GLTFLoader` for `.glb` and `.gltf` (embedded or external buffers) (OGL). Nodes become `Transform`s, meshes become `Geometry` and `Mesh`, with every accessor type, indices and multiple primitives per mesh. Cameras are imported too.
-- [ ] Materials map the base colour factor and texture, normals and UVs onto the lit program. glTF materials are PBR and the lit program is Blinn-Phong, so this is an approximation, and the docs should say so.
-- [ ] `EXT_mesh_gpu_instancing` creates an `InstancedMesh`, once that exists.
+- [x] Async `Texture.fromURL`, decoded with `createImageBitmap`. GLB textures need it, and it's useful on its own. It takes an abort `signal`, and `Texture.fromBlob` decodes an image already in hand.
+- [x] `GLTFLoader` for `.glb` and `.gltf` (embedded or external buffers) (OGL). Nodes become `Transform`s, meshes become `Geometry` and `Mesh`, with every accessor type, indices and multiple primitives per mesh. Cameras are imported too. Nodes become named `Obj`s (`Obj` gained a `name`), attributes are read into floats (dequantised, sparse applied) so the CPU-side tools work on loaded models, and `remove()` frees everything a file made.
+- [x] Materials map the base colour factor and texture, normals and UVs onto the lit program. glTF materials are PBR and the lit program is Blinn-Phong, so this is an approximation, and the docs should say so. Also alpha modes, double-sided, vertex colours, emissive (`LitProgram` gained `emissive` and `emissiveMap`, with `KHR_materials_emissive_strength`) and a roughness-to-highlight approximation. A primitive without normals is shaded flat.
+- [x] `EXT_mesh_gpu_instancing` creates an `InstancedMesh`, once that exists. The `gltf` demo loads an island made in Blender whose trees are exported this way.
 - Out of scope: skinning, morph targets and animation (a whole animation system, and three.js territory); PBR materials and IBL; Draco/meshopt compression. If compression is ever needed, it ships as an opt-in entry point, like the CSG adapter, so the decoder dependency stays optional.
 
 ### Core additions this depends on

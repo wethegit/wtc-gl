@@ -729,6 +729,36 @@
         <div class="demo">
           <div class="demo__preview">
             <img
+              src="./screenshots/gltf.jpg"
+              alt="A low-poly floating island with pine trees, grey rocks, a lamp post with a glowing orange lamp and a wooden sign with an arrow"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">GLTFLoader</span>
+              <span class="demo__class">Texture.fromURL</span>
+              <span class="demo__class">InstancedMesh</span>
+              <span class="demo__class">LitProgram</span>
+            </div>
+            <h3>glTF</h3>
+            <p>
+              A floating island made in Blender and loaded from a
+              <code>.glb</code> with <code>GLTFLoader</code>. Its materials
+              become <code>LitProgram</code>s sharing one <code>Lights</code>:
+              vertex-coloured rocks, a textured double-sided sign and an
+              emissive lamp. The trees are exported with
+              <code>EXT_mesh_gpu_instancing</code>, so they load as
+              <code>InstancedMesh</code>es. Look through the file's camera, or
+              hover to name the node under the pointer.
+            </p>
+            <a class="btn" href="./gltf/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
               src="./screenshots/paths.jpg"
               alt="A translucent trefoil-knot tube with small red, green and blue axes along its centre line"
               loading="lazy"

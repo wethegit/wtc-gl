@@ -33,6 +33,11 @@ export type TextureData =
 
 type ImageTypes = TextureImage
 
+/** Options for `Texture.fromURL`: texture options, and a signal to abort. */
+export type TextureLoadOptions = Partial<TextureOptions> & {
+  signal?: AbortSignal
+}
+
 export interface TextureOptions {
   image: ImageTypes | ImageTypes[]
   data: TextureData | null
@@ -179,6 +184,56 @@ export class Texture {
 
   // The context generation this texture was created for
   #contextVersion: number
+
+  /**
+   * Load an image from a URL into a texture. It's fetched, then decoded off
+   * the main thread with `createImageBitmap`, which also does the flipping
+   * and premultiplying (`flipY` and `premultiplyAlpha` here). Rejects if the
+   * request fails.
+   *
+   * ```ts
+   * const texture = await Texture.fromURL(gl, '/photo.jpg', { wrapS: gl.REPEAT })
+   * ```
+   * @param gl - The WTCGL rendering context.
+   * @param url - Where the image is.
+   * @param options - Texture options, plus a `signal` to abort the request.
+   */
+  static async fromURL(
+    gl: WTCGLRenderingContext,
+    url: string,
+    { signal, ...options }: TextureLoadOptions = {}
+  ): Promise<Texture> {
+    const response = await fetch(url, { signal })
+    if (!response.ok) {
+      throw new Error(
+        `Texture.fromURL: ${url} failed with ${response.status} ${response.statusText}`
+      )
+    }
+    return Texture.fromBlob(gl, await response.blob(), options)
+  }
+
+  /**
+   * Decode an image blob into a texture, as `fromURL` does once it has
+   * fetched one.
+   * @param gl - The WTCGL rendering context.
+   * @param blob - The encoded image, e.g. a PNG or JPEG.
+   * @param options - Texture options.
+   */
+  static async fromBlob(
+    gl: WTCGLRenderingContext,
+    blob: Blob,
+    options: Partial<TextureOptions> = {}
+  ): Promise<Texture> {
+    // Every 2D texture is flipped by default; an ImageBitmap has to be
+    // flipped as it's decoded instead
+    const { flipY = true, premultiplyAlpha = false } = options
+    const image = await createImageBitmap(blob, {
+      imageOrientation: flipY ? 'flipY' : 'from-image',
+      premultiplyAlpha: premultiplyAlpha ? 'premultiply' : 'none',
+      colorSpaceConversion: 'none'
+    })
+    return new Texture(gl, { ...options, image })
+  }
 
   /**
    * Create a render target object.

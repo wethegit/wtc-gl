@@ -20,6 +20,9 @@ uniform float u_useMap;
 uniform float u_specular;
 uniform float u_shininess;
 uniform float u_alphaTest;
+uniform vec3 u_emissive;
+uniform sampler2D u_emissiveMap;
+uniform float u_useEmissiveMap;
 // 1 when the renderer blends premultiplied alpha
 uniform float u_premultiplied;
 
@@ -52,6 +55,11 @@ void main() {
   vec3 view = orthographic ? vec3(0.0, 0.0, 1.0) : normalize(-v_position);
 
   c.rgb = litShade(c.rgb, n, view, mat3(u_viewMatrix), u_specular, u_shininess);
+
+  // Light the surface gives off, which lighting doesn't touch
+  vec3 emissive = u_emissive;
+  if (u_useEmissiveMap > 0.5) emissive *= texture(u_emissiveMap, v_uv).rgb;
+  c.rgb += emissive;
   if (u_premultiplied > 0.5) c.rgb *= c.a;
   fragColour = c;
 }
