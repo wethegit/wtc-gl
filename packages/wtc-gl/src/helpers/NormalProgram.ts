@@ -15,6 +15,8 @@ export interface NormalProgramOptions {
   flatShading: boolean
   /** Draw the back faces too, with their normals flipped. @default false */
   doubleSided: boolean
+  /** Read each instance's matrix from `InstancedMesh`. @default false */
+  instanced: boolean
 }
 
 /**
@@ -33,13 +35,15 @@ export class NormalProgram extends Program {
     {
       space = 'view',
       flatShading = false,
-      doubleSided = false
+      doubleSided = false,
+      instanced = false
     }: Partial<NormalProgramOptions> = {}
   ) {
     const defines =
       (space === 'world' ? '#define WORLD_SPACE\n' : '') +
       (flatShading ? '#define FLAT_SHADING\n' : '') +
-      (doubleSided ? '#define DOUBLE_SIDED\n' : '')
+      (doubleSided ? '#define DOUBLE_SIDED\n' : '') +
+      (instanced ? '#define INSTANCED\n' : '')
 
     super(gl, {
       vertex: `#version 300 es\n${defines}${normalVertex}`,

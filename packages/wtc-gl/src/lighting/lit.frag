@@ -6,6 +6,9 @@ in vec2 v_uv;
 #ifdef VERTEX_COLOURS
 in vec3 v_colour;
 #endif
+#ifdef INSTANCED
+in vec3 v_instanceColour;
+#endif
 
 uniform mat4 u_viewMatrix;
 uniform mat4 u_projectionMatrix;
@@ -26,6 +29,9 @@ void main() {
   vec4 c = vec4(u_colour, u_opacity);
 #ifdef VERTEX_COLOURS
   c.rgb *= v_colour;
+#endif
+#ifdef INSTANCED
+  c.rgb *= v_instanceColour;
 #endif
   if (u_useMap > 0.5) c *= texture(u_map, v_uv);
   if (c.a < u_alphaTest) discard;

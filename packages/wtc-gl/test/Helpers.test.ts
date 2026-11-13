@@ -304,7 +304,8 @@ describe('NormalProgram', () => {
   it.each([
     [{ space: 'world' }, 'WORLD_SPACE'],
     [{ flatShading: true }, 'FLAT_SHADING'],
-    [{ doubleSided: true }, 'DOUBLE_SIDED']
+    [{ doubleSided: true }, 'DOUBLE_SIDED'],
+    [{ instanced: true }, 'INSTANCED']
   ] as const)('%o adds #define %s', (options, define) => {
     const { gl } = createMockRenderer()
     new NormalProgram(gl, options)

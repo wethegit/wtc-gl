@@ -2,6 +2,7 @@ import type { WTCGLRenderingContext } from '../types'
 import { Mesh } from '../core/Mesh'
 import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
+import { sharedAttribute } from '../geometry/sharedAttribute'
 import { lineProgram } from './lineProgram'
 
 export interface WireMeshOptions {
@@ -90,24 +91,11 @@ export class WireMesh extends Mesh {
   }
 }
 
-/**
- * A position attribute that reads the source's buffer, which stays the
- * source's to upload and delete.
- */
+/** The source's position, read from its buffer. */
 function sharedPosition(geometry: Geometry): GeometryAttribute {
   const position = geometry.attributes.position
   if (!position) throw new Error('WireMesh: the geometry has no position')
-  return new GeometryAttribute({
-    size: position.size,
-    stride: position.stride,
-    offset: position.offset,
-    count: position.count,
-    type: position.type,
-    normalized: position.normalized,
-    data: position.data,
-    buffer: position.buffer,
-    external: true
-  })
+  return sharedAttribute(position)
 }
 
 /**

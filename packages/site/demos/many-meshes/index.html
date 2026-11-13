@@ -46,7 +46,9 @@
         position: absolute;
         left: 1em;
         top: 0.75em;
-        font: 12px/1.4 system-ui, sans-serif;
+        font:
+          12px/1.4 system-ui,
+          sans-serif;
         color: rgba(221, 224, 238, 0.7);
         pointer-events: none;
       }
@@ -62,7 +64,9 @@
         border-radius: 6px;
         background: rgba(7, 7, 14, 0.75);
         backdrop-filter: blur(8px);
-        font: 12px/1.6 ui-monospace, monospace;
+        font:
+          12px/1.6 ui-monospace,
+          monospace;
         color: rgba(221, 224, 238, 0.85);
         white-space: pre;
       }
@@ -81,9 +85,18 @@
           <option value="6000">6,000</option>
         </select>
       </label>
+      <label class="count">
+        As
+        <select id="mode">
+          <option value="separate" selected>separate meshes</option>
+          <option value="instanced">one InstancedMesh</option>
+        </select>
+      </label>
     </nav>
     <div class="pane" id="pane-main">
-      <span class="pane__label">Camera view · drag to orbit, scroll to zoom</span>
+      <span class="pane__label"
+        >Camera view · drag to orbit, scroll to zoom</span
+      >
     </div>
     <div class="pane" id="pane-overview">
       <span class="pane__label"

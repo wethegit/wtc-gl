@@ -4,6 +4,9 @@ import {
   DollyCamera,
   Obj,
   Mesh,
+  InstancedMesh,
+  Lights,
+  LitProgram,
   Program,
   Uniform,
   Box,
@@ -26,6 +29,11 @@ import flatFragment from './flat.frag'
 // The canvas is split in two. The first pane is the camera you control. The
 // second watches from above: it shows that camera and its frustum, and only
 // the meshes the first pane didn't frustum-cull.
+//
+// "One InstancedMesh" draws the same galaxy in a single draw call: one
+// InstancedMesh with a LitProgram, each cube an instance with its own matrix
+// and colour. It culls each instance against the camera you control (its
+// cullCamera), so the overview shows the same culled set.
 
 const renderer = new Renderer({
   dpr: Math.min(window.devicePixelRatio, 2),
@@ -68,23 +76,73 @@ const program = new Program(gl, { vertex, fragment })
 
 const scene = new Obj()
 let cubes = []
+let instanced = null
+
+// For the instanced mode: lit close to scene.frag, which lights each cube at
+// 0.3 + 0.7 × diffuse from the upper left, coloured by its distance from the
+// centre
+const instancedProgram = new LitProgram(gl, {
+  instanced: true,
+  lights: new Lights({
+    direction: [-0.4, 0.7, 0.6],
+    intensity: 0.7,
+    sky: [0, 0, 0],
+    ground: [0, 0, 0],
+    ambient: 0.3
+  })
+})
+const smoothstep = (a, b, x) => {
+  const t = Math.min(Math.max((x - a) / (b - a), 0), 1)
+  return t * t * (3 - 2 * t)
+}
+const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
+const galaxyColour = (radius) => {
+  const r = Math.min(radius / 40, 1)
+  const core = [1, 0.78, 0.45]
+  const mid = [0.95, 0.35, 0.55]
+  const rim = [0.3, 0.45, 1]
+  return mix(mix(core, mid, smoothstep(0, 0.45, r)), rim, smoothstep(0.4, 1, r))
+}
+// Each instance's matrix is composed here, then copied in
+const dummy = new Obj()
 
 // A spiral galaxy: a few arms, denser towards the centre
-const build = (count) => {
-  cubes.forEach(({ mesh }) => scene.removeChild(mesh))
+const build = (count, mode) => {
+  cubes.forEach(({ mesh }) => mesh && scene.removeChild(mesh))
   cubes = []
+  if (instanced) {
+    scene.removeChild(instanced)
+    // Its geometry only reads the Box's buffers, so this leaves them alone
+    instanced.geometry.remove()
+    instanced = null
+  }
+  if (mode === 'instanced') {
+    instanced = new InstancedMesh(gl, {
+      geometry,
+      program: instancedProgram,
+      count
+    })
+    instanced.cullCamera = camera
+    instanced.setParent(scene)
+  }
   const arms = 4
   for (let i = 0; i < count; i++) {
     const t = Math.random()
     const radius = 2 + Math.pow(t, 0.7) * 40
     const arm = (i % arms) / arms
     const spread = (Math.random() - 0.5) * (0.6 + radius * 0.02)
-    const mesh = new Mesh(gl, { geometry, program })
-    mesh.setParent(scene)
     const size = 0.5 + Math.random() * 1.2
-    mesh.scale.x = mesh.scale.y = mesh.scale.z = size
+    let mesh = null
+    if (!instanced) {
+      mesh = new Mesh(gl, { geometry, program })
+      mesh.setParent(scene)
+      mesh.scale.x = mesh.scale.y = mesh.scale.z = size
+    } else {
+      instanced.setColourAt(i, galaxyColour(radius))
+    }
     cubes.push({
       mesh,
+      size,
       radius,
       angle: arm * Math.PI * 2 + radius * 0.18 + spread,
       height: (Math.random() - 0.5) * (6 - radius * 0.1),
@@ -230,8 +288,11 @@ window.addEventListener('resize', resize)
 resize()
 
 const select = document.getElementById('count')
-select.addEventListener('change', () => build(Number(select.value)))
-build(Number(select.value))
+const modeSelect = document.getElementById('mode')
+const rebuild = () => build(Number(select.value), modeSelect.value)
+select.addEventListener('change', rebuild)
+modeSelect.addEventListener('change', rebuild)
+rebuild()
 
 // ── HUD ──────────────────────────────────────────────────────────────────
 const hud = document.getElementById('hud')
@@ -246,7 +307,9 @@ const updateHud = (now) => {
   const cpu = cpuTotal / frames
   const frame = frameTotal / frames
   const lines = [
-    `${cubes.length.toLocaleString()} meshes`,
+    instanced
+      ? `${cubes.length.toLocaleString()} instances · 1 draw call`
+      : `${cubes.length.toLocaleString()} meshes · ${inView.toLocaleString()} draw calls`,
     `In view ${inView.toLocaleString()} (${(cubes.length - inView).toLocaleString()} culled)`,
     `CPU   ${cpu.toFixed(2)} ms/frame`,
     `Frame ${frame.toFixed(1)} ms (${Math.round(1000 / frame)} fps)`
@@ -272,17 +335,23 @@ const run = (now) => {
 
   for (let i = 0; i < cubes.length; i++) {
     const cube = cubes[i]
-    const { mesh } = cube
+    // A separate mesh, or the scratch object for an instance
+    const object = cube.mesh ?? dummy
     // The overview hid culled meshes last frame
-    mesh.visible = true
+    object.visible = true
     const angle = cube.angle + time * cube.speed
     // Set components directly; Vec3.reset takes rest arguments, which allocate
-    mesh.position.x = Math.cos(angle) * cube.radius
-    mesh.position.y = cube.height + Math.sin(time + cube.radius) * 0.4
-    mesh.position.z = Math.sin(angle) * cube.radius
-    mesh.rotation.x = time * cube.spin
-    mesh.rotation.y = time * cube.spin * 0.7
-    mesh.updateRotation()
+    object.position.x = Math.cos(angle) * cube.radius
+    object.position.y = cube.height + Math.sin(time + cube.radius) * 0.4
+    object.position.z = Math.sin(angle) * cube.radius
+    object.rotation.x = time * cube.spin
+    object.rotation.y = time * cube.spin * 0.7
+    object.updateRotation()
+    if (instanced) {
+      dummy.scale.x = dummy.scale.y = dummy.scale.z = cube.size
+      dummy.updateMatrix()
+      instanced.setMatrixAt(i, dummy.matrix)
+    }
   }
 
   // Each pane clears and draws only inside its own rectangle
@@ -291,13 +360,19 @@ const run = (now) => {
   // 1. The camera you control. The renderer frustum-culls as it draws.
   renderPane(0, scene, camera)
 
-  // Repeat the renderer's culling test to find what it drew, and hide the
-  // rest for the overview
-  inView = 0
-  for (let i = 0; i < cubes.length; i++) {
-    const { mesh } = cubes[i]
-    mesh.visible = camera.frustumIntersects(mesh)
-    if (mesh.visible) inView++
+  if (instanced) {
+    // Culled against this camera as it drew, and again (to the same set) in
+    // the overview, through its cullCamera
+    inView = instanced.geometry.instancedCount
+  } else {
+    // Repeat the renderer's culling test to find what it drew, and hide the
+    // rest for the overview
+    inView = 0
+    for (let i = 0; i < cubes.length; i++) {
+      const { mesh } = cubes[i]
+      mesh.visible = camera.frustumIntersects(mesh)
+      if (mesh.visible) inView++
+    }
   }
 
   // 2. The overview, with the marker on the camera

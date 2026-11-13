@@ -148,7 +148,7 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 - [x] Per-instance culling, as an optional `worldMatrix` argument to `Camera.frustumIntersects(node, worldMatrix)` rather than OGL's separate `frustumIntersectsMesh` (OGL).
 - [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
 - [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
-- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
+- [x] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8. It draws from the source geometry's buffers through its own geometry, so the source can still be drawn by ordinary meshes. Culling packs the visible instances and only re-uploads when they or the instances change; `cullCamera` culls against another camera. `LitProgram` and `NormalProgram` read the instances with `instanced: true`. The many-meshes demo has an instanced mode: about a tenth of the CPU time of separate meshes. `camera-and-instancing` still builds its instances by hand.
 
 ### Interaction
 

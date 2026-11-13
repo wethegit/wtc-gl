@@ -605,6 +605,7 @@
               <span class="demo__class">Renderer</span>
               <span class="demo__class">DollyCamera</span>
               <span class="demo__class">Camera</span>
+              <span class="demo__class">InstancedMesh</span>
             </div>
             <h3>Many meshes</h3>
             <p>
@@ -612,7 +613,10 @@
               rotated every frame. One pane is the camera you control; the other
               watches it from above, showing its frustum and only the meshes it
               didn't cull. Matrices, uniforms and render lists are updated in
-              place, so the render loop makes almost no garbage.
+              place, so the render loop makes almost no garbage. Switch to one
+              <code>InstancedMesh</code> to draw the same galaxy in a single
+              draw call, still culled cube by cube, for a fraction of the CPU
+              time.
             </p>
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>

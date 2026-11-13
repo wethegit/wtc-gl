@@ -43,6 +43,11 @@ export interface LitProgramOptions {
   flatShading: boolean
   /** Draw and light the back faces too. @default false */
   doubleSided: boolean
+  /**
+   * Read each instance's matrix and colour from `InstancedMesh`. The colour
+   * multiplies the surface colour. @default false
+   */
+  instanced: boolean
   /** @default opacity < 1 */
   transparent: boolean
   /** @default true */
@@ -66,9 +71,10 @@ export interface LitProgramOptions {
  * ```
  *
  * It needs a camera to draw: the lighting is done in view space, from the
- * matrices the mesh sets. `vertexColours`, `flatShading` and `doubleSided`
- * change the shaders, so they're fixed when the program is made. The colour,
- * opacity, map, specular and shininess can be changed at any time.
+ * matrices the mesh sets. `vertexColours`, `flatShading`, `doubleSided` and
+ * `instanced` (for `InstancedMesh`) change the shaders, so they're fixed when
+ * the program is made. The colour, opacity, map, specular and shininess can
+ * be changed at any time.
  *
  * For a custom shader with the same lighting, use `litShading`.
  */
@@ -89,6 +95,7 @@ export class LitProgram extends Program {
       vertexColours = false,
       flatShading = false,
       doubleSided = false,
+      instanced = false,
       transparent = opacity < 1,
       depthTest = true,
       depthWrite = true
@@ -141,7 +148,8 @@ export class LitProgram extends Program {
     const defines =
       (flatShading ? '#define FLAT_SHADING\n' : '') +
       (vertexColours ? '#define VERTEX_COLOURS\n' : '') +
-      (doubleSided ? '#define DOUBLE_SIDED\n' : '')
+      (doubleSided ? '#define DOUBLE_SIDED\n' : '') +
+      (instanced ? '#define INSTANCED\n' : '')
 
     super(gl, {
       vertex: `#version 300 es\n${defines}${litVertex}`,

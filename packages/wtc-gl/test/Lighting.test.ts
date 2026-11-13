@@ -189,7 +189,8 @@ describe('LitProgram', () => {
   it.each([
     ['flatShading', 'FLAT_SHADING'],
     ['vertexColours', 'VERTEX_COLOURS'],
-    ['doubleSided', 'DOUBLE_SIDED']
+    ['doubleSided', 'DOUBLE_SIDED'],
+    ['instanced', 'INSTANCED']
   ] as const)('%s adds #define %s to both shaders', (option, define) => {
     const { gl } = createMockRenderer()
     new LitProgram(gl, { [option]: true })

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { Vec3 } from 'wtc-math'
+import { Mat4, Vec3 } from 'wtc-math'
 
 import { Camera } from '../src/core/Camera'
+import { InstancedMesh } from '../src/core/InstancedMesh'
 import { Mesh } from '../src/core/Mesh'
 import { Obj } from '../src/core/Object'
 import { Program } from '../src/core/Program'
@@ -277,6 +278,46 @@ describe('Per-frame allocations', () => {
       expect(bytes).toBeLessThan(100)
     }
     expect(visible).toBeGreaterThan(0)
+  })
+
+  it('are none for culling an InstancedMesh', async () => {
+    const { gl } = createMockRenderer()
+    const instances = new InstancedMesh(gl, {
+      geometry: new Box(gl),
+      program: new Program(gl, { vertex: '', fragment: '' }),
+      count: MESHES
+    })
+    instances.updateMatrixWorld()
+    const m = new Mat4()
+    for (let i = 0; i < MESHES; i++) {
+      m.a41 = (i % 40) - 20
+      m.a43 = Math.floor(i / 40) - 12
+      instances.setMatrixAt(i, m)
+    }
+    const camera = new Camera({ fov: 60, aspect: 1, near: 0.1, far: 100 })
+    camera.position.z = 40
+    camera.updateMatrixWorld()
+
+    // Marked as changed every frame, so the visible instances are packed
+    // again every time: the most work culling does. (Through `count`, as
+    // copying a matrix in and out of a Mat4 boxes its fields.)
+    const frame = () => {
+      instances.count = MESHES
+      instances.cull(camera)
+    }
+
+    let bytes = Infinity
+    for (let run = 0; run < 3 && bytes >= 1000; run++) {
+      bytes = Math.min(bytes, await bytesPerFrame(frame))
+    }
+    console.info(
+      `[allocations] InstancedMesh cull of ${MESHES}: ${bytes.toFixed(0)} B/frame`
+    )
+    // Nothing per instance, which would be 16 KB or more here. What's left
+    // is camera.updateFrustum, a few hundred bytes per call: wtc-math's Vec3
+    // setters box the doubles written to the planes.
+    expect(bytes).toBeLessThan(1000)
+    expect(instances.geometry.instancedCount).toBeGreaterThan(0)
   })
 
   it('stay small for a transform feedback simulation', async () => {
