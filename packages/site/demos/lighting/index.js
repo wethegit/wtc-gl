@@ -13,6 +13,9 @@ import {
   Torus,
   Capsule,
   GeometryAttribute,
+  GridHelper,
+  AxesHelper,
+  WireMesh,
   Vec2,
   Vec3
 } from 'wtc-gl'
@@ -22,10 +25,13 @@ import { Pane } from 'tweakpane'
 // light is in world space, so the shading stays put as you orbit while the
 // highlights move with the camera. The small sun shows where the light is
 // coming from; it has its own Lights, set to flat ambient so it isn't shaded.
+// A GridHelper lies on the ground, an AxesHelper marks the origin, and the
+// wireframe adds a WireMesh to each shape.
 
 const SPACING = 1.7
 const LABEL_DROP = 0.95
 const SUN_DISTANCE = 3.2
+const GROUND = 12
 
 const lightParams = {
   azimuth: -40,
@@ -35,7 +41,10 @@ const lightParams = {
   sky: { r: 0.3, g: 0.32, b: 0.36 },
   ground: { r: 0.12, g: 0.1, b: 0.08 },
   ambient: 0.05,
-  spin: true
+  spin: true,
+  grid: true,
+  axes: true,
+  wireframe: false
 }
 
 // ── Renderer and camera ───────────────────────────────────────────────────
@@ -183,12 +192,34 @@ SHAPES.forEach((shape, i) => {
 
 // The ground the shapes stand over
 const ground = new Mesh(gl, {
-  geometry: new Plane(gl, { width: SPACING * SHAPES.length + 1, height: 4 }),
+  geometry: new Plane(gl, { width: GROUND, height: GROUND }),
   program: new LitProgram(gl, { lights, colour: [0.86, 0.84, 0.8] })
 })
 ground.rotation.x = -Math.PI / 2
 ground.updateRotation()
 ground.setParent(scene)
+
+// A square on every half unit of the ground, and the world's axes
+const grid = new GridHelper(gl, { size: GROUND, divisions: GROUND * 2 })
+grid.setParent(scene)
+const axes = new AxesHelper(gl, { size: 1.2 })
+// Just above the grid, whose centre lines run along the x and z axes
+axes.position.y = 0.01
+axes.setParent(scene)
+
+// A wireframe over each shape, made when it's first turned on
+const setWireframes = () => {
+  for (const shape of SHAPES) {
+    if (lightParams.wireframe && !shape.wire) {
+      shape.wire = new WireMesh(gl, {
+        geometry: shape.mesh.geometry,
+        colour: [0.1, 0.1, 0.12],
+        opacity: 0.35
+      })
+    }
+    shape.wire?.setParent(lightParams.wireframe ? shape.mesh : null)
+  }
+}
 
 // The sun: lit only by its own flat ambient light, so it reads as a source
 const sun = new Mesh(gl, {
@@ -239,6 +270,15 @@ lightFolder.addBinding(lightParams, 'ground', colour)
 lightFolder.addBinding(lightParams, 'ambient', { min: 0, max: 1 })
 lightFolder.on('change', updateLights)
 pane.addBinding(lightParams, 'spin')
+
+const helperFolder = pane.addFolder({ title: 'Helpers' })
+helperFolder
+  .addBinding(lightParams, 'grid')
+  .on('change', () => (grid.visible = lightParams.grid))
+helperFolder
+  .addBinding(lightParams, 'axes')
+  .on('change', () => (axes.visible = lightParams.axes))
+helperFolder.addBinding(lightParams, 'wireframe').on('change', setWireframes)
 
 for (const shape of SHAPES) {
   const folder = pane.addFolder({ title: shape.name, expanded: false })

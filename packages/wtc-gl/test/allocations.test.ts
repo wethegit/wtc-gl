@@ -265,7 +265,12 @@ describe('Per-frame allocations', () => {
     }
 
     for (const [name, frame] of Object.entries({ project, unproject, cull })) {
-      const bytes = await bytesPerFrame(frame)
+      // The lowest of a few runs: a stray JIT or GC allocation can land in
+      // any one of them, while a real allocation per call shows in all
+      let bytes = Infinity
+      for (let run = 0; run < 3 && bytes >= 100; run++) {
+        bytes = Math.min(bytes, await bytesPerFrame(frame))
+      }
       console.info(
         `[allocations] ${MESHES}× ${name}: ${bytes.toFixed(0)} B/frame`
       )

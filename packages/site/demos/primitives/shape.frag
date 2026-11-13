@@ -5,7 +5,7 @@ in vec3 v_position;
 in vec2 v_uv;
 in vec3 v_barycentric;
 
-// 0 lit, 1 normals, 2 uv checker
+// 0 lit, 1 uv checker. The normals view swaps in wtc-gl's NormalProgram.
 uniform int u_mode;
 // 1 to draw each triangle's edges
 uniform float u_edges;
@@ -28,8 +28,6 @@ void main() {
 
   vec3 c;
   if (u_mode == 1) {
-    c = n * 0.5 + 0.5;
-  } else if (u_mode == 2) {
     // 8 × 8 checks with a red u = 0 edge and a green v = 0 edge, so the seams
     // and the direction of the uvs show
     vec2 cell = floor(v_uv * 8.0);

@@ -15,6 +15,10 @@ import {
   GeometryAttribute,
   Lights,
   litShading,
+  NormalProgram,
+  VertexNormalsHelper,
+  FaceNormalsHelper,
+  AxesHelper,
   Mat4,
   Vec2,
   Vec3,
@@ -31,6 +35,9 @@ import shapeFrag from './shape.frag'
 // coordinates for the edges, and flat shading recomputes the normals on that
 // copy (computeVertexNormals). The lathe is moved with applyMatrix so it's
 // centred in its cell like the others.
+//
+// The normals views swap in NormalProgram, and the helpers add
+// VertexNormalsHelper, FaceNormalsHelper and AxesHelper to each shape.
 
 const TAU = Math.PI * 2
 const COLUMNS = 4
@@ -209,7 +216,10 @@ const params = {
   shading: 'smooth',
   edges: true,
   cull: false,
-  spin: true
+  spin: true,
+  vertexNormals: false,
+  faceNormals: false,
+  axes: false
 }
 
 // ── Renderer and camera ───────────────────────────────────────────────────
@@ -242,6 +252,13 @@ const lights = new Lights({
   ambient: 0.42
 })
 const fragment = `#version 300 es\nprecision highp float;\n${litShading}\n${shapeFrag}`
+
+// The normals views swap these in for each shape's own program. They draw
+// both sides, like the shape shader, unless "cull backs" is on.
+const normalPrograms = {
+  normals: new NormalProgram(gl, { doubleSided: true }),
+  'world normals': new NormalProgram(gl, { space: 'world', doubleSided: true })
+}
 
 const u_mode = new Uniform({ name: 'mode', value: 0, kind: 'int' })
 const u_edges = new Uniform({ name: 'edges', value: 1, kind: 'float' })
@@ -281,23 +298,21 @@ SHAPES.forEach((shape, i) => {
     0
   ]
 
-  shape.mesh = new Mesh(gl, {
-    geometry: build(shape),
-    program: new Program(gl, {
-      vertex: shapeVert,
-      fragment,
-      uniforms: {
-        ...lights.uniforms,
-        u_mode,
-        u_edges,
-        u_colour: new Uniform({
-          name: 'colour',
-          value: shape.colour,
-          kind: 'float_vec3'
-        })
-      }
-    })
+  shape.program = new Program(gl, {
+    vertex: shapeVert,
+    fragment,
+    uniforms: {
+      ...lights.uniforms,
+      u_mode,
+      u_edges,
+      u_colour: new Uniform({
+        name: 'colour',
+        value: shape.colour,
+        kind: 'float_vec3'
+      })
+    }
   })
+  shape.mesh = new Mesh(gl, { geometry: build(shape), program: shape.program })
   shape.mesh.position.reset(...shape.centre)
   shape.mesh.setParent(scene)
 
@@ -309,18 +324,51 @@ SHAPES.forEach((shape, i) => {
 const describe = (shape) =>
   `${shape.name} · ${shape.vertices} verts · ${shape.triangles} tris`
 
+// The helpers chosen in the pane, as children of the shape's mesh. They read
+// the geometry when they're made, so they're made again with it.
+const setHelpers = (shape) => {
+  for (const helper of shape.helpers ?? []) {
+    helper.setParent(null)
+    helper.geometry.remove()
+  }
+  shape.helpers = []
+  const { mesh } = shape
+  if (params.vertexNormals) {
+    shape.helpers.push(new VertexNormalsHelper(mesh, { size: 0.15 }))
+  }
+  if (params.faceNormals) {
+    shape.helpers.push(new FaceNormalsHelper(mesh, { size: 0.15 }))
+  }
+  if (params.axes) {
+    const axes = new AxesHelper(gl, { size: 0.8 })
+    axes.setParent(mesh)
+    shape.helpers.push(axes)
+  }
+}
+
 const rebuild = (shape) => {
   shape.mesh.geometry.remove()
   shape.mesh.geometry = build(shape)
   shape.label.textContent = describe(shape)
+  setHelpers(shape)
 }
 
 const rebuildAll = () => SHAPES.forEach(rebuild)
 
 const setCulling = () => {
-  for (const { mesh } of SHAPES) {
-    mesh.program.cullFace = params.cull ? gl.BACK : null
+  const programs = [
+    ...SHAPES.map((shape) => shape.program),
+    ...Object.values(normalPrograms)
+  ]
+  for (const program of programs) {
+    program.cullFace = params.cull ? gl.BACK : null
   }
+}
+
+const setView = () => {
+  const normals = normalPrograms[params.view]
+  u_mode.value = params.view === 'uv' ? 1 : 0
+  for (const shape of SHAPES) shape.mesh.program = normals ?? shape.program
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────
@@ -331,11 +379,14 @@ const pane = new Pane({
 })
 pane
   .addBinding(params, 'view', {
-    options: { lit: 'lit', normals: 'normals', 'uv checker': 'uv' }
+    options: {
+      lit: 'lit',
+      'normals (view)': 'normals',
+      'normals (world)': 'world normals',
+      'uv checker': 'uv'
+    }
   })
-  .on('change', () => {
-    u_mode.value = { lit: 0, normals: 1, uv: 2 }[params.view]
-  })
+  .on('change', setView)
 pane
   .addBinding(params, 'shading', {
     options: { smooth: 'smooth', flat: 'flat' }
@@ -348,6 +399,12 @@ pane
   .addBinding(params, 'cull', { label: 'cull backs' })
   .on('change', setCulling)
 pane.addBinding(params, 'spin')
+
+const helpers = pane.addFolder({ title: 'Helpers' })
+helpers.addBinding(params, 'vertexNormals', { label: 'vertex normals' })
+helpers.addBinding(params, 'faceNormals', { label: 'face normals' })
+helpers.addBinding(params, 'axes')
+helpers.on('change', () => SHAPES.forEach(setHelpers))
 
 for (const shape of SHAPES) {
   const folder = pane.addFolder({ title: shape.name, expanded: false })

@@ -129,8 +129,8 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 ### Shading and viewing
 
 - [x] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. _New._ `LitProgram`, lit by a shared `Lights` object in world space, with `flatShading`, `vertexColours` and `doubleSided`. The lighting ships as the `litShading` GLSL string for custom shaders, the way `polylineExtrude` does; the `#include` work in Future features item 2 can register it as a named chunk later. The `lighting` demo shows each option, and the primitives, building-geometry and paths demos now use `litShading`.
-- [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
-- [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
+- [x] `NormalProgram` and `WireMesh` for debugging (OGL). `NormalProgram` shows normals in view or world space, optionally flat or double-sided. `WireMesh` draws each edge once from the source geometry's own position buffer (an external attribute), so it never copies or deletes it.
+- [x] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL). All of them, and `WireMesh`, draw `gl.LINES`, so the lines are one device pixel wide, and pull their lines slightly towards the camera so they show on a surface. The normals helpers parent themselves to the mesh and keep `size` world units long however it's scaled. They're shown in the primitives and lighting demos. The many-meshes demo's hand-built frustum lines could move onto the same line program later.
 
 ### Import
 

@@ -44,6 +44,13 @@ export * from './line/Polyline'
 export * from './lighting/Lights'
 export * from './lighting/LitProgram'
 
+export * from './helpers/NormalProgram'
+export * from './helpers/WireMesh'
+export * from './helpers/AxesHelper'
+export * from './helpers/GridHelper'
+export * from './helpers/VertexNormalsHelper'
+export * from './helpers/FaceNormalsHelper'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
