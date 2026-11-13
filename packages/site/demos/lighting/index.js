@@ -16,6 +16,8 @@ import {
   GridHelper,
   AxesHelper,
   WireMesh,
+  Raycast,
+  Polyline,
   Vec2,
   Vec3
 } from 'wtc-gl'
@@ -26,7 +28,9 @@ import { Pane } from 'tweakpane'
 // highlights move with the camera. The small sun shows where the light is
 // coming from; it has its own Lights, set to flat ambient so it isn't shaded.
 // A GridHelper lies on the ground, an AxesHelper marks the origin, and the
-// wireframe adds a WireMesh to each shape.
+// wireframe adds a WireMesh to each shape. Hovering a shape casts a Raycast
+// into it: a dot marks the hit point, a line shows the surface normal, and
+// the label gives the uv.
 
 const SPACING = 1.7
 const LABEL_DROP = 0.95
@@ -308,6 +312,74 @@ const resize = () => {
 window.addEventListener('resize', resize)
 resize()
 
+// ── Hover ─────────────────────────────────────────────────────────────────
+const raycast = new Raycast()
+// The pointer in normal device coordinates, or null when it's off the canvas
+let pointer = null
+gl.canvas.addEventListener('pointermove', (e) => {
+  pointer = [
+    (e.clientX / window.innerWidth) * 2 - 1,
+    1 - (e.clientY / window.innerHeight) * 2
+  ]
+})
+gl.canvas.addEventListener('pointerleave', () => (pointer = null))
+
+const hitDot = new Mesh(gl, {
+  geometry: new Sphere(gl, { radius: 0.035, widthSegments: 12 }),
+  program: new LitProgram(gl, {
+    lights: new Lights({ intensity: 0, sky: [0, 0, 0], ground: [0, 0, 0] }),
+    colour: [0.1, 0.1, 0.12]
+  })
+})
+hitDot.setParent(scene)
+const NORMAL_LENGTH = 0.35
+const normalLine = new Polyline(gl, {
+  points: [
+    [0, 0, 0],
+    [0, NORMAL_LENGTH, 0]
+  ],
+  width: 3,
+  colour: [0.1, 0.1, 0.12]
+})
+normalLine.setParent(scene)
+const hitLabel = document.createElement('div')
+hitLabel.className = 'label'
+labels.appendChild(hitLabel)
+
+// Shapes spin under a still pointer, so this runs every frame
+const hover = () => {
+  const hit = pointer
+    ? raycast
+        .castMouse(camera, pointer)
+        .intersectMeshes(SHAPES.map((shape) => shape.mesh))[0]
+    : null
+  hitDot.visible = normalLine.visible = !!hit
+  hitLabel.style.display = hit ? '' : 'none'
+  if (!hit) return
+
+  const shape = SHAPES.find((s) => s.mesh === hit.mesh)
+  // The flat-shaded sphere's geometry still has smooth normals; it's shaded
+  // by its faces, so show the face normal there
+  const n = shape.material.flatShading ? hit.faceNormal : hit.normal
+  const p = hit.point
+  hitDot.position.reset(p.x, p.y, p.z)
+  normalLine.setPoints([
+    [p.x, p.y, p.z],
+    [
+      p.x + n.x * NORMAL_LENGTH,
+      p.y + n.y * NORMAL_LENGTH,
+      p.z + n.z * NORMAL_LENGTH
+    ]
+  ])
+  const uv = hit.uv
+    ? ` · uv ${hit.uv.x.toFixed(2)}, ${hit.uv.y.toFixed(2)}`
+    : ''
+  hitLabel.textContent = `${shape.name} · face ${hit.faceIndex}${uv}`
+  const sx = ((pointer[0] * 0.5 + 0.5) * window.innerWidth).toFixed(0)
+  const sy = ((0.5 - pointer[1] * 0.5) * window.innerHeight - 28).toFixed(0)
+  hitLabel.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, 0)`
+}
+
 // ── Loop ──────────────────────────────────────────────────────────────────
 const labelPoint = new Vec3()
 let last = 0
@@ -325,6 +397,10 @@ const run = (t) => {
   }
 
   camera.update()
+  // Up to date for the raycast, rather than only once rendering
+  scene.updateMatrixWorld()
+  camera.updateMatrixWorld()
+  hover()
   renderer.render({ scene, camera })
 
   // Put each label just under its shape

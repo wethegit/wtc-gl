@@ -12,6 +12,7 @@ import {
   Extrude,
   GeometryAttribute,
   mergeGeometries,
+  Raycast,
   Lights,
   litShading,
   Mat4,
@@ -412,52 +413,36 @@ const loadPreset = () => {
 }
 
 // ── Dragging ──────────────────────────────────────────────────────────────
-// No raycasting yet, so handles are picked by their projected position and
-// dragged in the plane facing the camera. When extruding they're dragged on
-// the z = 0 plane instead, so the outline stays flat.
-const projected = new Vec3()
-const toScreen = ([x, y, z]) => {
-  camera.project(projected.reset(x, y, z))
-  return [
-    (projected.x * 0.5 + 0.5) * window.innerWidth,
-    (0.5 - projected.y * 0.5) * window.innerHeight
-  ]
-}
+// Handles are picked with a Raycast against their bounds, padded so they're
+// easy to grab, and dragged by casting onto a plane: the one through the
+// handle facing the camera, or z = 0 when extruding, so the outline stays
+// flat.
+const raycast = new Raycast()
+// World units added around each handle's bounds when picking
+const GRAB_PADDING = 0.08
 
-const nearestHandle = (x, y) => {
-  let best = -1
-  let bestDistance = 18
-  points.forEach((p, i) => {
-    const [sx, sy] = toScreen(p)
-    const d = Math.hypot(sx - x, sy - y)
-    if (d < bestDistance) {
-      best = i
-      bestDistance = d
-    }
-  })
-  return best
+const castPointer = (clientX, clientY) =>
+  raycast.castMouse(camera, [
+    (clientX / window.innerWidth) * 2 - 1,
+    1 - (clientY / window.innerHeight) * 2
+  ])
+
+const handleUnder = (clientX, clientY) => {
+  castPointer(clientX, clientY)
+  const visible = handles.slice(0, points.length)
+  const [hit] = raycast.intersectBounds(visible, { padding: GRAB_PADDING })
+  return hit ? handles.indexOf(hit.mesh) : -1
 }
 
 let hot = -1
 let dragging = -1
-let last = [0, 0]
 let dirty = false
-// When extruding: where the pointer hit z = 0, less the handle's position
-let grabOffset = [0, 0]
-
-// Where the ray under the pointer meets the z = 0 plane, or null if it doesn't
-const rayNear = new Vec3()
-const rayFar = new Vec3()
-const hitGround = (clientX, clientY) => {
-  const x = (clientX / window.innerWidth) * 2 - 1
-  const y = 1 - (clientY / window.innerHeight) * 2
-  const n = camera.unproject(rayNear.reset(x, y, -1))
-  const f = camera.unproject(rayFar.reset(x, y, 1))
-  if (Math.abs(f.z - n.z) < 1e-9) return null
-  const t = -n.z / (f.z - n.z)
-  if (t < 0) return null
-  return [n.x + (f.x - n.x) * t, n.y + (f.y - n.y) * t]
-}
+// The plane a handle is dragged in, and where the pointer met it at the
+// grab, less the handle's position
+const dragNormal = new Vec3()
+const dragPoint = new Vec3()
+const grabOffset = new Vec3()
+const planeHit = new Vec3()
 
 const setHot = (i) => {
   if (hot === i) return
@@ -473,12 +458,22 @@ window.addEventListener(
   'pointerdown',
   (e) => {
     if (e.target !== gl.canvas) return
-    const i = nearestHandle(e.clientX, e.clientY)
+    const i = handleUnder(e.clientX, e.clientY)
     if (i < 0) return
+    const [x, y, z] = points[i]
+    if (extruding()) {
+      dragNormal.reset(0, 0, 1)
+      dragPoint.reset(0, 0, 0)
+    } else {
+      // The camera's backward axis, so the plane faces it
+      const m = camera.worldMatrix
+      dragNormal.reset(m.a31, m.a32, m.a33)
+      dragPoint.reset(x, y, z)
+    }
+    const hit = raycast.intersectPlane(dragNormal, dragPoint, planeHit)
+    if (!hit) return
+    grabOffset.reset(hit.x - x, hit.y - y, hit.z - z)
     dragging = i
-    last = [e.clientX, e.clientY]
-    const hit = extruding() && hitGround(e.clientX, e.clientY)
-    if (hit) grabOffset = [hit[0] - points[i][0], hit[1] - points[i][1]]
     camera.enabled = false
     setHot(i)
     gl.canvas.style.cursor = 'grabbing'
@@ -488,39 +483,18 @@ window.addEventListener(
 
 window.addEventListener('pointermove', (e) => {
   if (dragging < 0) {
-    if (e.target === gl.canvas) setHot(nearestHandle(e.clientX, e.clientY))
+    if (e.target === gl.canvas) setHot(handleUnder(e.clientX, e.clientY))
     return
   }
 
+  castPointer(e.clientX, e.clientY)
+  const hit = raycast.intersectPlane(dragNormal, dragPoint, planeHit)
+  if (!hit) return
   const p = points[dragging]
-  if (extruding()) {
-    const hit = hitGround(e.clientX, e.clientY)
-    if (hit) {
-      p[0] = hit[0] - grabOffset[0]
-      p[1] = hit[1] - grabOffset[1]
-      handles[dragging].position.reset(...p)
-      dirty = true
-    }
-    return
-  }
-
-  // World units per pixel at the handle's depth
-  const m = camera.worldMatrix
-  const eye = camera.worldPosition
-  const depth = -(
-    (p[0] - eye.x) * m.a31 +
-    (p[1] - eye.y) * m.a32 +
-    (p[2] - eye.z) * m.a33
-  )
-  const scale =
-    (2 * depth * Math.tan((camera.fov * Math.PI) / 360)) / window.innerHeight
-
-  const dx = (e.clientX - last[0]) * scale
-  const dy = (e.clientY - last[1]) * scale
-  last = [e.clientX, e.clientY]
-  p[0] += m.a11 * dx - m.a21 * dy
-  p[1] += m.a12 * dx - m.a22 * dy
-  p[2] += m.a13 * dx - m.a23 * dy
+  p[0] = hit.x - grabOffset.x
+  p[1] = hit.y - grabOffset.y
+  // Extruded outlines stay on z = 0
+  if (!extruding()) p[2] = hit.z - grabOffset.z
   handles[dragging].position.reset(...p)
   dirty = true
 })

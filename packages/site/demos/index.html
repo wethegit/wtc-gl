@@ -616,7 +616,7 @@
               place, so the render loop makes almost no garbage. Switch to one
               <code>InstancedMesh</code> to draw the same galaxy in a single
               draw call, still culled cube by cube, for a fraction of the CPU
-              time.
+              time, and hover to pick out one cube with a <code>Raycast</code>.
             </p>
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
@@ -683,7 +683,8 @@
               <code>NormalProgram</code> in view or world space, flat and smooth
               shading, and turn off back-face culling to see inside the open
               shapes. The helpers add vertex normals, face normals and local
-              axes to every shape. The vase is a <code>Lathe</code> of a 2D
+              axes to every shape, and clicking one shows the triangle and uv
+              under the pointer. The vase is a <code>Lathe</code> of a 2D
               profile, and a cone is a <code>Cylinder</code> with
               <code>radiusTop: 0</code>.
             </p>
@@ -706,6 +707,7 @@
               <span class="demo__class">GridHelper</span>
               <span class="demo__class">AxesHelper</span>
               <span class="demo__class">WireMesh</span>
+              <span class="demo__class">Raycast</span>
             </div>
             <h3>Lighting</h3>
             <p>
@@ -717,7 +719,8 @@
               the world as you orbit, and the highlights follow the camera. A
               <code>GridHelper</code> and <code>AxesHelper</code> mark the floor
               and origin, and a <code>WireMesh</code> can show each shape's
-              triangles.
+              triangles. Hover a shape to see a <code>Raycast</code> hit: the
+              point, the surface normal, the face and the uv.
             </p>
             <a class="btn" href="./lighting/">Open demo →</a>
           </div>
@@ -738,6 +741,7 @@
               <span class="demo__class">Tube</span>
               <span class="demo__class">Extrude</span>
               <span class="demo__class">computeFrames</span>
+              <span class="demo__class">Raycast</span>
             </div>
             <h3>Paths</h3>
             <p>
@@ -751,7 +755,8 @@
               curve, and the B-spline type is smoother still, pulled towards the
               points rather than through them. The extrude preset turns a flat
               outline and hole into a bevelled solid as you drag, with hard
-              edges wherever it turns sharper than the crease angle.
+              edges wherever it turns sharper than the crease angle. Handles are
+              picked and dragged with a <code>Raycast</code>.
             </p>
             <a class="btn" href="./paths/">Open demo →</a>
           </div>

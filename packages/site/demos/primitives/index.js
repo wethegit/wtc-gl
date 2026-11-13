@@ -19,6 +19,7 @@ import {
   VertexNormalsHelper,
   FaceNormalsHelper,
   AxesHelper,
+  Raycast,
   Mat4,
   Vec2,
   Vec3,
@@ -38,6 +39,8 @@ import shapeFrag from './shape.frag'
 //
 // The normals views swap in NormalProgram, and the helpers add
 // VertexNormalsHelper, FaceNormalsHelper and AxesHelper to each shape.
+// Clicking a shape casts a Raycast into it, and its label shows the triangle
+// and uv that were hit.
 
 const TAU = Math.PI * 2
 const COLUMNS = 4
@@ -322,7 +325,36 @@ SHAPES.forEach((shape, i) => {
 })
 
 const describe = (shape) =>
-  `${shape.name} · ${shape.vertices} verts · ${shape.triangles} tris`
+  `${shape.name} · ${shape.vertices} verts · ${shape.triangles} tris` +
+  (shape.picked ? ` · ${shape.picked}` : '')
+
+// ── Picking ───────────────────────────────────────────────────────────────
+// A click, not a drag to orbit: the pointer moves less than a few pixels
+const raycast = new Raycast()
+let pressed = null
+gl.canvas.addEventListener('pointerdown', (e) => {
+  pressed = [e.clientX, e.clientY]
+})
+gl.canvas.addEventListener('pointerup', (e) => {
+  if (!pressed) return
+  const moved = Math.hypot(e.clientX - pressed[0], e.clientY - pressed[1])
+  pressed = null
+  if (moved > 4) return
+
+  raycast.castMouse(camera, [
+    (e.clientX / window.innerWidth) * 2 - 1,
+    1 - (e.clientY / window.innerHeight) * 2
+  ])
+  const [hit] = raycast.intersectMeshes(SHAPES.map((shape) => shape.mesh))
+  for (const shape of SHAPES) {
+    shape.picked =
+      hit?.mesh === shape.mesh
+        ? `face ${hit.faceIndex}` +
+          (hit.uv ? ` · uv ${hit.uv.x.toFixed(2)}, ${hit.uv.y.toFixed(2)}` : '')
+        : null
+    shape.label.textContent = describe(shape)
+  }
+})
 
 // The helpers chosen in the pane, as children of the shape's mesh. They read
 // the geometry when they're made, so they're made again with it.

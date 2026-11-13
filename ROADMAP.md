@@ -152,8 +152,8 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 
 ### Interaction
 
-- [ ] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9.
-  - Once it lands, regroup on the `paths` demo. Its handles are picked by their projected screen position and dragged in the plane facing the camera, as a stand-in. Decide whether to switch to raycast picking, and to dragging along a surface or constrained plane.
+- [x] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9. Hits also give the face, the face normal and, for an `InstancedMesh`, the `instanceId`. It follows each program's face culling, and takes `padding` for small targets. `intersectPlane`, `intersectSphere` and `intersectBox` test single shapes. Only `gl.TRIANGLES` meshes with positions on the CPU can be hit.
+  - The `paths` demo now picks its handles with padded bounds and drags them on a plane through `intersectPlane`: the one facing the camera, or z = 0 when extruding. The lighting, many-meshes and primitives demos show hits too.
 
 ### Later
 

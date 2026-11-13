@@ -5,6 +5,7 @@ import {
   Obj,
   Mesh,
   InstancedMesh,
+  Raycast,
   Lights,
   LitProgram,
   Program,
@@ -33,7 +34,9 @@ import flatFragment from './flat.frag'
 // "One InstancedMesh" draws the same galaxy in a single draw call: one
 // InstancedMesh with a LitProgram, each cube an instance with its own matrix
 // and colour. It culls each instance against the camera you control (its
-// cullCamera), so the overview shows the same culled set.
+// cullCamera), so the overview shows the same culled set. Hovering a cube
+// in the camera view lights it up: a Raycast finds the instance under the
+// pointer.
 
 const renderer = new Renderer({
   dpr: Math.min(window.devicePixelRatio, 2),
@@ -137,11 +140,12 @@ const build = (count, mode) => {
       mesh = new Mesh(gl, { geometry, program })
       mesh.setParent(scene)
       mesh.scale.x = mesh.scale.y = mesh.scale.z = size
-    } else {
-      instanced.setColourAt(i, galaxyColour(radius))
     }
+    const colour = galaxyColour(radius)
+    if (instanced) instanced.setColourAt(i, colour)
     cubes.push({
       mesh,
+      colour,
       size,
       radius,
       angle: arm * Math.PI * 2 + radius * 0.18 + spread,
@@ -311,12 +315,45 @@ const updateHud = (now) => {
       ? `${cubes.length.toLocaleString()} instances · 1 draw call`
       : `${cubes.length.toLocaleString()} meshes · ${inView.toLocaleString()} draw calls`,
     `In view ${inView.toLocaleString()} (${(cubes.length - inView).toLocaleString()} culled)`,
+    ...(instanced ? [`Hover ${hovered >= 0 ? `cube #${hovered}` : '–'}`] : []),
     `CPU   ${cpu.toFixed(2)} ms/frame`,
     `Frame ${frame.toFixed(1)} ms (${Math.round(1000 / frame)} fps)`
   ]
   hud.textContent = lines.join('\n')
   cpuTotal = frameTotal = frames = 0
   lastHud = now
+}
+
+// ── Hover ────────────────────────────────────────────────────────────────
+// In instanced mode, the cube under the pointer is lit up with setColourAt
+const raycast = new Raycast()
+// Cyan, which the galaxy's palette never reaches
+const HIGHLIGHT = [0.3, 1, 0.9]
+// The pointer in the camera pane's normal device coordinates, or null
+let pointer = null
+let hovered = -1
+controls.addEventListener('pointermove', (e) => {
+  const rect = controls.getBoundingClientRect()
+  pointer = [
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    1 - ((e.clientY - rect.top) / rect.height) * 2
+  ]
+})
+controls.addEventListener('pointerleave', () => (pointer = null))
+
+const hover = () => {
+  let id = -1
+  if (instanced && pointer) {
+    const [hit] = raycast.castMouse(camera, pointer).intersectMeshes(instanced)
+    if (hit) id = hit.instanceId
+  }
+  if (id === hovered) return
+  // The last one may be gone, after a rebuild
+  if (hovered >= 0 && instanced && hovered < cubes.length) {
+    instanced.setColourAt(hovered, cubes[hovered].colour)
+  }
+  hovered = id
+  if (hovered >= 0) instanced.setColourAt(hovered, HIGHLIGHT)
 }
 
 // ── Loop ─────────────────────────────────────────────────────────────────
@@ -383,6 +420,9 @@ const run = (now) => {
   gl.disable(gl.SCISSOR_TEST)
 
   cpuTotal += performance.now() - start
+  // Outside the timing, which compares drawing the two ways. The highlight
+  // shows from the next frame.
+  hover()
   if (lastFrame) frameTotal += now - lastFrame
   lastFrame = now
   frames++

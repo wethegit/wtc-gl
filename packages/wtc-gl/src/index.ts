@@ -52,6 +52,8 @@ export * from './helpers/GridHelper'
 export * from './helpers/VertexNormalsHelper'
 export * from './helpers/FaceNormalsHelper'
 
+export * from './interaction/Raycast'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
