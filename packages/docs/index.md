@@ -46,6 +46,13 @@ import {
 
 const renderer = new Renderer({ clearColour: [0.95, 0.96, 0.97, 1] })
 const { gl } = renderer
+// The renderer sizes the drawing buffer; CSS sizes the canvas on the page
+Object.assign(gl.canvas.style, {
+  position: 'fixed',
+  inset: '0',
+  width: '100%',
+  height: '100%'
+})
 document.body.appendChild(gl.canvas)
 
 const camera = new Camera({ fov: 35 })

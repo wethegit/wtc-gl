@@ -167,8 +167,8 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 Easy-to-browse, complete documentation for both packages. Today there's only a TypeDoc build of `wtc-gl` copied into the site by `build:site`. It misses `react-wtc-gl`, has no guides, and nothing checks that it builds or covers every export. The tooling (TypeDoc with a theme, VitePress with generated API pages, or similar) needs a plan first.
 
 - [x] A docs site published with the demos, with navigation, search and links between guides, API pages and demos. VitePress in `packages/docs`, laid out like the Tailwind docs, published at `/docs/` (the site root redirects there), with live examples (`<Example>`) that only run on screen.
-- [ ] Getting started: installing, a full-screen `FragmentShader`, a first 3D scene with a camera and lit meshes, and a `ScrollRenderer` page.
-- [ ] Guides for each area:
+- [x] Getting started: installing, a full-screen `FragmentShader`, a first 3D scene with a camera and lit meshes, and a `ScrollRenderer` page.
+- [x] Guides for each area, 21 pages with live examples:
   - the renderer, scene graph and cameras;
   - programs, uniforms and textures;
   - geometry, primitives, paths and `Polyline`;

@@ -33,7 +33,65 @@ const guide: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'Introduction', link: '/' },
       { text: 'Installation', link: '/getting-started/installation' },
-      { text: 'Your first shader', link: '/getting-started/first-shader' }
+      { text: 'Your first shader', link: '/getting-started/first-shader' },
+      { text: 'Your first 3D scene', link: '/getting-started/first-3d-scene' },
+      {
+        text: 'Scroll-synced scenes',
+        link: '/getting-started/scroll-synced-scenes'
+      }
+    ]
+  },
+  {
+    text: 'Core concepts',
+    items: [
+      { text: 'Renderer', link: '/core/renderer' },
+      { text: 'Scene graph', link: '/core/scene-graph' },
+      { text: 'Cameras', link: '/core/cameras' },
+      { text: 'Programs and shaders', link: '/core/programs-and-shaders' },
+      { text: 'Uniforms', link: '/core/uniforms' },
+      { text: 'Textures', link: '/core/textures' },
+      { text: 'Render targets', link: '/core/render-targets' },
+      { text: 'Cleaning up', link: '/core/cleaning-up' }
+    ]
+  },
+  {
+    text: 'Geometry',
+    items: [
+      {
+        text: 'Geometry and attributes',
+        link: '/geometry/geometry-and-attributes'
+      },
+      { text: 'Primitives', link: '/geometry/primitives' },
+      { text: 'Paths and curves', link: '/geometry/paths-and-curves' },
+      { text: 'Tube, Extrude and Lathe', link: '/geometry/tube-extrude-lathe' },
+      { text: 'CSG', link: '/geometry/csg' },
+      { text: 'Instancing', link: '/geometry/instancing' }
+    ]
+  },
+  {
+    text: 'Lines',
+    items: [{ text: 'Polyline', link: '/lines/polyline' }]
+  },
+  {
+    text: 'Lighting',
+    items: [
+      { text: 'Lights and LitProgram', link: '/lighting/lights' },
+      { text: 'Shadows', link: '/lighting/shadows' },
+      { text: 'Debug helpers', link: '/lighting/debug-helpers' }
+    ]
+  },
+  {
+    text: 'Loading',
+    items: [{ text: 'glTF models', link: '/loading/gltf' }]
+  },
+  {
+    text: 'Interaction',
+    items: [{ text: 'Raycast', link: '/interaction/raycast' }]
+  },
+  {
+    text: 'Simulation',
+    items: [
+      { text: 'TransformFeedback', link: '/simulation/transform-feedback' }
     ]
   }
 ]
@@ -59,6 +117,8 @@ export default defineConfig({
     'A small WebGL2 library for shader-driven sites: scene graph, geometry, lines, lighting, loading and scroll-synced scenes.',
   base: '/wtc-gl/docs/',
   cleanUrls: true,
+  // The README is for people working on the docs
+  srcExclude: ['README.md'],
   lastUpdated: false,
   // The API pages link to sources on GitHub and to each other; everything
   // else must resolve
