@@ -5,7 +5,7 @@
   "packageManager": "pnpm@12.18.0",
   "scripts": {
     "prepare": "husky",
-    "dev": "pnpm --filter wtc-gl-site run dev",
+    "dev": "pnpm --parallel --filter wtc-gl-site --filter wtc-gl-docs run dev",
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src ./packages/*/test",

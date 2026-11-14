@@ -18,14 +18,6 @@ body {
   color: var(--text);
 }
 
-.demo-nav {
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-}
-.demo-nav__sep,
-.demo-nav__title {
-  color: var(--muted);
-}
-
 .content {
   position: static;
   z-index: auto;

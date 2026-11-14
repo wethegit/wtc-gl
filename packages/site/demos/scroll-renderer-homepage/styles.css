@@ -13,7 +13,8 @@
 
 /* ── hero override ── */
 .hero {
-  padding: 0;
+  /* Only clear the top bar and its row of section links */
+  padding: var(--nav-offset) 0 0;
 }
 .hero__text {
   font-size: clamp(1em, 1.8vw, 1.15em);

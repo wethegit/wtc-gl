@@ -4,6 +4,8 @@
    rules below explicitly neutralise site typography.) */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* The top bar shared with every demo */
+@import '../nav.css';
 
 /* ── reset ── */
 
@@ -78,40 +80,6 @@ h3 {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 1.2em;
-}
-
-/* ── demo nav ── */
-
-.demo-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  padding: 0 2em;
-  height: 3em;
-  gap: 0.5em;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  font-family: system-ui, sans-serif;
-  font-size: 14px;
-}
-
-.demo-nav__brand {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.demo-nav__sep {
-  color: rgba(38, 34, 27, 0.35);
-}
-
-.demo-nav__title {
-  color: rgba(38, 34, 27, 0.7);
 }
 
 /* ── panning layers ─────────────────────────────────────────────────────────
