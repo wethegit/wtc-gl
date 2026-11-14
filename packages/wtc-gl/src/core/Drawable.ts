@@ -5,14 +5,21 @@ import { Program } from './Program'
 
 let ID = 0
 
+/**
+ * Options for creating a {@link Drawable}.
+ * @category Core
+ */
 export interface DrawableOptions {
+  /** Whether to skip the object when it's outside the camera's frustum. @default true */
   frustumCulled: boolean
+  /** An explicit render order. When 0, the order comes from the object's depth at render time. @default 0 */
   renderOrder: number
 }
 
 /**
  * Class representing A drawable object. A drawable object is one that is actually rendered to screen, this does not include cameras and groups.
  * @extends Obj
+ * @category Core
  **/
 export class Drawable extends Obj {
   /**
@@ -46,10 +53,8 @@ export class Drawable extends Obj {
 
   /**
    * Create a drawable object. This should never be instanciated directly
-   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
-   * @param {Object} __namedParameters - The parameters to be used for the camera
-   * @param {boolean} frustumCulled - Whether to apply culling to this object
-   * @param {number} renderOrder - The explicit render order of the object. If this is zero, then it will be instead calculated at render time.
+   * @param gl - The WTCGL Rendering context
+   * @param options - Culling and render order; see {@link DrawableOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,

@@ -1,6 +1,7 @@
 /**
  * Tagged template literal for inline GLSL. A no-op at runtime; exists so
  * editors with a GLSL extension can syntax-highlight the string contents.
+ * @category Recipes
  *
  * @example
  * const frag = glsl`
@@ -22,6 +23,7 @@ export const glsl = (
 /**
  * Reads GLSL source from a `<script>` element in the page. Useful when you
  * want to keep shaders inline in HTML rather than in separate `.frag` files.
+ * @category Recipes
  *
  * @param selector - CSS selector for the script element containing the GLSL source.
  * @throws {Error} If no element is found for the given selector.

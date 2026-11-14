@@ -1,5 +1,9 @@
 import { Uniform } from '../core/Uniform'
 
+/**
+ * Options for `Lights`. Every property is optional.
+ * @category Lighting
+ */
 export interface LightsOptions {
   /**
    * The direction towards the directional light, in world space. It's
@@ -35,15 +39,22 @@ export interface LightsOptions {
  * const shiny = new LitProgram(gl, { lights, specular: 0.6 })
  * lights.direction = [0, 1, 0] // both update
  * ```
+ * @category Lighting
  */
 export class Lights {
   /** The light uniforms, shared by every program using these lights. */
   readonly uniforms: {
+    /** The normalised direction towards the directional light (`vec3`). */
     u_lightDirection: Uniform
+    /** The directional light's colour (`vec3`). */
     u_lightColour: Uniform
+    /** The directional light's strength (`float`). */
     u_lightIntensity: Uniform
+    /** The hemisphere colour from above (`vec3`). */
     u_skyColour: Uniform
+    /** The hemisphere colour from below (`vec3`). */
     u_groundColour: Uniform
+    /** Flat light added everywhere (`float`). */
     u_ambient: Uniform
   }
 
@@ -98,6 +109,7 @@ export class Lights {
       number
     ]
   }
+  /** Set the direction towards the directional light. It's normalised. */
   set direction(value: ArrayLike<number>) {
     const length = Math.hypot(value[0], value[1], value[2]) || 1
     const d = this.uniforms.u_lightDirection.value as number[]
@@ -114,6 +126,7 @@ export class Lights {
       number
     ]
   }
+  /** Set the directional light's colour. */
   set colour(value: ArrayLike<number>) {
     copy(this.uniforms.u_lightColour, value)
   }
@@ -122,6 +135,7 @@ export class Lights {
   get intensity(): number {
     return this.uniforms.u_lightIntensity.value as number
   }
+  /** Set the directional light's strength. */
   set intensity(value: number) {
     this.uniforms.u_lightIntensity.value = value
   }
@@ -134,6 +148,7 @@ export class Lights {
       number
     ]
   }
+  /** Set the hemisphere light from above. */
   set sky(value: ArrayLike<number>) {
     copy(this.uniforms.u_skyColour, value)
   }
@@ -146,6 +161,7 @@ export class Lights {
       number
     ]
   }
+  /** Set the hemisphere light from below. */
   set ground(value: ArrayLike<number>) {
     copy(this.uniforms.u_groundColour, value)
   }
@@ -154,6 +170,7 @@ export class Lights {
   get ambient(): number {
     return this.uniforms.u_ambient.value as number
   }
+  /** Set the flat light added everywhere. */
   set ambient(value: number) {
     this.uniforms.u_ambient.value = value
   }

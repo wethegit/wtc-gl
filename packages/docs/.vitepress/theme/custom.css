@@ -221,7 +221,11 @@
   padding: 10px 16px 10px 0;
   text-align: left;
   vertical-align: top;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+/* Names on one line; types and descriptions wrap */
+.vp-doc td:first-child {
+  white-space: nowrap;
 }
 .vp-doc th {
   font-family: var(--vp-font-family-mono);

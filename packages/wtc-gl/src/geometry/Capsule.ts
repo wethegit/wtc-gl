@@ -7,12 +7,22 @@ import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 import { Lathe } from './Lathe'
 
+/**
+ * Options for creating a {@link Capsule}.
+ * @category Geometry
+ */
 export interface CapsuleOptions {
+  /** Radius of the cylinder and the hemispheres. @default 0.25 */
   radius: number
+  /** Whole length along y, tip to tip. @default 1 */
   height: number
+  /** Number of divisions in each quarter circle of the caps. @default 4 */
   capSegments: number
+  /** Number of divisions around the y axis. @default 8 */
   radialSegments: number
+  /** Number of divisions along the straight part. @default 1 */
   heightSegments: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
@@ -22,8 +32,14 @@ export interface CapsuleOptions {
  * `Cylinder`. A height under `2 * radius` gives a sphere of that radius.
  * `capSegments` are the steps in each quarter circle, and `heightSegments` the
  * steps along the straight part.
+ * @category Geometry
  */
 export class Capsule extends Geometry {
+  /**
+   * Create a capsule
+   * @param gl - The WTCGL rendering context
+   * @param options - Radius, height and divisions; see {@link CapsuleOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

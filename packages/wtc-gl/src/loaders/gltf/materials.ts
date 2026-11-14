@@ -6,10 +6,16 @@ import { LitProgram } from '../../lighting/LitProgram'
 import { linearToSRGB } from './colour'
 import type { GLTFMaterial } from './types'
 
-/** What a primitive needs from its program beyond its material. */
+/**
+ * What a primitive needs from its program beyond its material.
+ * @category Loaders
+ */
 export type ProgramFlags = {
+  /** Whether the primitive has a `COLOR_0` attribute to multiply by. */
   vertexColours: boolean
+  /** Whether to shade flat, for a primitive without normals. */
   flatShading: boolean
+  /** Whether the primitive is drawn as an `InstancedMesh`. */
   instanced: boolean
 }
 
@@ -29,6 +35,14 @@ export type ProgramFlags = {
  * - With a `shadow`, the program receives it.
  * - Normal, occlusion and metallic-roughness textures are ignored. Shading is
  *   in sRGB rather than linear, so lighting and blending are approximate.
+ *
+ * @param gl - The rendering context.
+ * @param material - The glTF material, or undefined for the default material.
+ * @param textures - The loaded textures, by glTF texture index.
+ * @param lights - The lights the program shares.
+ * @param flags - What the primitive needs beyond its material.
+ * @param shadow - A shadow for the program to receive, or null.
+ * @category Loaders
  */
 export function materialProgram(
   gl: WTCGLRenderingContext,

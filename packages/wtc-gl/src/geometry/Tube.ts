@@ -11,12 +11,22 @@ import type { Path } from '../path/Path'
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
+/**
+ * Options for creating a {@link Tube}.
+ * @category Geometry
+ */
 export interface TubeOptions {
+  /** The `Path` (or `Curve`) to sweep along. Required. */
   path: Path
+  /** Radius of the tube, or a function of `u`, the fraction of the way along the path, that returns it. @default 0.1 */
   radius: number | ((u: number) => number)
+  /** Number of divisions along the path. @default 64 */
   tubularSegments: number
+  /** Number of divisions around the tube. @default 8 */
   radialSegments: number
+  /** Whether to join the last ring onto the first. @default path.closed */
   closed: boolean
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
@@ -29,8 +39,14 @@ export interface TubeOptions {
  * the path, for tapers. `closed` (by default the path's own) joins the last
  * ring onto the first. u runs along the path and v around the tube. The ends
  * are open, so draw it two-sided, or cap it, if they'll be seen.
+ * @category Geometry
  */
 export class Tube extends Geometry {
+  /**
+   * Create a tube
+   * @param gl - The WTCGL rendering context
+   * @param options - The path, radius and divisions; see {@link TubeOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

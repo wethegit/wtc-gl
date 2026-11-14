@@ -5,16 +5,20 @@ import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { sharedAttribute } from '../geometry/sharedAttribute'
 import { lineProgram } from './lineProgram'
 
+/**
+ * Options for `WireMesh`. Only `geometry` is required.
+ * @category Helpers
+ */
 export interface WireMeshOptions {
-  /** The geometry to draw the edges of. */
+  /** The geometry to draw the edges of. Required. */
   geometry: Geometry
-  /** @default [0, 0, 0] */
+  /** The line colour. @default [0, 0, 0] */
   colour: [number, number, number]
-  /** @default 1 */
+  /** The line alpha. Below 1 the lines blend. @default 1 */
   opacity: number
-  /** @default true */
+  /** Whether to skip drawing when the source's bounds are outside the camera's view. @default true */
   frustumCulled: boolean
-  /** @default 0 */
+  /** The mesh's draw order, as in `Mesh`. @default 0 */
   renderOrder: number
 }
 
@@ -31,6 +35,7 @@ export interface WireMeshOptions {
  * that mesh (`wire.setParent(mesh)`) or give it the same transform. It's
  * pulled slightly towards the camera so it shows on the surface. It needs a
  * camera to draw.
+ * @category Helpers
  */
 export class WireMesh extends Mesh {
   /** The geometry whose edges are drawn. */

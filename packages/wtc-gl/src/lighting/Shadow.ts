@@ -35,11 +35,16 @@ import shadowSource from './shadow-shading.glsl'
  *
  * Then pass `shadowFactor(v_shadowCoord)` as the last argument of
  * `litShade`.
+ * @category Lighting
  */
 export const shadowShading: string = shadowSource
 
+/**
+ * Options for `Shadow`. Only `lights` is required.
+ * @category Lighting
+ */
 export interface ShadowOptions {
-  /** The lights whose directional light casts the shadow. */
+  /** The lights whose directional light casts the shadow. Required. */
   lights: Lights
   /** The centre of the area that gets shadows. @default (0, 0, 0) */
   target: Vec3
@@ -65,6 +70,10 @@ export interface ShadowOptions {
   softness: number
 }
 
+/**
+ * Options for `Shadow.add`.
+ * @category Lighting
+ */
 export interface ShadowCasterOptions {
   /**
    * The program to draw this node's meshes into the shadow map with, for
@@ -127,8 +136,10 @@ void main() {}
  * spot lights. Alpha-masked surfaces cast solid shadows, unless they're given
  * their own depth program. An `InstancedMesh` that culls its instances
  * differently against the light and the view camera re-uploads them for each.
+ * @category Lighting
  */
 export class Shadow {
+  /** The rendering context the shadow map belongs to. */
   readonly gl: WTCGLRenderingContext
   /** The lights whose directional light casts the shadow. */
   readonly lights: Lights
@@ -140,11 +151,17 @@ export class Shadow {
   readonly depthTexture: Texture
   /** The shadow uniforms, shared by every program that receives the shadow. */
   readonly uniforms: {
+    /** The depth texture (`sampler2DShadow`). */
     u_shadowMap: Uniform
+    /** World space to shadow map space, 0 to 1 on each axis (`mat4`). */
     u_shadowMatrix: Uniform
+    /** The depth bias (`float`). */
     u_shadowBias: Uniform
+    /** The normal bias, converted from texels to world units (`float`). */
     u_shadowNormalBias: Uniform
+    /** The filter's tap spacing, in texels (`float`). */
     u_shadowSoftness: Uniform
+    /** The size of one shadow map texel, `1 / mapSize` (`float`). */
     u_shadowTexel: Uniform
   }
 
@@ -258,6 +275,7 @@ export class Shadow {
   get mapSize(): number {
     return this.renderTarget.width
   }
+  /** Resize the shadow map. */
   set mapSize(value: number) {
     this.renderTarget.resize(value, value)
   }
@@ -436,10 +454,17 @@ export class Shadow {
   /**
    * Draw the casters into the shadow map. Call it each frame before
    * rendering the receivers, or whenever the casters or the light move.
-   * @param scene - Updated first, so the casters' world matrices are current.
-   * @param update - Whether to update `scene`'s world matrices. @default true
+   * @param options - The scene to update before drawing, and whether to.
    */
-  render({ scene, update = true }: { scene?: Obj; update?: boolean } = {}) {
+  render({
+    scene,
+    update = true
+  }: {
+    /** Updated first, so the casters' world matrices are current. */
+    scene?: Obj
+    /** Whether to update `scene`'s world matrices. @default true */
+    update?: boolean
+  } = {}) {
     const renderer = this.gl.renderer
     if (renderer.contextLost) return
     if (scene && update) scene.updateMatrixWorld()

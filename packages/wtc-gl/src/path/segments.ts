@@ -3,7 +3,10 @@
 import { Vec3 } from 'wtc-math'
 import type { Vec2 } from 'wtc-math'
 
-/** A point on a path: a `Vec3`, a `Vec2` (z = 0), or `[x, y]` / `[x, y, z]`. */
+/**
+ * A point on a path: a `Vec3`, a `Vec2` (z = 0), or `[x, y]` / `[x, y, z]`.
+ * @category Paths
+ */
 export type PathPoint =
   Vec3 | Vec2 | [number, number] | [number, number, number]
 
@@ -45,9 +48,12 @@ const write = (out: Vec3, x: number, y: number, z: number): Vec3 => {
  * One piece of a `Path`, parameterised by t from 0 to 1. t isn't spaced evenly
  * by distance along a curve, so `lengthToT` maps a distance along the segment
  * to its t.
+ * @category Paths
  */
 export abstract class PathSegment {
+  /** The tilt (radians) at t = 0. */
   tiltStart: number
+  /** The tilt (radians) at t = 1. */
   tiltEnd: number
 
   #length = -1
@@ -56,6 +62,10 @@ export abstract class PathSegment {
   // Scratch for the derivative, so measuring doesn't allocate
   #d: XYZ = [0, 0, 0]
 
+  /**
+   * @param tiltStart - The tilt (radians) at the start
+   * @param tiltEnd - The tilt (radians) at the end
+   */
   constructor(tiltStart = 0, tiltEnd = 0) {
     this.tiltStart = tiltStart
     this.tiltEnd = tiltEnd
@@ -71,7 +81,10 @@ export abstract class PathSegment {
   }
 
   /** The derivative at t as plain numbers, written into `out`. */
-  abstract derivative(t: number, out: XYZ): XYZ
+  abstract derivative(
+    t: number,
+    out: [number, number, number]
+  ): [number, number, number]
 
   /** The segment's length, worked out once by Gauss-Legendre quadrature. */
   get length(): number {
@@ -131,7 +144,7 @@ export abstract class PathSegment {
     return this.lengthBetween(0, t)
   }
 
-  // Integrates |dP/dt| over [a, b]
+  /** The distance along the segment from t = a to t = b, by Gauss-Legendre quadrature. */
   protected lengthBetween(a: number, b: number): number {
     const half = (b - a) / 2
     const mid = (a + b) / 2
@@ -147,11 +160,22 @@ export abstract class PathSegment {
   }
 }
 
-/** A straight line from `p0` to `p1`. */
+/**
+ * A straight line from `p0` to `p1`.
+ * @category Paths
+ */
 export class LineSegment extends PathSegment {
-  p0: XYZ
-  p1: XYZ
+  /** The start point. */
+  p0: [number, number, number]
+  /** The end point. */
+  p1: [number, number, number]
 
+  /**
+   * @param p0 - The start point
+   * @param p1 - The end point
+   * @param tiltStart - The tilt (radians) at the start
+   * @param tiltEnd - The tilt (radians) at the end
+   */
   constructor(p0: PathPoint, p1: PathPoint, tiltStart = 0, tiltEnd = 0) {
     super(tiltStart, tiltEnd)
     this.p0 = toXYZ(p0)
@@ -169,7 +193,10 @@ export class LineSegment extends PathSegment {
     )
   }
 
-  derivative(_t: number, out: XYZ): XYZ {
+  derivative(
+    _t: number,
+    out: [number, number, number]
+  ): [number, number, number] {
     out[0] = this.p1[0] - this.p0[0]
     out[1] = this.p1[1] - this.p0[1]
     out[2] = this.p1[2] - this.p0[2]
@@ -192,12 +219,25 @@ export class LineSegment extends PathSegment {
   }
 }
 
-/** A quadratic Bézier from `p0` to `p2`, pulled towards `p1`. */
+/**
+ * A quadratic Bézier from `p0` to `p2`, pulled towards `p1`.
+ * @category Paths
+ */
 export class QuadraticBezierSegment extends PathSegment {
-  p0: XYZ
-  p1: XYZ
-  p2: XYZ
+  /** The start point. */
+  p0: [number, number, number]
+  /** The control point. */
+  p1: [number, number, number]
+  /** The end point. */
+  p2: [number, number, number]
 
+  /**
+   * @param p0 - The start point
+   * @param p1 - The control point
+   * @param p2 - The end point
+   * @param tiltStart - The tilt (radians) at the start
+   * @param tiltEnd - The tilt (radians) at the end
+   */
   constructor(
     p0: PathPoint,
     p1: PathPoint,
@@ -225,7 +265,10 @@ export class QuadraticBezierSegment extends PathSegment {
     )
   }
 
-  derivative(t: number, out: XYZ): XYZ {
+  derivative(
+    t: number,
+    out: [number, number, number]
+  ): [number, number, number] {
     const k = 1 - t
     const { p0, p1, p2 } = this
     for (let i = 0; i < 3; i++) {
@@ -235,13 +278,28 @@ export class QuadraticBezierSegment extends PathSegment {
   }
 }
 
-/** A cubic Bézier from `p0` to `p3`, with control points `p1` and `p2`. */
+/**
+ * A cubic Bézier from `p0` to `p3`, with control points `p1` and `p2`.
+ * @category Paths
+ */
 export class CubicBezierSegment extends PathSegment {
-  p0: XYZ
-  p1: XYZ
-  p2: XYZ
-  p3: XYZ
+  /** The start point. */
+  p0: [number, number, number]
+  /** The first control point. */
+  p1: [number, number, number]
+  /** The second control point. */
+  p2: [number, number, number]
+  /** The end point. */
+  p3: [number, number, number]
 
+  /**
+   * @param p0 - The start point
+   * @param p1 - The first control point
+   * @param p2 - The second control point
+   * @param p3 - The end point
+   * @param tiltStart - The tilt (radians) at the start
+   * @param tiltEnd - The tilt (radians) at the end
+   */
   constructor(
     p0: PathPoint,
     p1: PathPoint,
@@ -272,7 +330,10 @@ export class CubicBezierSegment extends PathSegment {
     )
   }
 
-  derivative(t: number, out: XYZ): XYZ {
+  derivative(
+    t: number,
+    out: [number, number, number]
+  ): [number, number, number] {
     const k = 1 - t
     const { p0, p1, p2, p3 } = this
     for (let i = 0; i < 3; i++) {

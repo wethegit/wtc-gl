@@ -6,9 +6,18 @@ import { normalLines, readable, reader } from './normalLines'
 
 import normalsVertex from './normals.vert'
 
+/**
+ * Options for `VertexNormalsHelper` and `FaceNormalsHelper`. Every property
+ * is optional.
+ * @category Helpers
+ */
 export interface NormalsHelperOptions {
   /** The length of each line, in world units. @default 0.1 */
   size: number
+  /**
+   * The line colour.
+   * @default [0.25, 0.6, 1] for vertex normals, [1, 0.55, 0.2] for face normals
+   */
   colour: [number, number, number]
 }
 
@@ -20,6 +29,7 @@ export interface NormalsHelperOptions {
  * positions and normals once: call `update()` after they change, or after
  * the mesh's geometry is replaced. Drawn with `gl.LINES`, so the lines are
  * one pixel wide. It isn't frustum culled, and needs a camera to draw.
+ * @category Helpers
  */
 export class VertexNormalsHelper extends Mesh {
   /** The mesh whose normals are shown. */
@@ -50,6 +60,7 @@ export class VertexNormalsHelper extends Mesh {
   get size(): number {
     return this.program.uniforms.u_size.value as number
   }
+  /** Set the length of each line, in world units. */
   set size(value: number) {
     this.program.uniforms.u_size.value = value
   }

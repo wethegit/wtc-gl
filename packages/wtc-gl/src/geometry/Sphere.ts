@@ -8,18 +8,41 @@ import type {
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
+/**
+ * Options for creating a {@link Sphere}.
+ * @category Geometry
+ */
 export interface SphereOptions {
+  /** The sphere's radius. @default 0.5 */
   radius: number
+  /** Number of divisions around the y axis. @default 16 */
   widthSegments: number
+  /** Number of divisions from pole to pole. @default Math.ceil(widthSegments * 0.5) */
   heightSegments: number
+  /** Angle around the y axis to start at, in radians. @default 0 */
   phiStart: number
+  /** Angle around the y axis to sweep, in radians. @default Math.PI * 2 */
   phiLength: number
+  /** Angle down from the top pole to start at, in radians. @default 0 */
   thetaStart: number
+  /** Angle down from `thetaStart` to sweep, in radians. @default Math.PI */
   thetaLength: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
+/**
+ * A UV sphere centred on the origin, with its poles on the y axis. φ runs
+ * around the y axis from -x towards +z, and θ down from the top pole (+y), so
+ * partial sweeps of either leave it open.
+ * @category Geometry
+ */
 export class Sphere extends Geometry {
+  /**
+   * Create a sphere
+   * @param gl - The WTCGL rendering context
+   * @param options - Radius, divisions and sweep; see {@link SphereOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

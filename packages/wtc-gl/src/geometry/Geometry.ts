@@ -115,6 +115,7 @@ interface AttributeBinding {
 
 /**
  * Class representing some Geometry.
+ * @category Geometry
  **/
 export class Geometry {
   /**
@@ -149,7 +150,12 @@ export class Geometry {
   /**
    * The range of supplied elements to draw.
    */
-  drawRange: { start: number; count: number }
+  drawRange: {
+    /** The first element to draw: an index into `index` if there is one, otherwise a vertex. */
+    start: number
+    /** The number of elements to draw. */
+    count: number
+  }
   /**
    * The number of instances to draw.
    */
@@ -394,17 +400,17 @@ export class Geometry {
     }
   }
 
-  /**
-   * Draw the geometry
-   * @param {Object} __namedParameters - The parameters to be used for the draw command
-   * @param {Program} program - The Program object to draw to
-   * @param {GLenum} mode - The mode to draw the object in
-   */
   #updateAttribute = (_: unknown, { name }: { name: string }) => {
     const attr = this.attributes[name]
     if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
   }
 
+  /**
+   * Draw the geometry
+   * @param options - The draw settings.
+   * @param options.program - The Program object to draw to
+   * @param options.mode - The mode to draw the object in, e.g. `gl.TRIANGLES`
+   */
   draw({
     program,
     mode = this.gl.TRIANGLES
@@ -934,6 +940,7 @@ export class Geometry {
  * index. Draw ranges are ignored and the inputs are unchanged.
  * @param {Geometry[]} geometries - The geometries to combine
  * @returns {Geometry} The combined geometry
+ * @category Geometry
  */
 export function mergeGeometries(geometries: Geometry[]): Geometry {
   if (!geometries.length) throw new Error('mergeGeometries needs a geometry')

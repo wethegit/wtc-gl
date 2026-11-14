@@ -3,17 +3,30 @@ import { Vec3 } from 'wtc-math'
 // Anything with x, y and z, such as a Vec3
 type XYZ = { x: number; y: number; z: number }
 
+/**
+ * Frames along a path, one per sample, each made of a unit tangent, normal
+ * and binormal.
+ * @category Paths
+ */
 export interface PathFrames {
+  /** The unit tangents, in the direction of travel. */
   tangents: Vec3[]
+  /** The unit normals, at right angles to the tangents. */
   normals: Vec3[]
+  /** The unit binormals: tangent × normal. */
   binormals: Vec3[]
 }
 
+/**
+ * Options for {@link rotationMinimisingFrames}.
+ * @category Paths
+ */
 export interface RotationMinimisingFramesOptions {
   /**
    * Whether the tangents describe a loop. The last tangent should then repeat
    * the first: the twist left over after one lap is spread evenly around it,
    * so the last frame matches the first.
+   * @default false
    */
   closed?: boolean
   /** A twist (radians) for each frame, about its tangent. */
@@ -23,7 +36,14 @@ export interface RotationMinimisingFramesOptions {
    * first tangent. Without it, or when it's parallel to the first tangent,
    * the axis least like the first tangent is used.
    */
-  normal?: XYZ
+  normal?: {
+    /** The x component. */
+    x: number
+    /** The y component. */
+    y: number
+    /** The z component. */
+    z: number
+  }
 }
 
 export const clamp = (v: number, min: number, max: number) =>
@@ -67,9 +87,13 @@ const copy = (v: XYZ) => new Vec3(v.x, v.y, v.z)
  * The binormal is tangent × normal.
  *
  * See "Computation of Rotation Minimizing Frames", Wang et al. 2008.
+ * @param tangents - Unit tangents, one per frame. Anything with x, y and z, such as a `Vec3`
+ * @param options - Closing, tilts and the starting normal
+ * @returns New tangents, normals and binormals; the inputs aren't changed
+ * @category Paths
  */
 export function rotationMinimisingFrames(
-  tangents: XYZ[],
+  tangents: { x: number; y: number; z: number }[],
   { closed = false, tilts, normal }: RotationMinimisingFramesOptions = {}
 ): PathFrames {
   const count = tangents.length

@@ -8,18 +8,22 @@ import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { sharedAttribute } from '../geometry/sharedAttribute'
 
+/**
+ * Options for creating an {@link InstancedMesh}.
+ * @category Core
+ */
 export interface InstancedMeshOptions {
   /** The geometry each instance draws. It isn't changed. */
   geometry: Geometry
   /** A program that reads `instanceMatrix`, such as `LitProgram({ instanced: true })`. */
   program: Program
-  /** How many instances there's room for. */
+  /** How many instances there's room for. Must be above 0. */
   count: number
-  /** @default gl.TRIANGLES */
+  /** The draw mode, e.g. `gl.TRIANGLES` or `gl.LINES`. @default gl.TRIANGLES */
   mode?: GLenum
   /** Cull each instance against the camera. @default true */
   frustumCulled?: boolean
-  /** @default 0 */
+  /** An explicit render order. When 0, the order comes from the mesh's depth at render time. @default 0 */
   renderOrder?: number
 }
 
@@ -51,6 +55,7 @@ type FrustumPlane = Camera['frustum'][string]
  * drawing, for example to show one camera's view from another. The mesh as a
  * whole is never culled, and transparent instances aren't sorted among
  * themselves.
+ * @category Core
  */
 export class InstancedMesh extends Mesh {
   /** The geometry each instance draws. */
@@ -77,6 +82,12 @@ export class InstancedMesh extends Mesh {
   #sharedKeys: string[] = []
   #planes: FrustumPlane[] = []
 
+  /**
+   * Create an instanced mesh. Throws if there's no geometry or `count` isn't
+   * above 0.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The geometry, program, capacity and draw settings; see {@link InstancedMeshOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -145,6 +156,7 @@ export class InstancedMesh extends Mesh {
   get count(): number {
     return this.#count
   }
+  /** Set how many instances are drawn. Clamped to 0 to `capacity` and floored. */
   set count(value: number) {
     this.#count = Math.max(0, Math.min(this.capacity, Math.floor(value)))
     this.#dirty = true

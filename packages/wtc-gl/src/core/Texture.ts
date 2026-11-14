@@ -8,6 +8,7 @@ let ID = 1
  * Sources that can be uploaded as an image. `ImageBitmap` ignores `flipY` and
  * `premultiplyAlpha`; set `imageOrientation` and `premultiplyAlpha` in
  * `createImageBitmap` instead.
+ * @category Core
  */
 export type TextureImage =
   | HTMLImageElement
@@ -20,6 +21,7 @@ export type TextureImage =
  * Typed arrays that can be uploaded as texture data. The array type has to
  * match `type`, e.g. `Uint8Array` with `gl.UNSIGNED_BYTE`, `Float32Array`
  * with `gl.FLOAT`, `Uint16Array` with `gl.HALF_FLOAT` or `gl.UNSIGNED_SHORT`.
+ * @category Core
  */
 export type TextureData =
   | Float32Array
@@ -33,35 +35,63 @@ export type TextureData =
 
 type ImageTypes = TextureImage
 
-/** Options for `Texture.fromURL`: texture options, and a signal to abort. */
+/**
+ * Options for `Texture.fromURL`: texture options, and a signal to abort.
+ * @category Core
+ */
 export type TextureLoadOptions = Partial<TextureOptions> & {
+  /** Aborts the fetch when signalled. */
   signal?: AbortSignal
 }
 
+/**
+ * Options for creating a {@link Texture}.
+ * @category Core
+ */
 export interface TextureOptions {
+  /** The image to upload, or six images (+X, -X, +Y, -Y, +Z, -Z) for a cube map. */
   image: ImageTypes | ImageTypes[]
+  /** Typed array data for a data texture. Needs `width` and `height`. */
   data: TextureData | null
+  /** The binding point, e.g. `gl.TEXTURE_2D` or `gl.TEXTURE_CUBE_MAP`. @default gl.TEXTURE_2D */
   target: GLenum
+  /** The data type of the pixels, e.g. `gl.UNSIGNED_BYTE`, `gl.FLOAT` or `gl.HALF_FLOAT`. @default gl.UNSIGNED_BYTE */
   type: GLenum
+  /** The format of the pixel data. @default gl.RGBA */
   format: GLenum
+  /** The format the texture is stored in on the GPU, e.g. `gl.RGBA32F`. @default the same as `format` */
   internalFormat: GLenum
+  /** Horizontal wrapping: `gl.CLAMP_TO_EDGE`, `gl.REPEAT` or `gl.MIRRORED_REPEAT`. @default gl.CLAMP_TO_EDGE */
   wrapS: GLenum
+  /** Vertical wrapping: `gl.CLAMP_TO_EDGE`, `gl.REPEAT` or `gl.MIRRORED_REPEAT`. @default gl.CLAMP_TO_EDGE */
   wrapT: GLenum
+  /** Whether to generate mipmaps after each upload. @default true */
   generateMipmaps: boolean
+  /** The filter used when the texture is drawn smaller. @default gl.NEAREST_MIPMAP_LINEAR with mipmaps, otherwise gl.LINEAR */
   minFilter: GLenum
+  /** The filter used when the texture is drawn larger. @default gl.LINEAR */
   magFilter: GLenum
+  /** Whether to premultiply the colour by alpha on upload. Ignored for `ImageBitmap`s. @default false */
   premultiplyAlpha: boolean
+  /** The row alignment of the pixel data, in bytes. @default 4 */
   unpackAlignment: 1 | 2 | 4 | 8
+  /** Whether to flip the image vertically on upload. Ignored for `ImageBitmap`s. @default true for gl.TEXTURE_2D, otherwise false */
   flipY: boolean
+  /** The anisotropic filtering level, capped at the device's maximum. 0 turns it off. @default 0 */
   anisotropy: number
+  /** For a depth texture, the comparison a `sampler2DShadow` makes, or null for none. @default null */
   compareFunc: GLenum | null
+  /** The mipmap level the image is uploaded to. @default 0 */
   level: number
+  /** The width in pixels, for data textures and render targets. Images set their own. */
   width: number
+  /** The height in pixels, for data textures and render targets. Images set their own. @default the same as `width` */
   height: number
 }
 
 /**
  * A texture class contains image data for use in a shader. Along with the image data, the texture contains state variable that determine how secondary conditions, like wrapping and interpolation work.
+ * @category Core
  */
 export class Texture {
   /**
@@ -138,7 +168,8 @@ export class Texture {
   wrapT: GLenum
 
   /**
-   * Whether to generate mip maps for this texture. This requires that the texture be power of 2 in size
+   * Whether to generate mipmaps for this texture. WebGL2 can mipmap textures
+   * of any size.
    * @default true
    */
   generateMipmaps: boolean
@@ -179,6 +210,7 @@ export class Texture {
    * The image store
    */
   store: {
+    /** The image last uploaded, compared with `image` to see if it changed. */
     image?: ImageTypes | ImageTypes[]
   }
   /**
@@ -245,27 +277,9 @@ export class Texture {
   }
 
   /**
-   * Create a render target object.
-   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
-   * @param __namedParameters - The parameters to initialise the renderer.
-   * @param target - The binding point for the frame buffers.
-   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
-   * @param format - The texture format.
-   * @param internalFormat - the texture internalFormat.
-   * @param wrapS - Wrapping
-   * @param wrapT - Wrapping
-   * @param generateMipmaps - Whether to generate mips for this texture
-   * @param minFilter - The filter to use when rendering smaller
-   * @param magFilter - The filter to use when enlarging
-   * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
-   * @param flipY - Whether to flip the Y component of the supplied image
-   * @param anistropy - The anistropic filtering level for the texture.
-   * @param compareFunc - For a depth texture, the comparison a
-   * `sampler2DShadow` makes, or null for none.
-   * @param unpackAlignment - The unpack alignment for pixel stores.
-   * @param level - A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
-   * @param width - The width of the render target.
-   * @param height - The height of the render target.
+   * Create a texture. Nothing is uploaded until it's first used.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The texture's source and sampling settings; see {@link TextureOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -369,8 +383,7 @@ export class Texture {
 
   /**
    * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
-   * @param textureUnit The texture unit to update against.
-   * @returns
+   * @param textureUnit - The texture unit to update against.
    */
   update(textureUnit = 0) {
     const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)

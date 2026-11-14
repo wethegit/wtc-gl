@@ -12,51 +12,93 @@ import { GeometryAttribute } from './GeometryAttribute'
 // the loaded module in. These types are the parts of its API the adapter
 // uses, so the real module fits them.
 
-/** The options a manifold-3d `Mesh` is built from. */
+/**
+ * The options a manifold-3d `Mesh` is built from.
+ * @category Geometry
+ */
 export interface ManifoldMeshOptionsLike {
+  /** Properties per vertex, including the three for position. */
   numProp: number
+  /** Every vertex's properties, `numProp` at a time, position first. */
   vertProperties: Float32Array
+  /** Three vertex indices per triangle. */
   triVerts: Uint32Array
 }
 
-/** The parts of a manifold-3d `Mesh` the adapter uses. */
+/**
+ * The parts of a manifold-3d `Mesh` the adapter uses.
+ * @category Geometry
+ */
 export interface ManifoldMeshLike {
+  /** Properties per vertex, including the three for position. */
   numProp: number
+  /** Every vertex's properties, `numProp` at a time, position first. */
   vertProperties: Float32Array
+  /** Three vertex indices per triangle. */
   triVerts: Uint32Array
+  /** Where each run starts in `triVerts`, with one more entry for the end of the last. */
   runIndex: Uint32Array
+  /** The number of vertices. */
   readonly numVert: number
+  /** The number of runs: groups of triangles that came from the same input. */
   readonly numRun: number
+  /** Welds vertices at the same position, so seams close up. Returns whether it changed anything. */
   merge(): boolean
+  /** The transform a run went through, as a column-major 4×4 matrix. */
   transform(run: number): ArrayLike<number>
+  /** Whether a run was turned inside out, as by a subtraction. */
   backside(run: number): boolean
+  /** Whether manifold already keeps a run's normals up to date, as after `calculateNormals`. */
   hasNormals(run: number): boolean
 }
 
-/** The parts of a manifold-3d `Manifold` the adapter uses. */
+/**
+ * The parts of a manifold-3d `Manifold` the adapter uses.
+ * @category Geometry
+ */
 export interface ManifoldLike {
+  /** `'NoError'`, or why the manifold isn't valid. */
   status(): string
+  /** The manifold's triangles and vertex properties. */
   getMesh(): ManifoldMeshLike
+  /** A new manifold with normals written into the properties from `normalIdx`, keeping edges sharper than `minSharpAngle` degrees. */
   calculateNormals(normalIdx?: number, minSharpAngle?: number): ManifoldLike
+  /** Frees the manifold's WASM memory. */
   delete(): void
 }
 
-/** A loaded manifold-3d module, after `setup()`. */
+/**
+ * A loaded manifold-3d module, after `setup()`.
+ * @category Geometry
+ */
 export interface ManifoldModuleLike<
   M extends ManifoldLike = ManifoldLike,
   MeshType extends ManifoldMeshLike = ManifoldMeshLike
 > {
-  Mesh: new (options: ManifoldMeshOptionsLike) => MeshType
-  Manifold: new (mesh: MeshType) => M
+  /** The `Mesh` constructor. */
+  Mesh: {
+    /** Make a mesh from interleaved vertex properties and triangles. */
+    new (options: ManifoldMeshOptionsLike): MeshType
+  }
+  /** The `Manifold` constructor. */
+  Manifold: {
+    /** Make a manifold from a mesh. Throws if it isn't a closed solid. */
+    new (mesh: MeshType): M
+  }
 }
 
 /**
  * The vertex attributes carried through a manifold as its extra vertex
  * properties, by name and number of components, in order. `normal`, if
  * listed, always comes first.
+ * @category Geometry
  */
 export type ManifoldProperties = Record<string, number>
 
+/**
+ * Options for {@link fromManifold}.
+ * @category Geometry
+ */
 export interface ManifoldOptions {
   /**
    * The attributes to carry through. Give every geometry you combine, and
@@ -66,11 +108,16 @@ export interface ManifoldOptions {
   properties: ManifoldProperties
 }
 
+/**
+ * Options for {@link toManifold}.
+ * @category Geometry
+ */
 export interface ToManifoldOptions extends ManifoldOptions {
   /**
    * Values for attributes the geometry doesn't have, by name, such as
    * `{ colour: [1, 0.4, 0.2] }` to tint the faces a cutter leaves. Without
    * one, a missing attribute is 0s, or 1s for `colour`.
+   * @default {}
    */
   fill: Record<string, ArrayLike<number>>
   /**
@@ -139,6 +186,7 @@ let isExternalWarned = false
  * @param geometry - A closed, triangulated geometry
  * @param options - The attributes to carry through, and fill values
  * @returns A new manifold, which you own
+ * @category Geometry
  */
 export function toManifold<
   M extends ManifoldLike,
@@ -251,6 +299,7 @@ let isPropertyCountWarned = false
  * @param manifold - The manifold to convert
  * @param options - The attributes to read back
  * @returns A new Geometry
+ * @category Geometry
  */
 export function fromManifold(
   gl: WTCGLRenderingContext,

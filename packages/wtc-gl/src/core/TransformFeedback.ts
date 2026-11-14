@@ -9,6 +9,7 @@ import { Program } from './Program'
 
 /**
  * A per-vertex value the simulation reads, updates and writes back.
+ * @category Simulation
  */
 export interface TransformFeedbackAttribute {
   /**
@@ -26,6 +27,10 @@ export interface TransformFeedbackAttribute {
   varying: string
 }
 
+/**
+ * Options for creating a {@link TransformFeedback}.
+ * @category Simulation
+ */
 export interface TransformFeedbackOptions {
   /**
    * The simulation program. Its `transformFeedbackVaryings` must name every
@@ -95,8 +100,12 @@ interface Side {
  * sim.step()
  * renderer.render({ scene })
  * ```
+ * @category Simulation
  */
 export class TransformFeedback {
+  /**
+   * The WTCGL rendering context.
+   */
   gl: WTCGLRenderingContext
   /**
    * The simulation program.
@@ -123,6 +132,13 @@ export class TransformFeedback {
   // Reused for every step's draw, so stepping doesn't allocate
   #drawOptions: { program: Program; mode: GLenum }
 
+  /**
+   * Create the simulation's buffers and upload the starting values. Throws
+   * if the attributes don't match the program's varyings, or an attribute's
+   * data is too short for `count` vertices.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The program and attributes to simulate; see {@link TransformFeedbackOptions}.
+   */
   constructor(gl: WTCGLRenderingContext, options: TransformFeedbackOptions) {
     this.gl = gl
     this.#options = options

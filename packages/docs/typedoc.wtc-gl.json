@@ -5,5 +5,19 @@
   "entryPoints": ["../wtc-gl/src/index.ts"],
   "tsconfig": "../wtc-gl/tsconfig.json",
   "out": "./api/wtc-gl",
-  "docsRoot": "./"
+  "docsRoot": "./",
+  "categoryOrder": [
+    "Core",
+    "Geometry",
+    "Paths",
+    "Lines",
+    "Lighting",
+    "Helpers",
+    "Loaders",
+    "Interaction",
+    "Simulation",
+    "Recipes",
+    "Types",
+    "*"
+  ]
 }

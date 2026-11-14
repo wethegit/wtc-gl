@@ -8,21 +8,41 @@ import type {
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
-/** A profile point: distance from the y axis, then height. */
+/**
+ * A profile point: distance from the y axis, then height.
+ * @category Geometry
+ */
 export type LathePoint = [number, number] | Vec2
 
+/**
+ * Options for creating a {@link Lathe}.
+ * @category Geometry
+ */
 export interface LatheOptions {
+  /** The profile to spin, bottom to top. It needs at least two points. */
   points: LathePoint[]
+  /** Number of divisions around the y axis. @default 12 */
   segments: number
+  /** Angle to start at, in radians, from +z towards +x. @default 0 */
   phiStart: number
+  /** Angle to sweep, in radians. @default Math.PI * 2 */
   phiLength: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
+/**
+ * The arrays {@link Lathe.build} makes.
+ * @category Geometry
+ */
 export interface LatheData {
+  /** Vertex positions, three components each. */
   position: Float32Array
+  /** Vertex normals, three components each. */
   normal: Float32Array
+  /** Vertex uvs, two components each. */
   uv: Float32Array
+  /** Triangle indices. A Uint32Array when there are more than 65536 vertices. */
   index: Uint16Array | Uint32Array
 }
 
@@ -39,8 +59,14 @@ const toPair = (p: LathePoint): [number, number] =>
  * doesn't stretch where the points are unevenly spaced. Normals are smooth,
  * including at corners in the profile: for hard edges, use `toNonIndexed()`
  * then `computeVertexNormals()`.
+ * @category Geometry
  */
 export class Lathe extends Geometry {
+  /**
+   * Create a lathe
+   * @param gl - The WTCGL rendering context
+   * @param options - The profile, divisions and sweep; see {@link LatheOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

@@ -2,14 +2,27 @@ import { Path } from './Path'
 import { toXYZ } from './segments'
 import type { PathPoint, XYZ } from './segments'
 
+/**
+ * The kinds of curve a {@link Curve} can build.
+ * @category Paths
+ */
 export type CurveType =
   'catmullrom' | 'bspline' | 'quadraticbezier' | 'cubicbezier'
 
+/**
+ * Options for creating a {@link Curve}.
+ * @category Paths
+ */
 export interface CurveOptions {
+  /** The points to build the curve from. See {@link Curve} for how each type uses them. */
   points: PathPoint[]
+  /** The kind of curve. @default 'catmullrom' */
   type: CurveType
+  /** Whether the curve loops back to its first point. @default false */
   closed: boolean
+  /** For `catmullrom`, how the spacing of the points shapes the curve: 0 is uniform, 0.5 centripetal and 1 chordal. @default 0.5 */
   alpha: number
+  /** For `catmullrom`, tightens the curve towards straight lines at 1, or loosens it below 0. @default 0 */
   tension: number
 }
 
@@ -35,19 +48,31 @@ const distance = (a: XYZ, b: XYZ) =>
  *
  * It's a `Path`, so it samples evenly by distance and has frames. Change its
  * points with `setPoints`.
+ * @category Paths
  */
 export class Curve extends Path {
+  /** The `'catmullrom'` curve type. */
   static readonly CATMULLROM = 'catmullrom' as const
+  /** The `'bspline'` curve type. */
   static readonly BSPLINE = 'bspline' as const
+  /** The `'quadraticbezier'` curve type. */
   static readonly QUADRATICBEZIER = 'quadraticbezier' as const
+  /** The `'cubicbezier'` curve type. */
   static readonly CUBICBEZIER = 'cubicbezier' as const
 
+  /** The kind of curve. */
   readonly type: CurveType
+  /** How the spacing of the points shapes a `catmullrom` curve. */
   readonly alpha: number
+  /** How tight a `catmullrom` curve is. */
   readonly tension: number
   #closed: boolean
   #points: XYZ[] = []
 
+  /**
+   * Create a curve
+   * @param options - The points and the kind of curve; see {@link CurveOptions}.
+   */
   constructor({
     points = [],
     type = 'catmullrom',
@@ -64,7 +89,7 @@ export class Curve extends Path {
   }
 
   /** A copy of the points the curve was built from. */
-  get points(): XYZ[] {
+  get points(): [number, number, number][] {
     return this.#points.map((p) => [...p] as XYZ)
   }
 

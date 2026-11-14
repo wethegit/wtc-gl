@@ -5,7 +5,10 @@ import { Renderer, type RendererOptions } from '../../core/Renderer'
 import type { Uniform } from '../../core/Uniform'
 import { ScrollScene } from './ScrollScene'
 
-/** Options passed to the {@link ScrollRenderer} constructor. */
+/**
+ * Options passed to the {@link ScrollRenderer} constructor.
+ * @category Recipes
+ */
 export interface ScrollRendererOptions {
   /**
    * Props forwarded to the underlying {@link Renderer}. `autoClear` is always
@@ -116,6 +119,7 @@ export interface ScrollRendererOptions {
  * // body (or another non-positioned ancestor) so the canvas is document-relative
  * document.body.appendChild(renderer.canvas)
  * renderer.addScene(new ScrollScene({ element, scene, margin: renderer.overscanPx }))
+ * @category Recipes
  */
 export class ScrollRenderer {
   /** The underlying {@link Renderer} instance. */
@@ -146,6 +150,11 @@ export class ScrollRenderer {
   #sceneViewport: [Vec2, Vec2] = [new Vec2(), new Vec2()]
   #sceneScissor: [Vec2, Vec2] = [new Vec2(), new Vec2()]
 
+  /**
+   * Make the renderer and size it. The render loop starts when `playing` is
+   * set to `true`.
+   * @param options - Renderer options, layout and callbacks.
+   */
   constructor({
     rendererProps = {},
     layout = 'fixed',

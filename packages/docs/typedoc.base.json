@@ -41,5 +41,12 @@
   },
   "pageTitleTemplates": {
     "member": "{name}"
-  }
+  },
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": true
+  },
+  "treatValidationWarningsAsErrors": true,
+  "defaultCategory": "Other"
 }

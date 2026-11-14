@@ -166,7 +166,7 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 
 Easy-to-browse, complete documentation for both packages. Today there's only a TypeDoc build of `wtc-gl` copied into the site by `build:site`. It misses `react-wtc-gl`, has no guides, and nothing checks that it builds or covers every export. The tooling (TypeDoc with a theme, VitePress with generated API pages, or similar) needs a plan first.
 
-- [ ] A docs site published with the demos, with navigation, search and links between guides, API pages and demos.
+- [x] A docs site published with the demos, with navigation, search and links between guides, API pages and demos. VitePress in `packages/docs`, laid out like the Tailwind docs, published at `/docs/` (the site root redirects there), with live examples (`<Example>`) that only run on screen.
 - [ ] Getting started: installing, a full-screen `FragmentShader`, a first 3D scene with a camera and lit meshes, and a `ScrollRenderer` page.
 - [ ] Guides for each area:
   - the renderer, scene graph and cameras;
@@ -175,10 +175,10 @@ Easy-to-browse, complete documentation for both packages. Today there's only a T
   - lighting, shadows and `GLTFLoader`;
   - instancing, `Raycast` and `TransformFeedback`;
   - render targets and `ScrollRenderer`.
-- [ ] A full API reference for every export of `wtc-gl`, generated from TSDoc comments, with gaps in those comments filled.
+- [x] A full API reference for every export of `wtc-gl`, generated from TSDoc comments, with gaps in those comments filled. TypeDoc writes Markdown pages for both packages, grouped by `@category`; every option has a description and a default.
 - [ ] `react-wtc-gl`: its components and hooks, with a React getting-started page.
 - [ ] Annotated examples drawn from the demos, each linking to the live demo and its source.
-- [ ] A CI check that the docs build and that every export is documented.
+- [x] A CI check that the docs build and that every export is documented. TypeDoc's validation is strict, and VitePress fails on dead links.
 
 ---
 

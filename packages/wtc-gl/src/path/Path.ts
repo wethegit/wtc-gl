@@ -18,6 +18,7 @@ export type { PathFrames }
 /**
  * Adjusts the tilt (radians) at each frame. `u` is the fraction of the way
  * along the path, from 0 to 1.
+ * @category Paths
  */
 export type TiltFunction = (tilt: number, u: number, path: Path) => number
 
@@ -30,6 +31,7 @@ export type TiltFunction = (tilt: number, u: number, path: Path) => number
  * so `getPoints` and `getPointAt` give evenly spaced points. Each point can
  * carry a tilt (radians), which twists the frames from `computeFrames`. The
  * samplers take an optional `out` to write into, so they don't allocate.
+ * @category Paths
  */
 export class Path {
   /** Whether the path loops back to its start. Set by `close()`. */

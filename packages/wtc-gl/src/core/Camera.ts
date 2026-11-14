@@ -5,38 +5,75 @@ import { invertMat4, multiplyMat4 } from './matrix'
 import { Mesh } from './Mesh'
 import { Drawable } from './Drawable'
 
+/**
+ * Options for creating a {@link Camera}. Setting `left` or `right` makes an
+ * orthographic camera; otherwise it's a perspective one.
+ * @category Core
+ */
 export interface CameraOptions {
+  /** The distance to the near clipping plane. @default 0.1 */
   near?: number
+  /** The distance to the far clipping plane. @default 100 */
   far?: number
+  /** The vertical field of view of a perspective camera, in degrees. @default 45 */
   fov?: number
+  /** The aspect ratio of a perspective camera, normally width / height. @default 1 */
   aspect?: number
+  /** The zoom of an orthographic camera. The planes are divided by it. @default 1 */
   zoom?: number
+  /** The left plane of an orthographic camera. @default 0 */
   left: number
+  /** The right plane of an orthographic camera. @default 0 */
   right: number
+  /** The top plane of an orthographic camera. @default 0 */
   top: number
+  /** The bottom plane of an orthographic camera. @default 0 */
   bottom: number
 }
 
+/**
+ * Options for {@link Camera.orthographic}. Anything left out keeps the
+ * camera's current value.
+ * @category Core
+ */
 export interface OrtographicOptions {
+  /** The distance to the near clipping plane. */
   near: number
+  /** The distance to the far clipping plane. */
   far: number
+  /** The left plane. */
   left: number
+  /** The right plane. */
   right: number
+  /** The bottom plane. */
   bottom: number
+  /** The top plane. */
   top: number
+  /** The zoom. The planes are divided by it. */
   zoom: number
 }
 
+/**
+ * Options for {@link Camera.perspective}. Anything left out keeps the
+ * camera's current value.
+ * @category Core
+ */
 export interface PerspectiveOptions {
+  /** The distance to the near clipping plane. */
   near: number
+  /** The distance to the far clipping plane. */
   far: number
+  /** The vertical field of view, in degrees. */
   fov: number
+  /** The aspect ratio, normally width / height. */
   aspect: number
 }
 
 /**
- * Class representing some Geometry.
+ * A perspective or orthographic camera. Its world matrix places it in the
+ * scene; the renderer reads its view and projection matrices.
  * @extends Obj
+ * @category Core
  **/
 export class Camera extends Obj {
   /**
@@ -106,7 +143,18 @@ export class Camera extends Obj {
   /** Scratch space for `unproject()`, so it doesn't allocate. */
   #inverseProjectionView = new Mat4()
 
-  frustum: { [key: string]: { pos: Vec3; constant: number } } = {
+  /**
+   * The six frustum planes, keyed `xNeg`, `xPos`, `yNeg`, `yPos`, `zNeg`
+   * (near) and `zPos` (far). Updated by `updateFrustum()`.
+   */
+  frustum: {
+    [key: string]: {
+      /** The plane's unit normal, pointing into the frustum. */
+      pos: Vec3
+      /** The plane's distance term, so a point p is inside when `dot(pos, p) + constant >= 0`. */
+      constant: number
+    }
+  } = {
     xNeg: { pos: new Vec3(), constant: 0 },
     xPos: { pos: new Vec3(), constant: 0 },
     yNeg: { pos: new Vec3(), constant: 0 },
@@ -120,16 +168,7 @@ export class Camera extends Obj {
 
   /**
    * Create a camera object
-   * @param {Object} __namedParameters - The parameters to be used for the camera
-   * @param {number} near - The near point of the perspective matrix
-   * @param {number} far - The far point of the perspective matrix
-   * @param {number} fov - The fov of the camera, in degrees
-   * @param {number} aspect - The camera aspect ratio
-   * @param {number} left - The left point of the orthographic camera
-   * @param {number} right - The right point of the orthographic camera
-   * @param {number} top - The top point of the orthographic camera
-   * @param {number} bottom - The bottom point of the orthographic camera
-   * @param {number} zoom - The zoom level of the orthographic camera
+   * @param options - The projection settings; see {@link CameraOptions}.
    */
   constructor({
     near = 0.1,
@@ -167,12 +206,9 @@ export class Camera extends Obj {
   }
 
   /**
-   * Calculate the parameters necessary for a perspective camera
-   * @param {Object} __namedParameters - The parameters to be used for the camera
-   * @param {number} near - The near point of the perspective matrix
-   * @param {number} far - The far point of the perspective matrix
-   * @param {number} fov - The fov of the camera, in degrees
-   * @param {number} aspect - The camera aspect ratio
+   * Make this a perspective camera and rebuild the projection matrix.
+   * @param options - The perspective settings to change; see {@link PerspectiveOptions}.
+   * @returns The camera, for chaining.
    */
   perspective({
     near = this.near,
@@ -187,15 +223,9 @@ export class Camera extends Obj {
   }
 
   /**
-   * Calculate the parameters necessary for an orthographic camera
-   * @param {Object} __namedParameters - The parameters to be used for the camera
-   * @param {number} near - The near point of the perspective matrix
-   * @param {number} far - The far point of the perspective matrix
-   * @param {number} left - The left point of the orthographic camera
-   * @param {number} right - The right point of the orthographic camera
-   * @param {number} top - The top point of the orthographic camera
-   * @param {number} bottom - The bottom point of the orthographic camera
-   * @param {number} zoom - The zoom level of the orthographic camera
+   * Make this an orthographic camera and rebuild the projection matrix.
+   * @param options - The orthographic settings to change; see {@link OrtographicOptions}.
+   * @returns The camera, for chaining.
    */
   orthographic({
     near = this.near,
@@ -220,8 +250,7 @@ export class Camera extends Obj {
    * `project()` and `unproject()` are right straight away.
    *
    * The matrix is written in place, so `projectionMatrix` keeps its reference.
-   * @chainable
-   * @returns The camera operated on to make function chainable
+   * @returns The camera, for chaining.
    */
   updateProjectionMatrix(): Camera {
     const { near, far } = this
@@ -284,8 +313,7 @@ export class Camera extends Obj {
 
   /**
    * Update the world view matrices
-   * @chainable
-   * @returns The camera operated on to make function chainable
+   * @returns The camera, for chaining.
    */
   updateMatrixWorld(): Camera {
     super.updateMatrixWorld()
@@ -308,8 +336,7 @@ export class Camera extends Obj {
   /**
    * Look at a position
    * @param {Vec3} target - The position to look at
-   * @chainable
-   * @returns The camera operated on to make function chainable
+   * @returns The camera, for chaining.
    */
   lookAt(target: Vec3): Camera {
     super.lookAt(target, true)

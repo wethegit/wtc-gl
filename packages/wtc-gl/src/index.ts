@@ -57,7 +57,17 @@ export * from './helpers/FaceNormalsHelper'
 export * from './interaction/Raycast'
 
 export * from './loaders/GLTFLoader'
+export type {
+  GLTFAccessor,
+  GLTFBufferView,
+  GLTFCamera,
+  GLTFMaterial,
+  GLTFNode,
+  GLTFPrimitive,
+  GLTFTextureInfo
+} from './loaders/gltf/types'
 export { materialProgram } from './loaders/gltf/materials'
+export type { ProgramFlags } from './loaders/gltf/materials'
 
 export * from './ext/Framebuffer'
 

@@ -36,6 +36,11 @@ const ATTRIBUTES: Record<string, string> = {
   COLOR_0: 'colour'
 }
 
+/**
+ * Options for `GLTFLoader.load` and `GLTFLoader.parse`. Every property is
+ * optional.
+ * @category Loaders
+ */
 export interface GLTFLoaderOptions {
   /** The lights every program shares. @default a new `Lights()` */
   lights: Lights
@@ -51,7 +56,10 @@ export interface GLTFLoaderOptions {
   signal: AbortSignal
 }
 
-/** What a glTF file loads as. */
+/**
+ * What a glTF file loads as.
+ * @category Loaders
+ */
 export interface GLTF {
   /** The default scene's root. Add it to your own scene. */
   scene: Obj
@@ -61,9 +69,11 @@ export interface GLTF {
   nodes: Obj[]
   /** Every mesh made, including each primitive of a multi-primitive mesh. */
   meshes: Mesh[]
+  /** Every camera made, one per node with a camera. */
   cameras: Camera[]
   /** The programs made for the materials. */
   programs: LitProgram[]
+  /** The textures loaded for the materials. */
   textures: Texture[]
   /** The lights the programs share. */
   lights: Lights
@@ -95,6 +105,7 @@ export interface GLTF {
  * Not supported: skinning, morph targets, animation, PBR materials, other uv
  * sets, and compression (Draco, meshopt). A file that requires an extension
  * the loader doesn't support is rejected, naming it.
+ * @category Loaders
  */
 export class GLTFLoader {
   /** Fetch and parse a `.glb` or `.gltf` file. */

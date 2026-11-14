@@ -4,6 +4,10 @@ import { Program } from '../core/Program'
 import normalVertex from './normal.vert'
 import normalFragment from './normal.frag'
 
+/**
+ * Options for `NormalProgram`. Every property is optional.
+ * @category Helpers
+ */
 export interface NormalProgramOptions {
   /**
    * The space the normals are shown in. In `'view'` space the colours follow
@@ -27,6 +31,7 @@ export interface NormalProgramOptions {
  * One `NormalProgram` can be shared by any number of meshes, and swapped onto
  * a mesh in place of its own program to check its normals. Changing an option
  * recompiles the shaders with `setShaders`. It needs a camera to draw.
+ * @category Helpers
  */
 export class NormalProgram extends Program {
   #options: NormalProgramOptions
@@ -52,6 +57,7 @@ export class NormalProgram extends Program {
   get space(): 'view' | 'world' {
     return this.#options.space
   }
+  /** Set the space the normals are shown in. Recompiles when it changes. */
   set space(value: 'view' | 'world') {
     this.#set('space', value)
   }
@@ -60,6 +66,7 @@ export class NormalProgram extends Program {
   get flatShading(): boolean {
     return this.#options.flatShading
   }
+  /** Set whether to show face normals. Recompiles when it changes. */
   set flatShading(value: boolean) {
     this.#set('flatShading', value)
   }
@@ -68,6 +75,7 @@ export class NormalProgram extends Program {
   get doubleSided(): boolean {
     return this.#options.doubleSided
   }
+  /** Set whether to draw the back faces. Recompiles when it changes. */
   set doubleSided(value: boolean) {
     if (this.#set('doubleSided', value)) {
       this.cullFace = value ? 0 : this.gl.BACK
@@ -78,6 +86,7 @@ export class NormalProgram extends Program {
   get instanced(): boolean {
     return this.#options.instanced
   }
+  /** Set whether to read per-instance matrices. Recompiles when it changes. */
   set instanced(value: boolean) {
     this.#set('instanced', value)
   }

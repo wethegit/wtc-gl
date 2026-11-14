@@ -17,6 +17,7 @@ import normalsVertex from './normals.vert'
  * the mesh's geometry is replaced. The mesh should draw `gl.TRIANGLES`.
  * Drawn with `gl.LINES`, so the lines are one pixel wide. It isn't frustum
  * culled, and needs a camera to draw.
+ * @category Helpers
  */
 export class FaceNormalsHelper extends Mesh {
   /** The mesh whose face normals are shown. */
@@ -47,6 +48,7 @@ export class FaceNormalsHelper extends Mesh {
   get size(): number {
     return this.program.uniforms.u_size.value as number
   }
+  /** Set the length of each line, in world units. */
   set size(value: number) {
     this.program.uniforms.u_size.value = value
   }

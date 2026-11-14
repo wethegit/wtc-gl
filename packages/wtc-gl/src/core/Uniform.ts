@@ -7,7 +7,12 @@ import type {
 import { Texture } from './Texture'
 import { Program } from './Program'
 
-type Kind =
+/**
+ * The GLSL type of a {@link Uniform}. Textures and texture arrays are
+ * detected from the value, so `kind` is only used to warn about mismatches.
+ * @category Core
+ */
+export type UniformKind =
   | 'int'
   | 'float'
   | 'boolean'
@@ -33,14 +38,22 @@ type Kind =
   | 'mat4x2'
   | 'mat4x3'
 
+/**
+ * Options for creating a {@link Uniform}.
+ * @category Core
+ */
 export interface UniformOptions {
+  /** The name of the uniform, used in warnings. The key in the program's `uniforms` is what matches it to the shader. @default 'uniform' */
   name: string
+  /** The value to upload. @default [1, 1] */
   value: WTCGLUniformValue
-  kind: Kind
+  /** The GLSL type of the uniform, e.g. `'float'`, `'float_vec3'` or `'texture'`. @default 'float_vec2' */
+  kind: UniformKind
 }
 
 /**
  * A uniform is just a basic container for simple uniform information.
+ * @category Core
  */
 export class Uniform {
   /**
@@ -55,17 +68,14 @@ export class Uniform {
    * The uniform kind. Textures are detected from the value, so this is only
    * used to warn when it doesn't match.
    */
-  kind: Kind
+  kind: UniformKind
   /**
    * Whether a mismatch warning has already been shown for this uniform.
    */
   private warned = false
   /**
-   * Create a unform object
-   * @param __namedParameters
-   * @param name - The name of the uniform.
-   * @param value - The value for the uniform.
-   * @param kind - The type of uniform.
+   * Create a uniform object
+   * @param options - The uniform's name, value and kind; see {@link UniformOptions}.
    */
   constructor({
     name = 'uniform',

@@ -7,6 +7,11 @@ import type { ScrollSceneOptions, WTCGLRenderingContext } from 'wtc-gl'
 import { useScrollRenderer } from './scroll-renderer-provider'
 
 /** Context passed to a {@link ScrollSceneSetup} function. */
+/**
+ * What a `useScrollScene` setup function is given.
+ *
+ * @category Types
+ */
 export interface ScrollSceneSetupContext<S extends ScrollScene = ScrollScene> {
   /** WebGL context. */
   gl: WTCGLRenderingContext
@@ -26,6 +31,7 @@ export interface ScrollSceneSetupContext<S extends ScrollScene = ScrollScene> {
  *
  * Like a `useEffect` callback, it may return a cleanup function, which is
  * called when the scene is removed - free any GL resources you created there.
+ * @category Types
  */
 export type ScrollSceneSetup<S extends ScrollScene = ScrollScene> = (
   context: ScrollSceneSetupContext<S>
@@ -39,6 +45,7 @@ export type ScrollSceneSetup<S extends ScrollScene = ScrollScene> = (
  * `onBeforeRender`/`onAfterRender` may change between renders - the latest
  * ones are always called. All other options are captured when the scene is
  * created.
+ * @category Types
  */
 export type UseScrollSceneOptions = Omit<
   ScrollSceneOptions,
@@ -74,6 +81,7 @@ export type UseScrollSceneOptions = Omit<
  * @param setup - Builds the scene's GL content; may return a cleanup function.
  * @param options - Forwarded to the `ScrollScene` constructor.
  * @returns A ref holding the live `ScrollScene`, or `null` before creation.
+ * @category Hooks
  */
 export function useScrollScene(
   elementRef: RefObject<HTMLElement | null>,

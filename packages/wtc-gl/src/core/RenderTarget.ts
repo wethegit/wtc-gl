@@ -2,30 +2,54 @@ import type { WTCGLRenderingContext } from '../types'
 
 import { Texture, type TextureData } from './Texture'
 
+/**
+ * Options for creating a {@link RenderTarget}.
+ * @category Core
+ */
 export interface RenderTargetOptions {
+  /** Initial data for each colour texture. */
   data: TextureData | null
+  /** The width in pixels. @default gl.canvas.width */
   width: number
+  /** The height in pixels. @default gl.canvas.height */
   height: number
+  /** The framebuffer binding point. @default gl.FRAMEBUFFER */
   target: GLenum
+  /** The number of colour textures to create. More than one draws to several outputs at once. @default 1 */
   colour: number
+  /** Whether to create a depth buffer. @default true */
   depth: boolean
+  /** Whether to create a stencil buffer. With `depth`, the two share a `DEPTH24_STENCIL8` texture or renderbuffer. @default false */
   stencil: boolean
+  /** Whether the depth buffer is a texture you can sample (`true`), a renderbuffer (`false`), or a `Texture` to use. A stencil buffer on its own is always a renderbuffer. @default true */
   depthTexture: Texture | null | boolean
+  /** The depth buffer's internal format. @default gl.DEPTH_COMPONENT24, or gl.DEPTH24_STENCIL8 with `stencil` */
   depthFormat: GLenum
+  /** Horizontal wrapping of the colour textures. @default gl.CLAMP_TO_EDGE */
   wrapS: GLenum
+  /** Vertical wrapping of the colour textures. @default gl.CLAMP_TO_EDGE */
   wrapT: GLenum
+  /** The filter used when the colour textures are drawn smaller. @default gl.LINEAR */
   minFilter: GLenum
+  /** The filter used when the colour textures are drawn larger. @default the same as `minFilter` */
   magFilter: GLenum
+  /** The data type of the colour textures, e.g. `gl.UNSIGNED_BYTE`, `gl.FLOAT` or `gl.HALF_FLOAT`. @default gl.UNSIGNED_BYTE */
   type: GLenum
+  /** The format of the colour textures. @default gl.RGBA */
   format: GLenum
+  /** The GPU storage format of the colour textures. Always `gl.RGBA16F` when `type` is `gl.HALF_FLOAT`. @default the same as `format` */
   internalFormat: GLenum
+  /** The row alignment of the pixel data, in bytes. @default 4 */
   unpackAlignment: 1 | 2 | 4 | 8
+  /** Whether to premultiply `data` by alpha on upload. @default false */
   premultiplyAlpha: boolean
+  /** Whether to generate mipmaps for the colour textures. @default false */
   generateMipmaps: boolean
 }
 
 /**
  * Create a render target. A render target allows you to render a scene to a texture, instead of to screen. And can be used to either render a different view for composition to a scene, or to create advanced post processing effects.
+ * @category Core
  */
 export class RenderTarget {
   /**
@@ -84,29 +108,8 @@ export class RenderTarget {
 
   /**
    * Create a render target object.
-   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
-   * @param __namedParameters - The parameters to initialise the renderer.
-   * @param width - The width of the render target.
-   * @param height - The height of the render target.
-   * @param target - The binding point for the frame buffers.
-   * @param colour - The number of colour attachments to create.
-   * @param depth - Whether to create a depth buffer
-   * @param stencil - Whether to create a stencil buffer. With `depth`, the
-   * two share a `DEPTH24_STENCIL8` texture or renderbuffer.
-   * @param depthTexture - Whether the depth buffer is a texture you can
-   * sample (`true`), a renderbuffer (`false`), or a `Texture` to use. A
-   * stencil buffer on its own is always a renderbuffer.
-   * @param depthFormat - The depth buffer's internal format. Defaults to
-   * `DEPTH_COMPONENT24` (`DEPTH24_STENCIL8` with `stencil`).
-   * @param wrapS - Wrapping
-   * @param wrapT - Wrapping
-   * @param minFilter - The filter to use when rendering smaller
-   * @param magFilter - The filter to use when enlarging
-   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
-   * @param format - The texture format.
-   * @param internalFormat - the texture internalFormat.
-   * @param unpackAlignment - The unpack alignment for pixel stores.
-   * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The size, attachments and texture settings; see {@link RenderTargetOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -313,7 +316,7 @@ export class RenderTarget {
   }
 
   /**
-   * Returns the first texture, for the majority os use cases.
+   * The first colour texture, which is all most uses need.
    */
   get texture() {
     return this.textures[0]

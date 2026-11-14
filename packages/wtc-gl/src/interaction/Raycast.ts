@@ -12,8 +12,12 @@ import {
   normalMatrix
 } from '../core/matrix'
 
-/** Where a ray met a mesh's bounds. */
+/**
+ * Where a ray met a mesh's bounds.
+ * @category Interaction
+ */
 export interface RaycastBoundsHit {
+  /** The mesh hit. */
   mesh: Mesh
   /** From the ray's origin, in world units. */
   distance: number
@@ -25,7 +29,10 @@ export interface RaycastBoundsHit {
   instanceId?: number
 }
 
-/** Where a ray met a mesh's triangles. */
+/**
+ * Where a ray met a mesh's triangles.
+ * @category Interaction
+ */
 export interface RaycastHit extends RaycastBoundsHit {
   /** The triangle's number, in draw order. */
   faceIndex: number
@@ -40,19 +47,28 @@ export interface RaycastHit extends RaycastBoundsHit {
   uv?: Vec2
 }
 
+/**
+ * Options for `Raycast.intersectBounds` and `Raycast.intersectMeshes`. Every
+ * property is optional.
+ * @category Interaction
+ */
 export interface RaycastOptions {
   /** Ignore anything further away. @default Infinity */
   maxDistance: number
   /**
    * Which faces can't be hit: `gl.BACK`, `gl.FRONT`, or 0 for none. By
    * default, whatever the mesh's program culls when it draws.
+   * @default mesh.program.cullFace
    */
   cullFace: number
   /** Grow each mesh's bounds by this many world units, for small targets. @default 0 */
   padding: number
 }
 
-/** A mesh, a list of them, or the root of a scene to search. */
+/**
+ * A mesh, a list of them, or the root of a scene to search.
+ * @category Interaction
+ */
 export type RaycastTarget = Obj | Obj[]
 
 /**
@@ -80,6 +96,7 @@ export type RaycastTarget = Obj | Obj[]
  * World matrices should be up to date, as they are after a render. Picking
  * allocates its results, so it's meant for pointer events rather than every
  * frame. `intersectPlane` is handy for dragging.
+ * @category Interaction
  */
 export class Raycast {
   /** Where the ray starts, in world space. */

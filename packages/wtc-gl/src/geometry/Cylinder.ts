@@ -8,15 +8,28 @@ import type {
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
+/**
+ * Options for creating a {@link Cylinder}.
+ * @category Geometry
+ */
 export interface CylinderOptions {
+  /** Radius at the top (+y). 0 makes a cone. @default 0.5 */
   radiusTop: number
+  /** Radius at the bottom (-y). @default 0.5 */
   radiusBottom: number
+  /** Length along y. @default 1 */
   height: number
+  /** Number of divisions around the y axis. @default 8 */
   radialSegments: number
+  /** Number of divisions along y. @default 1 */
   heightSegments: number
+  /** Whether to leave out both caps. @default false */
   openEnded: boolean
+  /** Angle to start at, in radians, from +z towards +x. @default 0 */
   thetaStart: number
+  /** Angle to sweep, in radians. @default Math.PI * 2 */
   thetaLength: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
@@ -24,8 +37,14 @@ export interface CylinderOptions {
  * A cylinder along the y axis, centred on the origin. Set `radiusTop: 0` for a
  * cone, and `openEnded` to leave out both caps. A cap with zero radius is
  * always left out. Angles run from +z (θ = 0) towards +x.
+ * @category Geometry
  */
 export class Cylinder extends Geometry {
+  /**
+   * Create a cylinder
+   * @param gl - The WTCGL rendering context
+   * @param options - Radii, height, divisions and sweep; see {@link CylinderOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

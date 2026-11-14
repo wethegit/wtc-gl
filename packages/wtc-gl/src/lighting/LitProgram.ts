@@ -45,17 +45,22 @@ function litSources(options: LitShaderOptions) {
  * the directional light, from `shadowFactor` in `shadowShading`. Add it after the shader's
  * precision statement, and spread `lights.uniforms` into the program's
  * uniforms. It doesn't declare `u_viewMatrix`, so the shader can.
+ * @category Lighting
  */
 export const litShading: string = shadingSource
 
+/**
+ * Options for `LitProgram`. Every property is optional.
+ * @category Lighting
+ */
 export interface LitProgramOptions {
   /** The lights to share. @default a new `Lights()` */
   lights: Lights
-  /** The surface colour. @default [1, 1, 1] */
+  /** The surface colour, in sRGB. The lighting is done in sRGB. @default [1, 1, 1] */
   colour: [number, number, number]
-  /** @default 1 */
+  /** The surface alpha, multiplied with the map's alpha. @default 1 */
   opacity: number
-  /** A texture multiplied with the colour, read with the `uv` attribute. */
+  /** A texture multiplied with the colour, read with the `uv` attribute. @default null */
   map: Texture | null
   /** The strength of a Blinn-Phong highlight. 0 is plain Lambert. @default 0 */
   specular: number
@@ -65,7 +70,10 @@ export interface LitProgramOptions {
   alphaTest: number
   /** Light the surface gives off, added after the lighting. @default [0, 0, 0] */
   emissive: [number, number, number]
-  /** A texture multiplied with `emissive`, read with the `uv` attribute. */
+  /**
+   * A texture multiplied with `emissive`, read with the `uv` attribute.
+   * @default null
+   */
   emissiveMap: Texture | null
   /** Multiply by a `colour` attribute (vec3). @default false */
   vertexColours: boolean
@@ -83,11 +91,11 @@ export interface LitProgramOptions {
    * the shadow, not here. @default null
    */
   shadow: Shadow | null
-  /** @default opacity < 1 */
+  /** Whether to blend, and draw after the opaque meshes. @default opacity < 1 */
   transparent: boolean
-  /** @default true */
+  /** Whether to test against the depth buffer. @default true */
   depthTest: boolean
-  /** @default true */
+  /** Whether to write to the depth buffer. @default true */
   depthWrite: boolean
 }
 
@@ -112,6 +120,7 @@ export interface LitProgramOptions {
  * colour, opacity, map, emissive, specular and shininess are just uniforms.
  *
  * For a custom shader with the same lighting, use `litShading`.
+ * @category Lighting
  */
 export class LitProgram extends Program {
   /** The lights, whose uniforms this program shares. */
@@ -231,6 +240,7 @@ export class LitProgram extends Program {
   get shadow(): Shadow | null {
     return this.#shadow
   }
+  /** Set the shadow this program receives, or null for none. */
   set shadow(value: Shadow | null) {
     if (value === this.#shadow) return
     const uniforms = this.uniforms as Record<string, Uniform>
@@ -248,6 +258,7 @@ export class LitProgram extends Program {
   get flatShading(): boolean {
     return this.#shader.flatShading
   }
+  /** Set whether to shade each triangle flat. Recompiles when it changes. */
   set flatShading(value: boolean) {
     this.#setShader('flatShading', value)
   }
@@ -256,6 +267,7 @@ export class LitProgram extends Program {
   get vertexColours(): boolean {
     return this.#shader.vertexColours
   }
+  /** Set whether to multiply by a `colour` attribute. Recompiles when it changes. */
   set vertexColours(value: boolean) {
     this.#setShader('vertexColours', value)
   }
@@ -264,6 +276,7 @@ export class LitProgram extends Program {
   get doubleSided(): boolean {
     return this.#shader.doubleSided
   }
+  /** Set whether to draw and light the back faces. Recompiles when it changes. */
   set doubleSided(value: boolean) {
     if (this.#setShader('doubleSided', value)) {
       this.cullFace = value ? 0 : this.gl.BACK
@@ -274,6 +287,7 @@ export class LitProgram extends Program {
   get instanced(): boolean {
     return this.#shader.instanced
   }
+  /** Set whether to read per-instance matrices and colours. Recompiles when it changes. */
   set instanced(value: boolean) {
     this.#setShader('instanced', value)
   }
@@ -294,6 +308,7 @@ export class LitProgram extends Program {
       number
     ]
   }
+  /** Set the surface colour, in sRGB. */
   set colour(value: ArrayLike<number>) {
     const c = this.uniforms.u_colour.value as number[]
     c[0] = value[0]
@@ -301,9 +316,11 @@ export class LitProgram extends Program {
     c[2] = value[2]
   }
 
+  /** The surface alpha, multiplied with the map's alpha. */
   get opacity(): number {
     return this.uniforms.u_opacity.value as number
   }
+  /** Set the surface alpha. This doesn't change `transparent`. */
   set opacity(value: number) {
     this.uniforms.u_opacity.value = value
   }
@@ -314,6 +331,7 @@ export class LitProgram extends Program {
       ? (this.uniforms.u_map.value as Texture)
       : null
   }
+  /** Set the texture multiplied with the colour, or null for none. */
   set map(value: Texture | null) {
     this.uniforms.u_map.value = value ?? blankTexture(this.gl)
     this.uniforms.u_useMap.value = value ? 1 : 0
@@ -327,6 +345,7 @@ export class LitProgram extends Program {
       number
     ]
   }
+  /** Set the light the surface gives off. */
   set emissive(value: ArrayLike<number>) {
     const e = this.uniforms.u_emissive.value as number[]
     e[0] = value[0]
@@ -340,6 +359,7 @@ export class LitProgram extends Program {
       ? (this.uniforms.u_emissiveMap.value as Texture)
       : null
   }
+  /** Set the texture multiplied with `emissive`, or null for none. */
   set emissiveMap(value: Texture | null) {
     this.uniforms.u_emissiveMap.value = value ?? blankTexture(this.gl)
     this.uniforms.u_useEmissiveMap.value = value ? 1 : 0
@@ -349,6 +369,7 @@ export class LitProgram extends Program {
   get specular(): number {
     return this.uniforms.u_specular.value as number
   }
+  /** Set the strength of the Blinn-Phong highlight. */
   set specular(value: number) {
     this.uniforms.u_specular.value = value
   }
@@ -357,6 +378,7 @@ export class LitProgram extends Program {
   get shininess(): number {
     return this.uniforms.u_shininess.value as number
   }
+  /** Set how tight the highlight is. */
   set shininess(value: number) {
     this.uniforms.u_shininess.value = value
   }

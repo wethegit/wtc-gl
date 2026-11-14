@@ -4,6 +4,10 @@ import { Renderer } from './core/Renderer'
 import { Texture } from './core/Texture'
 import { Uniform } from './core/Uniform'
 
+/**
+ * A map of uniform names to `Uniform` objects, as passed to a `Program`.
+ * @category Types
+ */
 export interface WTCGLUniformArray {
   [index: string]: Uniform
 }
@@ -11,6 +15,7 @@ export interface WTCGLUniformArray {
 /**
  * Represents a collection of all of the properties that make up a complete blending function.
  * @interface
+ * @category Types
  */
 export interface WTCGLBlendFunction {
   /**
@@ -34,6 +39,7 @@ export interface WTCGLBlendFunction {
 /**
  * Represents a collection of modes used to make up a blend equation.
  * @interface
+ * @category Types
  */
 export interface WTCGLBlendEquation {
   /**
@@ -51,6 +57,7 @@ export interface WTCGLBlendEquation {
  * See [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLActiveInfo) for more information on WebGLActiveInfo.
  * @interface
  * @extends WebGLActiveInfo
+ * @category Types
  */
 export interface WTCGLActiveInfo extends WebGLActiveInfo {
   /**
@@ -77,22 +84,29 @@ export interface WTCGLActiveInfo extends WebGLActiveInfo {
 
 /**
  * Represents a value that can be bound to a uniform.
+ * @category Types
  */
 export type WTCGLUniformValue =
   Texture | Texture[] | number[] | string | number | boolean | Float32Array
 /**
  * A resource that can rebuild its GL objects after the WebGL context is
  * restored. See `Renderer.track`.
+ * @category Types
  */
 export interface WTCGLRestorable {
+  /**
+   * Recreate the resource's GL objects on the new context.
+   */
   restoreContext(): void
 }
 /**
  * Represents a map of uniforms returned from a program.
+ * @category Types
  */
 export type WTCGLUniformMap = Map<WTCGLActiveInfo, WebGLUniformLocation>
 /**
  * Represents a map of uniform locations to values. Used for caching uniforms in renderer state.
+ * @category Types
  */
 export type WTCGLRendererUniformMap = Map<
   WebGLUniformLocation,
@@ -100,12 +114,14 @@ export type WTCGLRendererUniformMap = Map<
 >
 /**
  * Represents an map of attributes to attribute locations.
+ * @category Types
  */
 export type WTCGLAttributeMap = Map<WTCGLActiveInfo, GLint>
 
 /**
  * Represents the cached state of the renderer. All of these properties can be considered "in use".
  * @interface
+ * @category Types
  */
 export interface WTCGLRendererState {
   /**
@@ -153,18 +169,26 @@ export interface WTCGLRendererState {
    * An object representing the current viewport
    */
   viewport: {
+    /** The x position, in pixels. */
     x: number | null
+    /** The y position, in pixels. */
     y: number | null
+    /** The width, in pixels. */
     width: number | null
+    /** The height, in pixels. */
     height: number | null
   }
   /**
    * The scissor rect last set with `setScissor`
    */
   scissor: {
+    /** The x position, in pixels. */
     x: number | null
+    /** The y position, in pixels. */
     y: number | null
+    /** The width, in pixels. */
     width: number | null
+    /** The height, in pixels. */
     height: number | null
   }
   /**
@@ -188,6 +212,7 @@ export interface WTCGLRendererState {
 /**
  * Texture state, contains the WebGL texture properties for a given texture.
  * @interface
+ * @category Types
  */
 export interface WTCGLTextureState {
   /**
@@ -218,6 +243,7 @@ export interface WTCGLTextureState {
 
 /**
  * An object defining the boundary of the geometry.
+ * @category Types
  */
 export type WTCGLBounds = {
   /**
@@ -244,6 +270,7 @@ export type WTCGLBounds = {
 
 /**
  * The collection of supplied attributes that define a geometry.
+ * @category Types
  */
 export type WTCGLGeometryAttributeCollection = {
   [key: string]: WTCGLGeometryAttribute
@@ -251,6 +278,7 @@ export type WTCGLGeometryAttributeCollection = {
 /**
  * Represents a geometry attribute.
  * @interface
+ * @category Types
  */
 export interface WTCGLGeometryAttribute {
   /**
@@ -323,46 +351,67 @@ export interface WTCGLGeometryAttribute {
 /**
  * A [WebGL2RenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext) with a reference back to the renderer that owns it.
  * @interface
+ * @category Types
  */
 export type WTCGLRenderingContext = WebGL2RenderingContext & {
   /**
    * The WTCGL Renderer object
    */
   renderer: Renderer
-  /**
-   * The HTML canvas element. Supplied here because the in-built interface doesn't contain it.
-   */
+  // The canvas, narrowed to an HTMLCanvasElement. Its doc comment comes from
+  // WebGL2RenderingContext, as TypeDoc only takes one.
   canvas: HTMLCanvasElement
 }
 
 /**
  * The WebGL2 extensions `Renderer.getExtension` knows the types of. Any other
  * name can still be requested, but returns `unknown`.
+ * @category Types
  */
 export interface WTCGLExtensionMap {
+  /** Rendering to 16- and 32-bit float colour buffers. Enabled by the renderer on creation. */
   EXT_color_buffer_float: EXT_color_buffer_float
+  /** Rendering to 16-bit float colour buffers. */
   EXT_color_buffer_half_float: EXT_color_buffer_half_float
+  /** Blending into 32-bit float colour buffers. */
   EXT_float_blend: EXT_float_blend
+  /** BPTC compressed texture formats. */
   EXT_texture_compression_bptc: EXT_texture_compression_bptc
+  /** RGTC compressed texture formats. */
   EXT_texture_compression_rgtc: EXT_texture_compression_rgtc
+  /** Anisotropic texture filtering. */
   EXT_texture_filter_anisotropic: EXT_texture_filter_anisotropic
+  /** Non-blocking shader compile and link status queries. */
   KHR_parallel_shader_compile: KHR_parallel_shader_compile
+  /** Linear filtering of 32-bit float textures. Enabled by the renderer on creation. */
   OES_texture_float_linear: OES_texture_float_linear
+  /** Rendering to several views (such as stereo eyes) in one draw call. */
   OVR_multiview2: OVR_multiview2
+  /** ASTC compressed texture formats. */
   WEBGL_compressed_texture_astc: WEBGL_compressed_texture_astc
+  /** ETC compressed texture formats. */
   WEBGL_compressed_texture_etc: WEBGL_compressed_texture_etc
+  /** S3TC (DXT) compressed texture formats. */
   WEBGL_compressed_texture_s3tc: WEBGL_compressed_texture_s3tc
+  /** S3TC (DXT) compressed texture formats in sRGB. */
   WEBGL_compressed_texture_s3tc_srgb: WEBGL_compressed_texture_s3tc_srgb
+  /** The unmasked vendor and renderer strings of the GPU. */
   WEBGL_debug_renderer_info: WEBGL_debug_renderer_info
+  /** The translated source of a shader, for debugging. */
   WEBGL_debug_shaders: WEBGL_debug_shaders
+  /** Simulating context loss and restoration. */
   WEBGL_lose_context: WEBGL_lose_context
+  /** Drawing several ranges of a buffer in one call. */
   WEBGL_multi_draw: WEBGL_multi_draw
 }
 
 /**
  * A list of hardware limit values.
+ * @category Types
  */
 export interface WTCGLRendererParams {
+  /** The number of texture units available across all shader stages (`MAX_COMBINED_TEXTURE_IMAGE_UNITS`). */
   maxTextureUnits: number
+  /** The highest anisotropic filtering level supported, or 0 without `EXT_texture_filter_anisotropic`. */
   maxAnisotropy: number
 }

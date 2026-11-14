@@ -10,19 +10,36 @@ import type {
 
 let ID = 1
 
+/**
+ * Options for creating a {@link Program}.
+ * @category Core
+ */
 export interface ProgramOptions {
+  /** The vertex shader source. */
   vertex: string
+  /** The fragment shader source. */
   fragment: string
+  /** The uniforms for the program, keyed by their name in the shaders. @default {} */
   uniforms?: WTCGLUniformArray
+  /** Whether to render with transparency. Sets an alpha blend function. @default false */
   transparent?: boolean
+  /** The face to cull, or 0 to draw both. @default gl.BACK */
   cullFace?: GLenum
+  /** Which winding counts as front facing. @default gl.CCW */
   frontFace?: GLenum
+  /** Whether to test fragments against the depth buffer. @default true */
   depthTest?: boolean
+  /** Whether to write to the depth buffer. @default true */
   depthWrite?: boolean
+  /** The depth comparison function. @default gl.LESS */
   depthFunc?: GLenum
+  /** The stencil test to apply, or null for none. @default null */
   stencil?: StencilOptions | null
+  /** Whether to write colour. @default true */
   colourWrite?: boolean
+  /** The varyings to capture with a `TransformFeedback`, in buffer order. @default [] */
   transformFeedbackVaryings?: string[]
+  /** Whether the varyings are written to separate buffers or interleaved into one. @default 'separate' */
   transformFeedbackBufferMode?: TransformFeedbackBufferMode
 }
 
@@ -30,12 +47,14 @@ export interface ProgramOptions {
  * How transform feedback writes its varyings: each to its own buffer
  * (`'separate'`), or all into one buffer, one vertex after another
  * (`'interleaved'`).
+ * @category Simulation
  */
 export type TransformFeedbackBufferMode = 'separate' | 'interleaved'
 
 /**
  * Stencil test settings for a program. Anything left out uses the WebGL
  * default. See `gl.stencilFunc`, `gl.stencilOp` and `gl.stencilMask`.
+ * @category Core
  */
 export interface StencilOptions {
   /** The comparison, e.g. `gl.EQUAL`. @default gl.ALWAYS */
@@ -56,6 +75,7 @@ export interface StencilOptions {
 
 /**
  * The program class prvides the rendering setup, internal logic, and state for rendering an object.
+ * @category Core
  */
 export class Program {
   /**
@@ -129,6 +149,7 @@ export class Program {
       ...options
     }
   }
+  /** The stencil test with defaults filled in, or null for none. */
   get stencil(): Required<StencilOptions> | null {
     return this.#stencil
   }
@@ -187,20 +208,7 @@ export class Program {
   /**
    * Create a Program
    * @param gl - The WTCGL Rendering context
-   * @param __namedParameters - The parameters for the Program
-   * @param vertex - The vertext shader
-   * @param fragment - The fragment shader
-   * @param uniforms - An object of uniforms for use in the program
-   * @param transparent - Whether to render the program with transparency
-   * @param cullFace - What method to use for determining face culling
-   * @param frontFace - What method to use for determining the front of a face
-   * @param depthTest - Whether to test the depth of a fragment against the depth buffer
-   * @param depthWrite - Whether to write the depth information
-   * @param depthFunc - The function to use when depth testing
-   * @param stencil - The stencil test to apply, if any
-   * @param colourWrite - Whether to write colour
-   * @param transformFeedbackVaryings - The varyings to capture with a `TransformFeedback`, in buffer order
-   * @param transformFeedbackBufferMode - Whether the varyings are written to separate buffers or interleaved into one
+   * @param options - The shaders, uniforms and render state; see {@link ProgramOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -517,10 +525,7 @@ export class Program {
     )
   }
 
-  /**
-   * Set up the program for use
-   * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
-   */
+  /** Upload one active uniform's value, warning if it wasn't supplied. */
   #bindUniform = (
     location: WebGLUniformLocation,
     activeUniform: WTCGLActiveInfo
@@ -539,6 +544,12 @@ export class Program {
     uniform.bind(this, location, activeUniform)
   }
 
+  /**
+   * Set up the program for use: bind it, upload its uniforms and apply its
+   * state to the renderer. A program that failed to link is unbound instead.
+   * @param options - The use settings.
+   * @param options.flipFaces - Flip the front face, for when a mesh is scaled in the negative
+   */
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     this.textureUnit = -1
 

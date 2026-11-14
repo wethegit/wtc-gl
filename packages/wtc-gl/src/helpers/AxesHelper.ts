@@ -4,19 +4,21 @@ import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { lineProgram } from './lineProgram'
 
-type RGB = [number, number, number]
-
+/**
+ * Options for `AxesHelper`. Every property is optional.
+ * @category Helpers
+ */
 export interface AxesHelperOptions {
   /** The length of each axis. @default 1 */
   size: number
   /** Extend each axis through the origin to -size as well. @default false */
   symmetric: boolean
-  /** @default red */
-  xColour: RGB
-  /** @default green */
-  yColour: RGB
-  /** @default blue */
-  zColour: RGB
+  /** The colour of the x axis. @default [0.95, 0.3, 0.3] */
+  xColour: [number, number, number]
+  /** The colour of the y axis. @default [0.35, 0.8, 0.35] */
+  yColour: [number, number, number]
+  /** The colour of the z axis. @default [0.3, 0.5, 1] */
+  zColour: [number, number, number]
 }
 
 /**
@@ -24,6 +26,7 @@ export interface AxesHelperOptions {
  * the scene to show the world's axes, or as a child of an object to show its
  * local frame. Drawn with `gl.LINES`, so the lines are one pixel wide. It
  * needs a camera to draw.
+ * @category Helpers
  */
 export class AxesHelper extends Mesh {
   constructor(

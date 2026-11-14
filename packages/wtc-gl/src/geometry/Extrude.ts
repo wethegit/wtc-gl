@@ -11,20 +11,38 @@ import type { PathPoint } from '../path/segments'
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
-/** An outline: a `Path` (or `Curve`), or a list of points. */
+/**
+ * An outline: a `Path` (or `Curve`), or a list of points.
+ * @category Geometry
+ */
 export type ExtrudeContour = Path | PathPoint[]
 
+/**
+ * Options for creating an {@link Extrude}.
+ * @category Geometry
+ */
 export interface ExtrudeOptions {
+  /** The outline to extrude. Only its x and y are used. Required. */
   shape: ExtrudeContour
+  /** Outlines to cut out of `shape`. @default [] */
   holes: ExtrudeContour[]
+  /** Length along z, not counting the bevel. @default 0.2 */
   depth: number
+  /** Number of divisions in each curved segment of a `Path` outline; see `Path.toPolyline`. @default 12 */
   curveDivisions: number
+  /** Whether to bevel the edges between the caps and the sides. @default false */
   bevel: boolean
+  /** How far the bevel adds to each end along z. @default 0.05 */
   bevelThickness: number
+  /** How far the bevel insets the caps. @default 0.04 */
   bevelSize: number
+  /** Number of steps in the bevel. 1 is a chamfer. @default 3 */
   bevelSegments: number
+  /** The sides are smooth where they turn by less than this, in radians, and hard-edged at sharper corners. @default Math.PI / 6 */
   creaseAngle: number
+  /** How the bevel is mapped: projected like the caps, or like the sides. @default 'projected' */
   uvs: 'projected' | 'separate'
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
@@ -95,8 +113,14 @@ const turn = (a: XY, b: XY) =>
  * like the caps, so a texture runs on from the face over the bevel without a
  * seam, and the seam is where the bevel meets the straight side instead. With
  * `uvs: 'separate'` the bevel is mapped like the sides.
+ * @category Geometry
  */
 export class Extrude extends Geometry {
+  /**
+   * Create an extruded solid
+   * @param gl - The WTCGL rendering context
+   * @param options - The outline, holes, depth and bevel; see {@link ExtrudeOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

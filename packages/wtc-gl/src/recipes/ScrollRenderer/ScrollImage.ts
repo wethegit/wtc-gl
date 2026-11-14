@@ -3,7 +3,10 @@ import { Uniform } from '../../core/Uniform'
 import { Texture } from '../../core/Texture'
 import { ScrollScene, type ScrollSceneOptions } from './ScrollScene'
 
-/** Options passed to the {@link ScrollImage} constructor. */
+/**
+ * Options passed to the {@link ScrollImage} constructor.
+ * @category Recipes
+ */
 export interface ScrollImageOptions extends ScrollSceneOptions {
   /** The GL rendering context from the parent {@link ScrollRenderer}. */
   gl: WTCGLRenderingContext
@@ -39,6 +42,7 @@ export interface ScrollImageOptions extends ScrollSceneOptions {
  *   }),
  * }).setParent(drawable)
  * renderer.addScene(scene)
+ * @category Recipes
  */
 export class ScrollImage extends ScrollScene {
   /** The `sampler2D` uniform pointing at the image texture. */
@@ -48,6 +52,9 @@ export class ScrollImage extends ScrollScene {
   /** The underlying {@link Texture} wrapping the source image element. */
   texture: Texture
 
+  /**
+   * @param options - The scene options plus the GL context and image.
+   */
   constructor({ gl, image, element, ...rest }: ScrollImageOptions) {
     super({ element, ...rest })
 

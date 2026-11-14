@@ -4,17 +4,19 @@ import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { lineProgram } from './lineProgram'
 
-type RGB = [number, number, number]
-
+/**
+ * Options for `GridHelper`. Every property is optional.
+ * @category Helpers
+ */
 export interface GridHelperOptions {
   /** The width and depth of the grid. @default 10 */
   size: number
   /** The number of squares along each side. @default 10 */
   divisions: number
-  /** @default [0.6, 0.6, 0.6] */
-  colour: RGB
+  /** The colour of the lines. @default [0.6, 0.6, 0.6] */
+  colour: [number, number, number]
   /** The colour of the two lines through the centre. @default [0.35, 0.35, 0.35] */
-  centreColour: RGB
+  centreColour: [number, number, number]
 }
 
 /**
@@ -23,6 +25,7 @@ export interface GridHelperOptions {
  * `centreColour`. Drawn with `gl.LINES`, so the lines are one pixel wide, and
  * pulled slightly towards the camera so it can lie on a surface. It needs a
  * camera to draw.
+ * @category Helpers
  */
 export class GridHelper extends Mesh {
   constructor(
@@ -41,7 +44,7 @@ export class GridHelper extends Mesh {
     const colours = new Float32Array(lines * 2 * 2 * 3)
 
     let v = 0
-    const vertex = (x: number, z: number, c: RGB) => {
+    const vertex = (x: number, z: number, c: [number, number, number]) => {
       position.set([x, 0, z], v * 3)
       colours.set(c, v * 3)
       v++

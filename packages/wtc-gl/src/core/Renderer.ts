@@ -14,35 +14,65 @@ import { Obj } from './Object'
 import { Drawable } from './Drawable'
 import type { StencilOptions } from './Program'
 
+/**
+ * Options for creating a {@link Renderer}.
+ * @category Core
+ */
 export interface RendererOptions {
+  /** The canvas to render to. A new canvas is created when left out. */
   canvas: HTMLCanvasElement
+  /** The width of the canvas in CSS pixels. @default 300 */
   width: number
+  /** The height of the canvas in CSS pixels. @default 150 */
   height: number
+  /** The device pixel ratio the canvas is scaled by. @default devicePixelRatio, capped at 2 */
   dpr: number
+  /** Whether the drawing buffer has an alpha channel. @default false */
   alpha: boolean
+  /** Whether the drawing buffer has a depth buffer. @default true */
   depth: boolean
+  /** Whether the drawing buffer has a stencil buffer. @default false */
   stencil: boolean
+  /** Whether to antialias the drawing buffer. @default false */
   antialias: boolean
+  /** Whether the page compositor treats colours as premultiplied by alpha. @default false */
   premultipliedAlpha: boolean
+  /** Keep the drawing buffer between frames, e.g. to read the canvas back as an image. @default false */
   preserveDrawingBuffer: boolean
+  /** The WebGL power preference hint: `'default'`, `'high-performance'` or `'low-power'`. @default 'default' */
   powerPreference: string
+  /** Whether to clear the buffers before each render. @default true */
   autoClear: boolean
+  /** The colour to clear to, as `[r, g, b, a]`. @default [0, 0, 0, 0] */
   clearColour: WTCGLColour
 }
 
 /**
  * A colour as `[r, g, b, a]`, each from 0 to 1.
+ * @category Core
  */
 export type WTCGLColour = [number, number, number, number]
 
+/**
+ * Options for {@link Renderer.render}.
+ * @category Core
+ */
 export interface RenderOptions {
+  /** The root object to render. */
   scene: Obj
+  /** The camera to render with. Without one, objects are drawn as they are and no frustum culling happens. */
   camera?: Camera
+  /** The render target to draw into, or null for the canvas. @default null */
   target?: RenderTarget | null
+  /** Whether to update the scene's world matrices first. @default true */
   update?: boolean
+  /** Whether to sort into opaque, transparent and UI groups before drawing. @default true */
   sort?: boolean
+  /** Whether to skip drawables outside the camera's frustum. @default true */
   frustumCull?: boolean
+  /** Whether to clear first. Left out, the renderer's `autoClear` decides. */
   clear?: boolean
+  /** The viewport as `[size, position]` in pixels. Defaults to the whole canvas or render target. */
   viewport?: [Vec2, Vec2]
   /**
    * Keep the clear and the drawing inside a rect: `true` for the viewport, or
@@ -54,6 +84,7 @@ export interface RenderOptions {
 
 /**
  * Create a renderer. This is responsible for bringing together the whole state and, eventually, rendering to screen.
+ * @category Core
  */
 export class Renderer {
   /**
@@ -120,7 +151,10 @@ export class Renderer {
    */
   currentGeometry = ''
 
-  // Allows programs to optimise by determine if they're the currently rendering program and skipping some steps
+  /**
+   * The id of the program last used, so a program already in use can skip
+   * rebinding. -1 when none is.
+   */
   currentProgram = -1
 
   #ownsCanvas: boolean
@@ -150,20 +184,8 @@ export class Renderer {
   #resourceRefs = new WeakMap<WTCGLRestorable, WeakRef<WTCGLRestorable>>()
 
   /**
-   * create a renderer
-   * @param __namedParameters - The parameters to initialise the renderer.
-   * @param canvas - The canvas HTML element to render to.
-   * @param width - The width of the canvas.
-   * @param height - The height of the canvas.
-   * @param dpr - The pixel aspect ratio of the canvas.
-   * @param alpha - Whether to render an alpha channel.
-   * @param depth - Whether to render a depth buffer.
-   * @param stencil - Whether to render a stencil buffer.
-   * @param premultipliedAlpha - Whether to use premultiplied alpha.
-   * @param preserveDrawingBuffer - Preserve the drawing buffer between calls. Useful for when downloading the canvas to an image.
-   * @param powerPreference - WebGL power preference.
-   * @param autoClear - Whether to clear the canvas between draw.
-   * @param clearColour - The colour to clear to, as `[r, g, b, a]`.
+   * Create a renderer and its WebGL2 context. Throws if WebGL2 isn't available.
+   * @param options - The canvas, size and context attributes; see {@link RendererOptions}.
    */
   constructor({
     canvas,
@@ -357,12 +379,17 @@ export class Renderer {
     if (this.#ownsCanvas) this.getExtension('WEBGL_lose_context')?.loseContext()
   }
 
+  /**
+   * The size of the renderer in CSS pixels. Setting it resizes the canvas's
+   * drawing buffer to this size times `dpr`.
+   */
   set dimensions(v: Vec2) {
     this.#dimensions = v
 
     this.gl.canvas.width = v.width * this.dpr
     this.gl.canvas.height = v.height * this.dpr
   }
+  /** The size of the renderer in CSS pixels. */
   get dimensions() {
     return this.#dimensions
   }
@@ -493,25 +520,28 @@ export class Renderer {
   }
 
   /**
-   * Sets the cull face bit
+   * The face culled when `gl.CULL_FACE` is enabled, e.g. `gl.BACK`. Null
+   * until set.
    */
   set cullFace(value: GLenum) {
     if (this.state.cullFace === value) return
     this.state.cullFace = value
     this.gl.cullFace(value)
   }
+  /** The face culled when `gl.CULL_FACE` is enabled, or null if never set. */
   get cullFace(): GLenum | null {
     return this.state.cullFace
   }
 
   /**
-   * Sets the front face bit
+   * Which winding counts as front facing: `gl.CCW` or `gl.CW`.
    */
   set frontFace(value: GLenum) {
     if (this.state.frontFace === value) return
     this.state.frontFace = value
     this.gl.frontFace(value)
   }
+  /** Which winding counts as front facing. */
   get frontFace(): GLenum | null {
     return this.state.frontFace
   }
@@ -526,30 +556,33 @@ export class Renderer {
     this.#clearColour = [value[0], value[1], value[2], value[3]]
     this.gl.clearColor(value[0], value[1], value[2], value[3])
   }
+  /** A copy of the clear colour, as `[r, g, b, a]`. */
   get clearColour(): WTCGLColour {
     return [...this.#clearColour]
   }
 
   /**
-   * Sets the depth mask bit
+   * Whether writing to the depth buffer is enabled.
    */
   set depthMask(value: boolean) {
     if (this.state.depthMask === value) return
     this.state.depthMask = value
     this.gl.depthMask(value)
   }
+  /** Whether writing to the depth buffer is enabled. */
   get depthMask() {
     return this.state.depthMask
   }
 
   /**
-   * Sets the depth function bit
+   * The depth comparison function, e.g. `gl.LESS`.
    */
   set depthFunc(value: GLenum) {
     if (this.state.depthFunc === value) return
     this.state.depthFunc = value
     this.gl.depthFunc(value)
   }
+  /** The depth comparison function. */
   get depthFunc(): GLenum | null {
     return this.state.depthFunc
   }
@@ -568,6 +601,7 @@ export class Renderer {
     this.#colourWrite = value
     this.gl.colorMask(value, value, value, value)
   }
+  /** Whether colour is written. */
   get colourWrite(): boolean {
     return this.#colourWrite
   }
@@ -624,23 +658,24 @@ export class Renderer {
   }
 
   /**
-   * Sets the active texture value
+   * The active texture unit, as an index from 0 (not a `gl.TEXTURE0` enum).
    */
   set activeTexture(value: number) {
     if (this.state.activeTextureUnit === value) return
     this.state.activeTextureUnit = value
     this.gl.activeTexture(this.gl.TEXTURE0 + value)
   }
+  /** The active texture unit, as an index from 0. */
   get activeTexture() {
     return this.state.activeTextureUnit
   }
 
   /**
-   * Binds a given WebGLFramebuffer to a target .
-   * @param __namedParameters
-   * @param target - A GLenum specifying the binding point (target). Typically only `gl.FRAMEBUFFER` see [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer) for more information
-   * @param buffer - A WebGLFramebuffer object to bind. If framebuffer is null, then the canvas (which has no WebGLFramebuffer object) is bound.
-   * @returns
+   * Binds a given WebGLFramebuffer to a target, skipping the call if it's
+   * already bound.
+   * @param options - The target and framebuffer to bind.
+   * @param options.target - The binding point. Typically `gl.FRAMEBUFFER`; see [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindFramebuffer) for more information.
+   * @param options.buffer - The framebuffer to bind. If null, the canvas (which has no WebGLFramebuffer object) is bound.
    */
   bindFramebuffer({
     target = this.gl.FRAMEBUFFER,
@@ -733,12 +768,12 @@ export class Renderer {
 
   /**
    * Retrieves the list of renderable objects sorted by position, explicit render order and applied depth
-   * @param __namedParameters
-   * @param scene - The root scene to render.
-   * @param camera - The camera to use to determine the render list, applies frustum culling etc.
-   * @param frustumCull - Whether to apply frustum culling
-   * @param sort - Whether to sort the list at all.
-   * @returns - An array of renderable objects
+   * @param options - The scene, camera and whether to cull and sort.
+   * @param options.scene - The root scene to render.
+   * @param options.camera - The camera to use to determine the render list, applies frustum culling etc.
+   * @param options.frustumCull - Whether to apply frustum culling
+   * @param options.sort - Whether to sort the list at all.
+   * @returns A new array of renderable objects
    */
   getRenderList({
     scene,
@@ -844,15 +879,8 @@ export class Renderer {
   }
 
   /**
-   * Renders a scene
-   * @param __namedParameters
-   * @param scene - The renderable object to render.
-   * @param camera - The camera to render with. If not supplied will just render as is.
-   * @param target - The render target to render to.
-   * @param update - Whether to update all of the object worl matrices prior to rendering.
-   * @param sort - Whether to sort the objects prior to rendering.
-   * @param frustumCull - Whether to apply frustum culling prior to rendering.
-   * @param clear - Whether to clear the scene prior to rendering. Only matters if renderer.autoClear is false.
+   * Renders a scene. Does nothing while the context is lost.
+   * @param options - The scene, camera, target and render settings; see {@link RenderOptions}.
    */
   render({
     scene,

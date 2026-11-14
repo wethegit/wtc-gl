@@ -20,5 +20,6 @@
     "wtc-math": {
       "*": "https://wethegit.github.io/wtc-math/"
     }
-  }
+  },
+  "categoryOrder": ["Components", "Hooks", "Types", "*"]
 }

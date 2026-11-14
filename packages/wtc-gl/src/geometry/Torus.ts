@@ -8,12 +8,22 @@ import type {
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
+/**
+ * Options for creating a {@link Torus}.
+ * @category Geometry
+ */
 export interface TorusOptions {
+  /** Distance from the centre to the middle of the tube. @default 0.5 */
   radius: number
+  /** Radius of the tube. @default 0.2 */
   tube: number
+  /** Number of divisions around the tube. @default 8 */
   radialSegments: number
+  /** Number of divisions around the ring. @default 24 */
   tubularSegments: number
+  /** Angle of the ring to sweep, in radians, from +x towards +y. @default Math.PI * 2 */
   arc: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: WTCGLGeometryAttributeCollection
 }
 
@@ -22,8 +32,14 @@ export interface TorusOptions {
  * centre to the middle of the tube, and `tube` is the tube's radius. `arc`
  * sweeps the ring from +x towards +y, so less than 2π leaves it open.
  * `radialSegments` go around the tube and `tubularSegments` around the ring.
+ * @category Geometry
  */
 export class Torus extends Geometry {
+  /**
+   * Create a torus
+   * @param gl - The WTCGL rendering context
+   * @param options - Radii, divisions and sweep; see {@link TorusOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

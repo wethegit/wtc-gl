@@ -18,7 +18,10 @@ interface CanvasRenderingContext2DWithElementDraw extends CanvasRenderingContext
   ): void
 }
 
-/** Options passed to the {@link ScrollHTML} constructor. */
+/**
+ * Options passed to the {@link ScrollHTML} constructor.
+ * @category Recipes
+ */
 export interface ScrollHTMLOptions extends ScrollSceneOptions {
   /** The GL rendering context from the parent {@link ScrollRenderer}. */
   gl: WTCGLRenderingContext
@@ -66,6 +69,7 @@ export interface ScrollHTMLOptions extends ScrollSceneOptions {
  *   }),
  * }).setParent(drawable)
  * renderer.addScene(scene)
+ * @category Recipes
  */
 export class ScrollHTML extends ScrollScene {
   /** The `sampler2D` uniform pointing at the HTML texture. */
@@ -90,6 +94,11 @@ export class ScrollHTML extends ScrollScene {
   /** Whether the first `paint` snapshot has been recorded. */
   #ready: boolean = false
 
+  /**
+   * Move the HTML element into a capture canvas and start copying it to the
+   * texture each frame once the browser has painted it.
+   * @param options - The scene options plus the GL context and HTML element.
+   */
   constructor({
     gl,
     htmlElement,
