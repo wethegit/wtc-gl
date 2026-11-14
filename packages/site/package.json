@@ -15,6 +15,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@wethegit/react-wtc-gl": "workspace:*",
+    "manifold-3d": "^3.5.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tweakpane": "^4.0.5",

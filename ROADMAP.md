@@ -159,8 +159,26 @@ For the occasional hero model from Blender. It lands after the lit program, whic
 
 - [x] `Shadow` — shadow-map pass from a light camera (OGL). For the `Lights` directional light: an orthographic light camera covering a sphere of `size` around `target` follows `lights.direction`, and `fit(node)` sets both from a model's bounds. Casters are added explicitly with `shadow.add(node)` and drawn with a depth-only program (instanced for an `InstancedMesh`, both sides so planes cast), or a custom one for shaders that move vertices. `LitProgram` (and `GLTFLoader`) take `shadow` to receive it, and only the directional light is shadowed. The map is a depth texture compared as it's sampled (`Texture` gained `compareFunc`), so each tap is hardware PCF, and a 3×3 kernel spread by `softness` softens the edges. `bias` and a `normalBias` in texels keep acne away. The lookup ships as `shadowShading` for custom shaders, and `litShade` takes an optional shadow factor. Shown in the `gltf`, `lighting` and `icon-swarm` demos; the icon swarm also catches shadows on a transparent backdrop with `shadowShading`.
   - Limits: one directional light and one map (no cascades, point or spot lights); alpha-masked surfaces cast solid shadows unless given their own depth program; an `InstancedMesh` culled differently by the light and view cameras re-uploads its instances for each.
-- [ ] CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves. Ship it as a separate entry point so the WASM dependency stays opt-in.
+- [x] CSG via a thin `manifold-3d` adapter, rather than writing CSG ourselves: `toManifold(wasm, geometry)` and `fromManifold(gl, manifold)`, with the booleans, transforms and the rest left to manifold's own API. It's in the main entry rather than a separate one: you install and load manifold-3d and pass the module in, and wtc-gl only declares structural types for it, so the WASM stays opt-in without a second build. Positions plus a `properties` list of attributes (`normal` and `uv` by default) carry through, and `fill` gives a geometry the attributes it lacks, so a cutter can colour the faces it leaves. Normals are rotated with each part's transform and flipped where a subtraction turns them inside out; missing normals are computed. Shown in the `csg` demo.
 - Model export moved to Future features item 11.
+
+### Documentation
+
+Easy-to-browse, complete documentation for both packages. Today there's only a TypeDoc build of `wtc-gl` copied into the site by `build:site`. It misses `react-wtc-gl`, has no guides, and nothing checks that it builds or covers every export. The tooling (TypeDoc with a theme, VitePress with generated API pages, or similar) needs a plan first.
+
+- [ ] A docs site published with the demos, with navigation, search and links between guides, API pages and demos.
+- [ ] Getting started: installing, a full-screen `FragmentShader`, a first 3D scene with a camera and lit meshes, and a `ScrollRenderer` page.
+- [ ] Guides for each area:
+  - the renderer, scene graph and cameras;
+  - programs, uniforms and textures;
+  - geometry, primitives, paths and `Polyline`;
+  - lighting, shadows and `GLTFLoader`;
+  - instancing, `Raycast` and `TransformFeedback`;
+  - render targets and `ScrollRenderer`.
+- [ ] A full API reference for every export of `wtc-gl`, generated from TSDoc comments, with gaps in those comments filled.
+- [ ] `react-wtc-gl`: its components and hooks, with a React getting-started page.
+- [ ] Annotated examples drawn from the demos, each linking to the live demo and its source.
+- [ ] A CI check that the docs build and that every export is documented.
 
 ---
 

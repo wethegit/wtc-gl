@@ -788,6 +788,34 @@
         <div class="demo">
           <div class="demo__preview">
             <img
+              src="./screenshots/csg.jpg"
+              alt="A pale cube with a spherical bite taken out of one corner, the hollow coloured orange, casting a shadow onto a grid floor"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">toManifold</span>
+              <span class="demo__class">fromManifold</span>
+              <span class="demo__class">LitProgram</span>
+              <span class="demo__class">Shadow</span>
+            </div>
+            <h3>CSG</h3>
+            <p>
+              Booleans with manifold-3d, which wtc-gl doesn't depend on: the
+              demo loads the WASM and <code>toManifold</code> converts wtc-gl
+              primitives for it. A cutter orbits through a box, cylinder, torus
+              or extruded star and the subtraction, intersection or union is
+              redone every frame. The cut faces keep the cutter's colour and its
+              normals, flipped to face the right way.
+            </p>
+            <a class="btn" href="./csg/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
               src="./screenshots/paths.jpg"
               alt="A translucent trefoil-knot tube with small red, green and blue axes along its centre line"
               loading="lazy"

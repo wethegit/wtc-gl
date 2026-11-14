@@ -26,6 +26,7 @@ export * from './geometry/Lathe'
 export * from './geometry/Capsule'
 export * from './geometry/Tube'
 export * from './geometry/Extrude'
+export * from './geometry/manifold'
 export * from './geometry/PointCloud'
 
 export * from './path/Path'

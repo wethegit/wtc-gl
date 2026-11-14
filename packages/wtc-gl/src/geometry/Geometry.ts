@@ -9,6 +9,12 @@ import type {
 import { Program } from '../core/Program'
 import { determinantMat4, normalMatrix } from '../core/matrix'
 import { GeometryAttribute } from './GeometryAttribute'
+import {
+  elementLayout,
+  indexArray,
+  indexEntries,
+  type AttributeData
+} from './attributeData'
 
 let ID = 1
 
@@ -19,19 +25,6 @@ let isTransformWarned = false
 
 // Reused by applyMatrix
 const scratchNormalMatrix = new Mat3()
-
-// An attribute's offset and stride are in bytes, as GL expects; convert them
-// to array indices
-const elementLayout = function (attr: WTCGLGeometryAttribute): {
-  offset: number
-  stride: number
-} {
-  const bytes = attr.data.BYTES_PER_ELEMENT
-  return {
-    offset: (attr.offset || 0) / bytes,
-    stride: (attr.stride || 0) / bytes || attr.size
-  }
-}
 
 // Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
@@ -51,8 +44,6 @@ const warnExternalCopy = function (key: string): void {
   isExternalCopyWarned = true
   console.warn(`External attribute ${key} can't be copied, so it's left out`)
 }
-
-type AttributeData = WTCGLGeometryAttribute['data']
 
 // Allocate an empty array of the same typed-array type as `source`
 const allocate = function (
@@ -108,22 +99,6 @@ const copyVertices = function (
   const data = allocate(attr.data, count * attr.size)
   packVertices(attr, data, 0, count, ids)
   return attributeLike(attr, data)
-}
-
-// The index's entries, from its offset
-const indexEntries = function (index: WTCGLGeometryAttribute): AttributeData {
-  const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
-  return index.data.subarray(start, start + index.count)
-}
-
-// The smallest index array type that can hold `vertexCount` vertices
-const indexArray = function (
-  entries: ArrayLike<number>,
-  vertexCount: number
-): Uint16Array | Uint32Array {
-  return vertexCount <= 65536
-    ? new Uint16Array(entries)
-    : new Uint32Array(entries)
 }
 
 // The context generation each attribute's buffer was last rebuilt for

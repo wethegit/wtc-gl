@@ -58,6 +58,7 @@ export default defineConfig({
         lighting: resolvePath('demos/lighting/index.html'),
         gltf: resolvePath('demos/gltf/index.html'),
         iconSwarm: resolvePath('demos/icon-swarm/index.html'),
+        csg: resolvePath('demos/csg/index.html'),
         paths: resolvePath('demos/paths/index.html'),
         lines: resolvePath('demos/lines/index.html'),
         polylineTrails: resolvePath('demos/polyline-trails/index.html')
