@@ -86,7 +86,7 @@ On an opaque canvas, none of this matters, and the show pass can do anything it 
 
 - The [framebuffer demo](https://wethegit.github.io/wtc-gl/demos/framebuffer/) paints with the pointer the same way, with 32-bit float textures. [Pointer, time and resolution](/cookbook/pointer-uniforms) covers getting the pointer into the step shader.
 - Seed a simulation with `data`, and step it with a shader that reads its neighbours, for reaction-diffusion or the game of life. Use `minFilter: gl.NEAREST` so each texel reads exactly.
-- The [particle simulation recipe](/recipes/particle-simulation) keeps particle positions in framebuffers.
+- The [`GPUSimulation` recipe](/recipes/gpu-simulation) does this ping-pong for you, for simulations with up to four state textures.
 
 ## See also
 

@@ -10,6 +10,7 @@ import { RenderTarget } from '../core/RenderTarget'
 import { Texture } from '../core/Texture'
 import { Uniform } from '../core/Uniform'
 import { writeMat4 } from '../core/matrix'
+import { worldBoundingSphere } from '../core/bounds'
 import type { Lights } from './Lights'
 
 import shadowSource from './shadow-shading.glsl'
@@ -311,54 +312,12 @@ export class Shadow {
    * stays put or spins in place.
    */
   fit(node: Obj): this {
-    const spheres: [number, number, number, number][] = []
-    node.traverse((child) => {
-      if (!(child instanceof Mesh)) return null
-      const geometry = child.geometry
-      if (!geometry.attributes.position) return null
-      if (!geometry.bounds || geometry.bounds.radius === Infinity) {
-        if (geometry.attributes.position.external) return null
-        geometry.computeBoundingSphere()
-      }
-      const bounds = geometry.bounds
-      if (!bounds) return null
-      const m = child.worldMatrix
-      const { x, y, z } = bounds.center
-      const scale = Math.sqrt(
-        Math.max(
-          m.a11 * m.a11 + m.a12 * m.a12 + m.a13 * m.a13,
-          m.a21 * m.a21 + m.a22 * m.a22 + m.a23 * m.a23,
-          m.a31 * m.a31 + m.a32 * m.a32 + m.a33 * m.a33
-        )
-      )
-      spheres.push([
-        m.a11 * x + m.a21 * y + m.a31 * z + m.a41,
-        m.a12 * x + m.a22 * y + m.a32 * z + m.a42,
-        m.a13 * x + m.a23 * y + m.a33 * z + m.a43,
-        bounds.radius * scale
-      ])
-      return null
-    })
-    if (!spheres.length) return this
-
-    const min = [Infinity, Infinity, Infinity]
-    const max = [-Infinity, -Infinity, -Infinity]
-    for (const s of spheres) {
-      for (let k = 0; k < 3; k++) {
-        min[k] = Math.min(min[k], s[k] - s[3])
-        max[k] = Math.max(max[k], s[k] + s[3])
-      }
-    }
-    const centre = [0, 1, 2].map((k) => (min[k] + max[k]) / 2)
-    let size = 0
-    for (const s of spheres) {
-      const d = Math.hypot(s[0] - centre[0], s[1] - centre[1], s[2] - centre[2])
-      size = Math.max(size, d + s[3])
-    }
-    this.target.x = centre[0]
-    this.target.y = centre[1]
-    this.target.z = centre[2]
-    this.size = size
+    const sphere = worldBoundingSphere(node)
+    if (!sphere) return this
+    this.target.x = sphere.centre[0]
+    this.target.y = sphere.centre[1]
+    this.target.z = sphere.centre[2]
+    this.size = sphere.radius
     this.update()
     return this
   }

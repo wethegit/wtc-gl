@@ -14,6 +14,7 @@ import defaultShaderF from './default-shader-frag.frag'
 import defaultShaderV from './default-shader-vert.vert'
 
 const hasWindow = typeof window !== 'undefined'
+let deprecationWarned = false
 const hasDocument = typeof document !== 'undefined'
 
 /**
@@ -98,6 +99,8 @@ export interface ParticleSimulationOptions {
  * The program gets two uniforms besides your own: `u_time`, which grows by
  * `delta * 0.00005` each frame (`delta` in ms), and `u_resolution`, the
  * canvas size.
+ * @deprecated Use {@link GPUSimulation}, which keeps its own state textures
+ * and step pass. `ParticleSimulation` is removed in 3.0.
  * @category Recipes
  */
 export class ParticleSimulation {
@@ -170,6 +173,12 @@ export class ParticleSimulation {
     createGeometry,
     rendererProps = {}
   }: Partial<ParticleSimulationOptions> = {}) {
+    if (!deprecationWarned) {
+      deprecationWarned = true
+      console.warn(
+        'ParticleSimulation is deprecated and will be removed in wtc-gl 3.0: use GPUSimulation, which keeps its own state textures'
+      )
+    }
     this.onBeforeRender = onBeforeRender.bind(this)
     this.onAfterRender = onAfterRender.bind(this)
     this.render = this.render.bind(this)

@@ -181,6 +181,14 @@ Easy-to-browse, complete documentation for both packages. Today there's only a T
 - [x] Recipes (`FragmentShader`, `ParticleSimulation`, `ScrollRenderer`) and a Cookbook of task-based how-tos, most with live examples.
 - [x] A CI check that the docs build and that every export is documented. TypeDoc's validation is strict, and VitePress fails on dead links.
 
+## Phase 7 — Recipes
+
+Ready-made setups for what the demos and docs kept writing by hand.
+
+- [x] `Stage`: a 3D scene recipe, as `FragmentShader` is for a full-screen shader. It makes a renderer sized to its container, an orbiting `DollyCamera` (zoom off, so pages still scroll; `controls: false` for a fixed camera), shared `Lights`, a `Shadow` and a render loop. `add(node)` makes a node cast, `load(url)` loads a glTF model lit and shadowed and frames it, and `fit(node)` points the camera at a node and backs off until it's all in view, fitting the shadow too. The `gltf` demo is built on it.
+- [x] `GPUSimulation`: a simulation in float textures, one texel per item, with up to four named state textures written in one pass (multiple render targets). It owns the ping-pong state and the step pass, gives the shaders `b_<name>`, `u_time` and `u_delta`, and `points()` draws one point per item from its `reference`. It replaces `ParticleSimulation`, which is deprecated and goes in 3.0, and covers Future features item 7. The webcam automaton demo runs on it, one texel per cell.
+- [ ] Post-processing (Future features item 1), next: a `PostProcess` chain for `FragmentShader`, `Stage` and each `ScrollScene`.
+
 ---
 
 ## Future features
@@ -219,7 +227,7 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
 
 6. **Loaders.** `Texture.fromURL` and the glTF loader moved to Phase 6 (Import).
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
-7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
+7. **A GPGPU helper.** Done as `GPUSimulation` in Phase 7.
    - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
 8. **Instancing helpers.** Moved to Phase 6 (Core additions).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.

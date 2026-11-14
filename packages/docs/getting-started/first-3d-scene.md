@@ -133,6 +133,27 @@ requestAnimationFrame(function frame() {
 
 [Cameras](/core/cameras#orbiting-with-dollycamera) has a live example and its options.
 
+## The shortcut: Stage
+
+Everything on this page, from the renderer to the loop, is what the [`Stage`](/recipes/stage) recipe sets up for you, with a shadow besides:
+
+```js
+import { Stage, Mesh, Box, LitProgram } from 'wtc-gl'
+
+const stage = new Stage({ container: document.querySelector('.scene') })
+stage.add(
+  new Mesh(stage.gl, {
+    geometry: new Box(stage.gl),
+    program: new LitProgram(stage.gl, {
+      lights: stage.lights,
+      shadow: stage.shadow
+    })
+  })
+)
+```
+
+Knowing what it does helps when you need something it doesn't.
+
 ## Next steps
 
 - [Scene graph](/core/scene-graph): parents and children, matrices and draw order.

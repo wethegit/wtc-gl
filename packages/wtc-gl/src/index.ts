@@ -73,6 +73,8 @@ export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
 export * from './recipes/ParticleSimulation'
+export * from './recipes/GPUSimulation'
+export * from './recipes/Stage'
 export * from './recipes/ScrollRenderer'
 
 /**

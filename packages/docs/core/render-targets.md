@@ -180,7 +180,7 @@ Its options differ from a `RenderTarget`'s:
 
 `render` passes on `scene`, `camera`, `update`, `clear` and `viewport`. `resize(width, height)` makes two new targets at the new size, deleting the old ones, so their textures change too. `swap()` swaps the targets without drawing, and `remove()` deletes both.
 
-The [framebuffer demo](https://wethegit.github.io/wtc-gl/demos/framebuffer/) paints with the pointer this way, and [`ParticleSimulation`](/recipes/particle-simulation) reads particle state from a `Framebuffer` you step each frame. For simulations that don't need textures, see [transform feedback](/simulation/transform-feedback).
+The [framebuffer demo](https://wethegit.github.io/wtc-gl/demos/framebuffer/) paints with the pointer this way, and [`GPUSimulation`](/recipes/gpu-simulation) keeps a simulation's state in a pair of render targets it swaps each step. For simulations that don't need textures, see [transform feedback](/simulation/transform-feedback).
 
 ## Cleaning up
 

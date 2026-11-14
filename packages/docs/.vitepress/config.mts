@@ -98,8 +98,13 @@ const guide: DefaultTheme.SidebarItem[] = [
     text: 'Recipes',
     items: [
       { text: 'FragmentShader', link: '/recipes/fragment-shader' },
-      { text: 'ParticleSimulation', link: '/recipes/particle-simulation' },
-      { text: 'ScrollRenderer', link: '/recipes/scroll-renderer' }
+      { text: 'Stage', link: '/recipes/stage' },
+      { text: 'GPUSimulation', link: '/recipes/gpu-simulation' },
+      { text: 'ScrollRenderer', link: '/recipes/scroll-renderer' },
+      {
+        text: 'ParticleSimulation (deprecated)',
+        link: '/recipes/particle-simulation'
+      }
     ]
   },
   {

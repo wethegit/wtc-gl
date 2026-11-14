@@ -194,7 +194,7 @@ The same happens if the WebGL context is lost and restored: the simulation start
 
 ## Particles in textures
 
-The [`ParticleSimulation`](/recipes/particle-simulation) recipe takes the other approach: each particle's state is a texel in a texture, which you update by drawing into a [`Framebuffer`](/core/render-targets#feedback-with-framebuffer), and its vertex shader reads that texture to place each point. Simulating in a fragment shader is less direct, but each particle can read any other texel, which suits simulations where particles interact with their neighbours. See [ParticleSimulation](/api/wtc-gl/classes/ParticleSimulation).
+The [`GPUSimulation`](/recipes/gpu-simulation) recipe takes the other approach: each particle's state is a texel in a float texture, updated by a fragment shader each step, and the points read that texture to place themselves. Simulating in a fragment shader is less direct, but each particle can read any other texel, which suits simulations where particles interact with their neighbours. See [GPUSimulation](/api/wtc-gl/classes/GPUSimulation).
 
 ## Cleaning up
 

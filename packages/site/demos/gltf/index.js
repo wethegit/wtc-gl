@@ -1,26 +1,16 @@
-import {
-  Renderer,
-  DollyCamera,
-  Obj,
-  InstancedMesh,
-  GLTFLoader,
-  Lights,
-  Shadow,
-  GridHelper,
-  Raycast,
-  Vec2,
-  Vec3
-} from 'wtc-gl'
+import { Stage, InstancedMesh, GridHelper, Raycast, Vec3 } from 'wtc-gl'
 import { Pane } from 'tweakpane'
 
 // A small floating island made in Blender and exported as a .glb, loaded
-// with GLTFLoader. Its materials become LitPrograms sharing one Lights:
-// vertex-coloured rocks, a textured double-sided sign and an emissive
-// lantern. The ring of trees is one mesh with two materials, exported with
-// EXT_mesh_gpu_instancing, so it loads as two InstancedMeshes. The file's
-// camera can be looked through, and hovering names the node under the
-// pointer with a Raycast. The whole island casts into a Shadow that every
-// material receives, fitted to the island once it's loaded.
+// into a Stage: the recipe that sets up the renderer, an orbiting camera,
+// shared Lights, a Shadow and the render loop. stage.load() turns the file's
+// materials into LitPrograms that share the stage's lights and receive its
+// shadow (vertex-coloured rocks, a textured double-sided sign and an
+// emissive lantern), adds the island casting the shadow, and frames the
+// camera and shadow on it. The ring of trees is one mesh with two materials,
+// exported with EXT_mesh_gpu_instancing, so it loads as two InstancedMeshes.
+// The file's camera can be looked through, and hovering names the node under
+// the pointer with a Raycast.
 
 const params = {
   azimuth: -35,
@@ -33,29 +23,33 @@ const params = {
   glTFCamera: false
 }
 
-// ── Renderer and cameras ──────────────────────────────────────────────────
-const renderer = new Renderer({
-  dpr: Math.min(window.devicePixelRatio, 2),
-  clearColour: [0.93, 0.95, 0.97, 1]
-})
-const { gl } = renderer
-document.body.appendChild(gl.canvas)
+const hud = document.getElementById('hud')
+let gltf = null
+let island = null
+let fileCamera = null
 
-const orbit = new DollyCamera(
-  {
-    element: gl.canvas,
+// ── Stage ─────────────────────────────────────────────────────────────────
+const stage = new Stage({
+  clearColour: [0.93, 0.95, 0.97, 1],
+  // Full-screen, so the wheel can zoom rather than scroll the page
+  controlOptions: {
     target: new Vec3(0, -0.4, 0),
     minDistance: 4,
-    maxDistance: 25
+    maxDistance: 25,
+    enableZoom: true
   },
-  { fov: 35, near: 0.1, far: 100 }
-)
-orbit.setPosition(6, 4, 7)
-
-const lights = new Lights({
-  sky: [0.32, 0.36, 0.42],
-  ground: [0.14, 0.11, 0.09]
+  cameraPosition: [6, 4, 7],
+  lights: { sky: [0.32, 0.36, 0.42], ground: [0.14, 0.11, 0.09] },
+  onBeforeRender: (time, delta) => {
+    if (island && params.spin) {
+      island.rotation.y += delta * 0.15
+      island.updateRotation()
+    }
+    hover()
+  }
 })
+const { lights } = stage
+
 const setLights = () => {
   const a = (params.azimuth * Math.PI) / 180
   const e = (params.elevation * Math.PI) / 180
@@ -69,38 +63,25 @@ const setLights = () => {
 }
 setLights()
 
-const shadow = new Shadow(gl, { lights, mapSize: 2048 })
-
-const scene = new Obj()
-// A faint floor far below, for a sense of height
-const grid = new GridHelper(gl, {
+// A faint floor far below, for a sense of height. It doesn't cast.
+const grid = new GridHelper(stage.gl, {
   size: 24,
   divisions: 24,
   colour: [0.8, 0.82, 0.85],
   centreColour: [0.7, 0.72, 0.76]
 })
 grid.position.y = -4
-grid.setParent(scene)
+stage.add(grid, { castShadow: false })
 
 // ── The model ─────────────────────────────────────────────────────────────
-const hud = document.getElementById('hud')
-let gltf = null
-let island = null
-let fileCamera = null
-
 // Through import.meta.url, so Vite copies the file into the site build
 const url = new URL('./island.glb', import.meta.url).href
-GLTFLoader.load(gl, url, { lights, shadow })
+stage
+  .load(url)
   .then((loaded) => {
     gltf = loaded
     island = gltf.scene
-    island.setParent(scene)
-    // Around the island as it spins, with a little room
-    scene.updateMatrixWorld()
-    shadow.add(island).fit(island)
-    shadow.size *= 1.1
     fileCamera = gltf.cameras[0] ?? null
-    resize()
     const instanced = gltf.meshes.filter((m) => m instanceof InstancedMesh)
     const instances = instanced.reduce((n, m) => n + m.count, 0)
     hud.dataset.stats = [
@@ -118,13 +99,13 @@ GLTFLoader.load(gl, url, { lights, shadow })
 // ── Hover ─────────────────────────────────────────────────────────────────
 const raycast = new Raycast()
 let pointer = null
-gl.canvas.addEventListener('pointermove', (e) => {
+stage.canvas.addEventListener('pointermove', (e) => {
   pointer = [
     (e.clientX / window.innerWidth) * 2 - 1,
     1 - (e.clientY / window.innerHeight) * 2
   ]
 })
-gl.canvas.addEventListener('pointerleave', () => (pointer = null))
+stage.canvas.addEventListener('pointerleave', () => (pointer = null))
 
 // The nearest named node, for meshes split into primitives ("Trees.0")
 const nameOf = (node) => {
@@ -134,11 +115,14 @@ const nameOf = (node) => {
   return node.name || 'unnamed'
 }
 
-const hover = (camera) => {
+function hover() {
   if (!island || !hud.dataset.stats) return
   let line = ''
   if (pointer) {
-    const [hit] = raycast.castMouse(camera, pointer).intersectMeshes(island)
+    stage.camera.updateMatrixWorld()
+    const [hit] = raycast
+      .castMouse(stage.camera, pointer)
+      .intersectMeshes(island)
     if (hit) {
       line = `\nHover ${nameOf(hit.mesh)}`
       if (hit.instanceId !== undefined) line += ` · instance ${hit.instanceId}`
@@ -163,45 +147,17 @@ lightFolder.on('change', setLights)
 const shadowFolder = pane.addFolder({ title: 'Shadow' })
 shadowFolder.addBinding(params, 'shadows').on('change', ({ value }) => {
   for (const program of gltf?.programs ?? []) {
-    program.shadow = value ? shadow : null
+    program.shadow = value ? stage.shadow : null
   }
 })
 shadowFolder
   .addBinding(params, 'softness', { min: 0, max: 4 })
-  .on('change', ({ value }) => (shadow.softness = value))
+  .on('change', ({ value }) => (stage.shadow.softness = value))
 pane.addBinding(params, 'spin')
-pane.addBinding(params, 'glTFCamera', { label: 'file camera' })
-
-const resize = () => {
-  const width = window.innerWidth
-  const height = window.innerHeight
-  renderer.dimensions = new Vec2(width, height)
-  orbit.perspective({ aspect: width / height })
-  fileCamera?.perspective({ aspect: width / height })
-}
-window.addEventListener('resize', resize)
-resize()
-
-// ── Loop ──────────────────────────────────────────────────────────────────
-let last = 0
-const run = (t) => {
-  requestAnimationFrame(run)
-  const time = t * 0.001
-  const dt = Math.min(time - last, 0.1)
-  last = time
-
-  if (island && params.spin) {
-    island.rotation.y += dt * 0.15
-    island.updateRotation()
-  }
-
-  orbit.update()
-  const camera = params.glTFCamera && fileCamera ? fileCamera : orbit
-  orbit.enabled = camera === orbit
-  scene.updateMatrixWorld()
-  camera.updateMatrixWorld()
-  hover(camera)
-  if (params.shadows) shadow.render({ scene, update: false })
-  renderer.render({ scene, camera })
-}
-requestAnimationFrame(run)
+pane
+  .addBinding(params, 'glTFCamera', { label: 'file camera' })
+  // Setting the camera fits it to the canvas, and turns the orbit controls
+  // off until they're the camera again
+  .on('change', ({ value }) => {
+    stage.camera = value && fileCamera ? fileCamera : stage.controls
+  })

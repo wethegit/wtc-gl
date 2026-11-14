@@ -17,7 +17,7 @@ It's descended from [OGL](https://github.com/oframe/ogl), with names familiar fr
 - **Loading.** `GLTFLoader` for models from Blender and other tools, and `Texture.fromURL`.
 - **Interaction.** `Raycast` for picking meshes and instances.
 - **Simulation.** `InstancedMesh` for many copies of a mesh, and `TransformFeedback` to simulate on the GPU.
-- **Recipes.** Ready-made setups: `FragmentShader` for a full-screen shader, `ParticleSimulation`, and `ScrollRenderer` to draw many scenes, each fitted to an element, on one canvas.
+- **Recipes.** Ready-made setups: `FragmentShader` for a full-screen shader, `Stage` for a 3D scene with an orbiting camera, lights and shadows, `GPUSimulation` for particles and other simulations in float textures, and `ScrollRenderer` to draw many scenes, each fitted to an element, on one canvas.
 - **React.** `@wethegit/react-wtc-gl` wraps `ScrollRenderer` in a provider and hooks.
 
 It also re-exports [wtc-math](https://wethegit.github.io/wtc-math/), so vectors and matrices come from the same import.

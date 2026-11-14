@@ -1,11 +1,12 @@
 #version 300 es
 precision highp float;
 
+// From GPUSimulation: the grid size in cells (one texel each), and the time
 uniform vec2 u_resolution;
+// The canvas size, for the camera's aspect
+uniform vec2 u_screen;
 uniform vec2 u_camResolution;
 uniform float u_time;
-// The size of a simulation cell, in device pixels
-uniform float u_cellSize;
 // The rule, as bitmasks of neighbour counts: bit n of u_birth means a dead
 // cell with n live neighbours is born; bit n of u_survive means a live one
 // survives. Conway's Life (B3/S23) is birth 8, survive 12.
@@ -19,7 +20,7 @@ out vec4 colour;
 // Aspect-correct "cover" UV — mirrors horizontally for selfie orientation.
 // Maintains the webcam's native aspect ratio, cropping as needed to fill the screen.
 vec2 camUV(vec2 screenUV) {
-  float sAR = u_resolution.x / u_resolution.y;
+  float sAR = u_screen.x / u_screen.y;
   float cAR = u_camResolution.x / u_camResolution.y;
   vec2 uv = vec2(1.0 - screenUV.x, screenUV.y); // mirror
   if (cAR > sAR) {
@@ -43,10 +44,10 @@ float hash21b(vec2 p) {
 }
 
 void main() {
-  // Snap to the cell grid — all pixels in a cell compute identically
-  vec2 cellCoord = floor(gl_FragCoord.xy / u_cellSize);
-  vec2 cellUV    = (cellCoord + 0.5) * u_cellSize / u_resolution; // sample at cell centre
-  vec2 px        = u_cellSize / u_resolution;                     // one step = one cell
+  // One texel is one cell
+  vec2 cellCoord = floor(gl_FragCoord.xy);
+  vec2 cellUV    = (cellCoord + 0.5) / u_resolution; // the cell's centre
+  vec2 px        = 1.0 / u_resolution;               // one step = one cell
 
   vec3 cam  = texture(b_webcam, camUV(cellUV)).rgb;
   float luma = dot(cam, vec3(0.299, 0.587, 0.114));

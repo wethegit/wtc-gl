@@ -117,6 +117,21 @@ When the whole renderer is going, as at the end of the example, `delete` and `se
 - Outside the shadow's area, everything is lit. If shadows are cut off at an edge, `fit` again after moving the model, or raise `size`.
 - Leaves and other cut-outs cast solid shadows, since the depth pass doesn't read textures.
 
+## With a Stage
+
+The [`Stage`](/recipes/stage) recipe does the first half of this page for you. `load` passes the stage's lights and shadow to the loader, adds the model casting the shadow, and frames the camera and the shadow on it:
+
+```js
+import { Stage } from 'wtc-gl'
+
+const stage = new Stage({ container })
+const gltf = await stage.load('/models/island.glb')
+// Add a ground or a shadow catcher with castShadow: false
+stage.add(catcher, { castShadow: false })
+```
+
+`stage.destroy()` frees the model with the rest.
+
 ## See also
 
 - [glTF models](/loading/gltf), for what the loader makes and supports
