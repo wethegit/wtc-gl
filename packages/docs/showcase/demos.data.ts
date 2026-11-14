@@ -22,8 +22,16 @@ export interface Demo {
   label: string | null
   /** The classes and functions the demo shows off. */
   classes: string[]
-  /** The description, as HTML with only `<code>` kept. */
-  description: string
+  /** The description, as plain text, with the parts that were `<code>` marked. */
+  description: DescriptionPart[]
+}
+
+/** A run of a description's text, and whether it was in `<code>`. */
+export interface DescriptionPart {
+  /** The text, with entities decoded. */
+  text: string
+  /** Whether it was inside `<code>`. */
+  code: boolean
 }
 
 declare const data: Demo[]
@@ -45,12 +53,54 @@ const decode = (text: string) =>
     .replace(/&mdash;/g, '—')
     .replace(/&amp;/g, '&')
 
-// Tags dropped, entities decoded
-const toText = (html: string) => decode(collapse(html.replace(/<[^>]*>/g, '')))
+// The text between a card's tags, as runs marked in or out of <code>. It
+// walks the markup once, so no tag can survive in the text, and the result is
+// only ever shown as text, never as HTML.
+const toParts = (html: string): DescriptionPart[] => {
+  const parts: DescriptionPart[] = []
+  let code = false
+  let text = ''
+  const flush = () => {
+    if (text) parts.push({ text: decode(text), code })
+    text = ''
+  }
+  for (let i = 0; i < html.length; i++) {
+    if (html[i] !== '<') {
+      text += html[i]
+      continue
+    }
+    const end = html.indexOf('>', i)
+    if (end === -1) break
+    const tag = html
+      .slice(i + 1, end)
+      .trim()
+      .toLowerCase()
+    if (tag === 'code' || tag === '/code') {
+      flush()
+      code = tag === 'code'
+    }
+    i = end
+  }
+  flush()
+  // Collapse white space across the runs, as the page would
+  const joined = parts.map((part) => ({
+    ...part,
+    text: part.text.replace(/\s+/g, ' ')
+  }))
+  if (joined.length) {
+    joined[0].text = joined[0].text.trimStart()
+    joined[joined.length - 1].text = joined[joined.length - 1].text.trimEnd()
+  }
+  return joined.filter((part) => part.text)
+}
 
-// Every tag but <code> dropped; entities stay encoded, as it's shown as HTML
-const toInlineHTML = (html: string) =>
-  collapse(html.replace(/<(?!\/?code>)[^>]*>/g, ''))
+// Tags dropped, entities decoded
+const toText = (html: string) =>
+  collapse(
+    toParts(html)
+      .map((part) => part.text)
+      .join('')
+  )
 
 const attribute = (tag: string, name: string) =>
   tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1] ?? null
@@ -102,7 +152,7 @@ const parseCard = (card: string): Demo | null => {
     background,
     label,
     classes,
-    description: toInlineHTML(description)
+    description: toParts(description)
   }
 }
 

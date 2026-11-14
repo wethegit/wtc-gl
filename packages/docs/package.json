@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "api": "typedoc --options typedoc.wtc-gl.json && typedoc --options typedoc.react.json",
+    "api": "pnpm --filter wtc-gl run build && typedoc --options typedoc.wtc-gl.json && typedoc --options typedoc.react.json",
     "dev": "pnpm run assets && pnpm run api && vitepress dev --port 5273 --strictPort",
     "build": "pnpm run assets && pnpm run api && vitepress build",
     "preview": "vitepress preview",

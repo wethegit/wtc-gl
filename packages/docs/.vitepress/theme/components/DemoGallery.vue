@@ -134,7 +134,12 @@ const toggle = (name: string) => {
         <h3 class="demo-card__title">
           <a :href="`${DEMOS}${demo.folder}/`">{{ demo.title }}</a>
         </h3>
-        <p class="demo-card__description" v-html="demo.description" />
+        <p class="demo-card__description">
+          <template v-for="(part, i) in demo.description" :key="i">
+            <code v-if="part.code">{{ part.text }}</code>
+            <template v-else>{{ part.text }}</template>
+          </template>
+        </p>
 
         <p class="demo-card__links">
           <a
