@@ -1,0 +1,22 @@
+{
+  "name": "wtc-gl-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "typedoc --options typedoc.wtc-gl.json && typedoc --options typedoc.react.json",
+    "dev": "pnpm run api && vitepress dev",
+    "build": "pnpm run api && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@wethegit/react-wtc-gl": "workspace:*",
+    "manifold-3d": "^3.5.5",
+    "typedoc": "~0.28.20",
+    "typedoc-plugin-markdown": "^4.14.1",
+    "typedoc-vitepress-theme": "^1.1.4",
+    "typescript": "~6.0.3",
+    "vitepress": "1.6.4",
+    "vue": "^3.5.45",
+    "wtc-gl": "workspace:*"
+  }
+}

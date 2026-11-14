@@ -1,4 +1,6 @@
 packages:
   - 'packages/*'
+allowBuilds:
+  esbuild: false
 minimumReleaseAgeExclude:
   - wtc-math@1.4.0

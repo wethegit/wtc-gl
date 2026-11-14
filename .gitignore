@@ -30,7 +30,11 @@ bower_components
 **/bower_components
 **/*/bower_components
 **/*/*.log
-docs/
+# The docs site's generated API pages and build
+packages/docs/api/wtc-gl/
+packages/docs/api/react/
+packages/docs/.vitepress/dist/
+packages/docs/.vitepress/cache/
 dist-site/
 test-results/
 playwright-report/

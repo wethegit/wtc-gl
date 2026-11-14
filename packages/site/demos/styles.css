@@ -259,6 +259,13 @@ pre {
 .demo-nav__title {
   color: rgba(221, 224, 238, 0.7);
 }
+.demo-nav__docs {
+  margin-left: auto;
+  color: rgba(221, 224, 238, 0.7);
+}
+.demo-nav__docs:hover {
+  color: var(--accent);
+}
 
 /* ── fullscreen canvas demo ── */
 html.demo-fullscreen,

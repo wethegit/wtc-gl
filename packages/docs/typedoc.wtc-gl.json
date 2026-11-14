@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "extends": ["./typedoc.base.json"],
+  "name": "wtc-gl",
+  "entryPoints": ["../wtc-gl/src/index.ts"],
+  "tsconfig": "../wtc-gl/tsconfig.json",
+  "out": "./api/wtc-gl",
+  "docsRoot": "./"
+}

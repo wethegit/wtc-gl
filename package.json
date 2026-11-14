@@ -10,8 +10,8 @@
     "test": "pnpm -r run test",
     "lint": "eslint --fix --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src ./packages/*/test",
     "preview": "pnpm --filter wtc-gl-site run preview",
-    "document": "typedoc --entryPointStrategy Expand",
-    "build:site": "pnpm run document && pnpm --filter wtc-gl-site run build && cp -r docs packages/site/dist-site/demos/docs",
+    "docs:dev": "pnpm --filter wtc-gl-docs run dev",
+    "build:site": "pnpm --filter wtc-gl-site run build && pnpm --filter wtc-gl-docs run build && cp -r packages/docs/.vitepress/dist packages/site/dist-site/docs",
     "check": "eslint --ext .ts,.tsx --ignore-path .gitignore ./packages/*/src ./packages/*/test && pnpm run build",
     "changeset": "changeset",
     "version": "changeset version && pnpm install --lockfile-only",
@@ -27,7 +27,6 @@
     "husky": "~9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
-    "typedoc": "~0.28.20",
     "typescript": "~6.0.3"
   },
   "lint-staged": {

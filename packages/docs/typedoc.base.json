@@ -1,0 +1,45 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "readme": "none",
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "disableSources": false,
+  "gitRevision": "master",
+  "sourceLinkTemplate": "https://github.com/wethegit/wtc-gl/blob/{gitRevision}/{path}#L{line}",
+  "outputFileStrategy": "members",
+  "entryFileName": "index",
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "useCodeBlocks": true,
+  "parametersFormat": "table",
+  "interfacePropertiesFormat": "table",
+  "classPropertiesFormat": "table",
+  "typeDeclarationFormat": "table",
+  "enumMembersFormat": "table",
+  "propertyMembersFormat": "table",
+  "categorizeByGroup": false,
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": false
+  },
+  "sidebar": {
+    "autoConfiguration": true,
+    "format": "vitepress",
+    "pretty": true,
+    "collapsed": true
+  },
+  "externalSymbolLinkMappings": {
+    "wtc-math": {
+      "*": "https://wethegit.github.io/wtc-math/"
+    }
+  },
+  "tableColumnSettings": {
+    "hideSources": true,
+    "leftAlignHeaders": true
+  },
+  "pageTitleTemplates": {
+    "member": "{name}"
+  }
+}
