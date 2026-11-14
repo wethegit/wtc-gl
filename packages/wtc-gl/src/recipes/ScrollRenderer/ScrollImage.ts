@@ -90,6 +90,21 @@ export class ScrollImage extends ScrollScene {
       applyImage()
     } else {
       imgEl.addEventListener('load', applyImage, { once: true })
+      this.#stopWaiting = () => imgEl.removeEventListener('load', applyImage)
     }
+  }
+
+  #stopWaiting: (() => void) | null = null
+
+  /**
+   * Stop waiting for the image if it hasn't loaded, delete the texture, and
+   * disconnect the scene's observer. Call when permanently removing this
+   * scene, after {@link ScrollRenderer.removeScene}.
+   */
+  destroy() {
+    this.#stopWaiting?.()
+    this.#stopWaiting = null
+    this.texture.remove()
+    super.destroy()
   }
 }

@@ -4,6 +4,13 @@ precision highp float;
 uniform vec2 u_resolution;
 uniform vec2 u_camResolution;
 uniform float u_time;
+// The size of a simulation cell, in device pixels
+uniform float u_cellSize;
+// The rule, as bitmasks of neighbour counts: bit n of u_birth means a dead
+// cell with n live neighbours is born; bit n of u_survive means a live one
+// survives. Conway's Life (B3/S23) is birth 8, survive 12.
+uniform int u_birth;
+uniform int u_survive;
 uniform sampler2D b_state;
 uniform sampler2D b_webcam;
 
@@ -36,12 +43,10 @@ float hash21b(vec2 p) {
 }
 
 void main() {
-  const float PIXEL_SIZE = 2.0;
-
-  // Snap to PIXEL_SIZE cell grid — all pixels in a block compute identically
-  vec2 cellCoord = floor(gl_FragCoord.xy / PIXEL_SIZE);
-  vec2 cellUV    = (cellCoord * PIXEL_SIZE + 1.0) / u_resolution; // sample at cell centre
-  vec2 px        = PIXEL_SIZE / u_resolution;                      // one step = one cell
+  // Snap to the cell grid — all pixels in a cell compute identically
+  vec2 cellCoord = floor(gl_FragCoord.xy / u_cellSize);
+  vec2 cellUV    = (cellCoord + 0.5) * u_cellSize / u_resolution; // sample at cell centre
+  vec2 px        = u_cellSize / u_resolution;                     // one step = one cell
 
   vec3 cam  = texture(b_webcam, camUV(cellUV)).rgb;
   float luma = dot(cam, vec3(0.299, 0.587, 0.114));
@@ -51,7 +56,7 @@ void main() {
   float alive = step(0.5, curr.r);
   float age   = curr.g;
 
-  // Count Moore neighbourhood (each step moves one full cell = 2px)
+  // Count Moore neighbourhood (each step moves one full cell)
   float count = 0.0;
   for (int dy = -1; dy <= 1; dy++) {
     for (int dx = -1; dx <= 1; dx++) {
@@ -60,9 +65,10 @@ void main() {
     }
   }
 
-  // Conway Game of Life rules
-  float survives = alive        * step(1.5, count) * step(count, 3.5);
-  float born     = (1.0 - alive) * step(2.5, count) * step(count, 3.5);
+  // The chosen Life-like rule
+  int n = int(count + 0.5);
+  float survives = alive         * float((u_survive >> n) & 1);
+  float born     = (1.0 - alive) * float((u_birth >> n) & 1);
 
   // Use cellCoord for randomness so all pixels in the same cell agree
   float frameId = floor(u_time * 60.0);

@@ -71,7 +71,7 @@ The renderer doesn't append or style the canvas: `scrollRenderer.canvas` is your
 
 ### Playing
 
-`playing` starts and stops the loop; nothing is drawn until you set it to `true`. Stopping resets the frame clock, so the first frame after starting again adds no time to the scenes. Like `ParticleSimulation`, stopping lets the frame that was already requested run, so don't stop and restart within a single frame.
+`playing` starts and stops the loop; nothing is drawn until you set it to `true`. Stopping resets the frame clock, so the first frame after starting again adds no time to the scenes. Stopping also cancels the frame that was already requested, so stopping and starting again within a frame doesn't run two loops.
 
 ## ScrollScene
 
@@ -210,7 +210,7 @@ void main() {
 
 The `<img>` stays in the page underneath. Hide it with `opacity: 0` (or `visibility: hidden` on an image you track through a wrapper), so it keeps its layout and the browser still loads it, and show it again if WebGL isn't there, using `initializedClass`. An image from another origin needs CORS headers and `crossorigin="anonymous"` to be uploaded.
 
-`scrollImage.texture` is the [Texture](/core/textures). `destroy()` doesn't remove it, so call `scrollImage.texture.remove()` when you're done with it.
+`scrollImage.texture` is the [Texture](/core/textures). `destroy()` deletes it, disconnects the observer, and stops waiting for the image if it hasn't loaded yet.
 
 ## ScrollHTML
 
@@ -229,9 +229,9 @@ const scrollHTML = new ScrollHTML({
 
 It adds `u_html` (`sampler2D`, the element as last painted) and `u_htmlSize` (`vec2`, the capture canvas's size in device pixels).
 
-It moves `htmlElement` into a hidden `<canvas layoutsubtree>` appended to the body, which is how the API draws it, so it's no longer where it was in the page. `element` stays put, for the scene to track. Always pass both: with only `element`, or the same element twice, that element is moved and a hidden placeholder `<div>` holds its place, but the scene goes on tracking the moved element rather than the placeholder. The capture canvas is `scrollHTML.captureCanvas`: position it over the element, with a tiny opacity and `pointer-events: auto`, to let the pointer reach a form inside it, as the image cloth demo does.
+It moves `htmlElement` into a hidden `<canvas layoutsubtree>` appended to the body, which is how the API draws it, so it's no longer where it was in the page. `element` stays put, for the scene to track. With only `element`, or the same element twice, that element is moved, and a hidden placeholder `<div>` the same size holds its place in the page; the scene tracks the placeholder. The capture canvas is `scrollHTML.captureCanvas`: position it over the element, with a tiny opacity and `pointer-events: auto`, to let the pointer reach a form inside it, as the image cloth demo does.
 
-Where the API isn't supported, the uniforms exist but the texture stays empty. `destroy()` puts the element back at the end of `document.body` (not where it was), and removes the capture canvas and placeholder. Like `ScrollImage`, it leaves the texture for you to remove.
+Where the API isn't supported, the uniforms exist but the texture stays empty. `destroy()` puts the element back where it was, in place of the placeholder or in its old spot among its parent's children, and only at the end of `document.body` when neither is still in the page. It also removes the capture canvas and placeholder, and deletes the texture.
 
 ## Fixed or absolute
 
@@ -287,7 +287,7 @@ Don't use absolute layout for scenes on elements fixed to the viewport, such as 
 scrollRenderer.destroy().remove()
 ```
 
-Remove the scenes' programs, geometries and textures first, `ScrollImage` and `ScrollHTML` textures among them, if the context will be kept. See [Cleaning up](/core/cleaning-up).
+Remove the scenes' programs, geometries and textures first if the context will be kept. A `ScrollImage`'s or `ScrollHTML`'s own texture goes when its scene is destroyed. See [Cleaning up](/core/cleaning-up).
 
 ## Related
 

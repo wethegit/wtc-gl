@@ -6,22 +6,24 @@ Buffers, textures, programs and framebuffers live on the GPU, outside JavaScript
 
 ## What to call
 
-| Class                                            | Call               | What it frees                                                                                                                      |
-| ------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `Geometry`, and every primitive                  | `remove()`         | Its vertex arrays and attribute buffers. Buffers it shares from another geometry are left to that geometry.                        |
-| `Program`, `LitProgram`                          | `remove()`         | The program, and its uniform values in the renderer's cache.                                                                       |
-| `Texture`                                        | `remove()`         | The WebGL texture.                                                                                                                 |
-| `VideoTexture`                                   | `remove()`         | The texture, and it stops following the video. The video itself keeps playing.                                                     |
-| `RenderTarget`                                   | `remove()`         | The framebuffer, its colour textures, and the depth buffer or depth texture it made. A `depthTexture` you passed in is left alone. |
-| `Framebuffer`                                    | `remove()`         | Both of its render targets.                                                                                                        |
-| `TransformFeedback`                              | `remove()`         | Its buffers, vertex arrays and transform feedback objects. The program is left alone.                                              |
-| `Shadow`                                         | `remove()`         | The shadow map, its render target and its depth programs. Programs you passed to `add()` are left alone.                           |
-| A loaded glTF                                    | `remove()`         | Every geometry, program and texture made for the file.                                                                             |
-| `Mesh`, `InstancedMesh`, `Polyline`, the helpers | none               | Meshes have no `remove()`. Remove a mesh's `geometry` and `program` instead.                                                       |
-| `DollyCamera`                                    | `removeHandlers()` | Its input listeners.                                                                                                               |
-| `Renderer`                                       | `dispose()`        | Its listeners and state caches, and the context, if it made its own canvas.                                                        |
-| `FragmentShader`, `ScrollRenderer`               | `destroy()`        | Everything the recipe set up; see [below](#recipes).                                                                               |
-| `ScrollScene`                                    | `destroy()`        | Its `IntersectionObserver`.                                                                                                        |
+| Class                                                    | Call               | What it frees                                                                                                                      |
+| -------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Geometry`, and every primitive                          | `remove()`         | Its vertex arrays and attribute buffers. Buffers it shares from another geometry are left to that geometry.                        |
+| `Program`, `LitProgram`                                  | `remove()`         | The program, and its uniform values in the renderer's cache.                                                                       |
+| `Texture`                                                | `remove()`         | The WebGL texture.                                                                                                                 |
+| `VideoTexture`                                           | `remove()`         | The texture, and it stops following the video. The video itself keeps playing.                                                     |
+| `RenderTarget`                                           | `remove()`         | The framebuffer, its colour textures, and the depth buffer or depth texture it made. A `depthTexture` you passed in is left alone. |
+| `Framebuffer`                                            | `remove()`         | Both of its render targets.                                                                                                        |
+| `TransformFeedback`                                      | `remove()`         | Its buffers, vertex arrays and transform feedback objects. The program is left alone.                                              |
+| `Shadow`                                                 | `remove()`         | The shadow map, its render target and its depth programs. Programs you passed to `add()` are left alone.                           |
+| A loaded glTF                                            | `remove()`         | Every geometry, program and texture made for the file.                                                                             |
+| `Mesh`, `InstancedMesh`, `Polyline`, the helpers         | none               | Meshes have no `remove()`. Remove a mesh's `geometry` and `program` instead.                                                       |
+| `DollyCamera`                                            | `removeHandlers()` | Its input listeners.                                                                                                               |
+| `Renderer`                                               | `dispose()`        | Its listeners and state caches, and the context, if it made its own canvas.                                                        |
+| `FragmentShader`, `ParticleSimulation`, `ScrollRenderer` | `destroy()`        | Everything the recipe set up; see [below](#recipes).                                                                               |
+| `ScrollScene`                                            | `destroy()`        | Its `IntersectionObserver`.                                                                                                        |
+| `ScrollImage`                                            | `destroy()`        | Its texture and its `IntersectionObserver`, and it stops waiting for the image to load.                                            |
+| `ScrollHTML`                                             | `destroy()`        | Its texture, capture canvas and observers, and it puts the element back where it was.                                              |
 
 Each `remove()` also stops the renderer rebuilding the resource after [context loss](/core/renderer#context-loss). After `remove()`, the object can't be drawn or used again.
 
@@ -101,7 +103,9 @@ Browsers allow only a few WebGL contexts at once, 16 in Chrome, and when a page 
 
 `FragmentShader.destroy()` stops the render loop and the resize listener, removes the mesh's geometry and program, disposes of the renderer, and takes the canvas out of the page if it made it. It returns the canvas. A `post` framebuffer is yours, so call its `remove()` too.
 
-`ScrollRenderer.destroy()` stops the render loop and the resize observer, destroys every scene, and disposes of the renderer. It returns the canvas for you to remove. It doesn't remove the scenes' geometry and programs; if the renderer made its own canvas they go with the context, and otherwise remove them first. `removeScene()` only stops drawing a scene; call the scene's `destroy()` as well when it's gone for good.
+`ParticleSimulation.destroy()` does the same for a simulation. A `post` framebuffer, and the textures and framebuffers you passed in as uniforms, are yours to `remove()`.
+
+`ScrollRenderer.destroy()` stops the render loop and the resize observer, destroys every scene (which deletes a `ScrollImage`'s or `ScrollHTML`'s texture), and disposes of the renderer. It returns the canvas for you to remove. It doesn't remove the scenes' geometry and programs; if the renderer made its own canvas they go with the context, and otherwise remove them first. `removeScene()` only stops drawing a scene; call the scene's `destroy()` as well when it's gone for good.
 
 ```js
 scrollRenderer.destroy().remove()

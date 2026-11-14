@@ -94,7 +94,7 @@ Both use `projectionViewMatrix`, which the renderer brings up to date as it rend
 
 ## Frustum culling
 
-The frustum is the part of the world a camera can see. With `frustumCull` on, as it is by default, `render()` skips meshes whose bounding sphere is entirely outside it, which saves drawing what can't be seen.
+The frustum is the part of the world a camera can see. With `frustumCull` on, as it is by default, `render()` skips meshes whose bounding sphere is entirely outside it, which saves drawing what can't be seen. A drawable that isn't a `Mesh` has no bounds, so it's never culled.
 
 The bounding sphere is measured from the geometry's `position` data the first time it's needed. A vertex shader that moves vertices, or position data you change later, can take a mesh outside its measured bounds, and it'll be culled while still on screen. Either measure again, box first, as the sphere is centred on the box, or turn culling off for that mesh:
 
@@ -109,7 +109,7 @@ You can test against the frustum yourself. `updateFrustum()` updates its planes 
 
 ```js
 camera.updateFrustum()
-camera.frustumIntersects(mesh) // the mesh's bounds against the frustum
+camera.frustumIntersects(mesh) // the mesh's bounds against the frustum; true for other drawables
 camera.frustumIntersectsSphere(centre, radius)
 ```
 
@@ -123,7 +123,7 @@ camera.frustumIntersectsSphere(centre, radius)
 - Scroll the wheel, drag with the middle button or pinch to zoom.
 - Drag with the right button or two fingers to pan.
 
-It takes its own options first and the usual camera options second. Place it with `setPosition`, and call `update()` every frame: input sets where the camera is heading, and `update()` eases it there, applies the limits and points it at the target.
+It takes its own options first and the usual [camera options](#perspective) second. Both are optional, and as with `Camera` you only pass the camera options you want to change, so `new DollyCamera({ element })` works. Place it with `setPosition`, and call `update()` every frame: input sets where the camera is heading, and `update()` eases it there, applies the limits and points it at the target.
 
 ```js
 import { DollyCamera, Vec3 } from 'wtc-gl'

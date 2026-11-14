@@ -45,7 +45,6 @@ export function WavyImage({ src, alt }: { src: string; alt: string }) {
     return () => {
       geometry.remove()
       program.remove()
-      scrollScene.texture.remove()
     }
   })
 
@@ -110,7 +109,7 @@ Like every option but the callbacks, `image` is read once, when the scene is mad
 
 ## Cleaning up
 
-On unmount the hook removes and destroys the scene, then calls your cleanup. Destroying a `ScrollImage` doesn't free its texture, so remove `scrollScene.texture` in your cleanup, as the first example does, along with your programs and geometry.
+On unmount the hook removes and destroys the scene, then calls your cleanup. Destroying a `ScrollImage` deletes its texture, so your cleanup only needs to remove what setup made, such as your programs and geometry, as the first example does.
 
 ## The returned ref
 

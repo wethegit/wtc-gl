@@ -108,7 +108,7 @@ Set `visible` to `false` to stop drawing an object and everything under it. Its 
 
 Two options on every drawable change how the renderer treats it:
 
-- `frustumCulled` (default `true`) skips the mesh when its bounds are outside the camera's view. See [frustum culling](/core/cameras#frustum-culling).
+- `frustumCulled` (default `true`) skips the mesh when its bounds are outside the camera's view. A drawable that isn't a `Mesh` has no bounds, so it's always drawn. See [frustum culling](/core/cameras#frustum-culling).
 - `renderOrder` (default `0`) sets its place in the draw order.
 
 ```js

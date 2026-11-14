@@ -50,12 +50,12 @@ export interface FragmentShaderOptions {
    * Called each frame before rendering, with the `requestAnimationFrame`
    * timestamp in ms. Bound to the instance.
    */
-  onBeforeRender: (delta: number) => void
+  onBeforeRender: (time: number) => void
   /**
    * Called each frame after rendering, with the `requestAnimationFrame`
    * timestamp in ms. Bound to the instance.
    */
-  onAfterRender: (delta: number) => void
+  onAfterRender: (time: number) => void
   /**
    * Options for the {@link Renderer}. The clear colour defaults to opaque
    * white.

@@ -173,7 +173,7 @@ export class DollyCamera extends Camera {
       minDistance = 0,
       maxDistance = Infinity
     }: Partial<DollyCameraOptions> = {},
-    cameraOptions: CameraOptions
+    cameraOptions: Partial<CameraOptions> = {}
   ) {
     super(cameraOptions)
 

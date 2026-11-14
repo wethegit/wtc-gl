@@ -139,7 +139,9 @@ export class Sphere extends Geometry {
       position: new GeometryAttribute({ size: 3, data: position }),
       normal: new GeometryAttribute({ size: 3, data: normal }),
       uv: new GeometryAttribute({ size: 2, data: uv }),
-      index: new GeometryAttribute({ data: index })
+      // Rows at closed poles skip a triangle per segment, so trim the unused
+      // (all-zero) entries off the end
+      index: new GeometryAttribute({ data: index.slice(0, ii * 3) })
     })
 
     super(gl, attributes)

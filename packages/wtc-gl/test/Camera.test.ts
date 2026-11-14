@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Mat4, Vec3 } from 'wtc-math'
 
 import { Camera } from '../src/core/Camera'
+import { Drawable } from '../src/core/Drawable'
 import { Mesh } from '../src/core/Mesh'
 import { Program } from '../src/core/Program'
 import { Box } from '../src/geometry/Box'
@@ -223,5 +224,17 @@ describe('Camera.frustumIntersects with a world matrix', () => {
     // About 4.1 is the half-width at the mesh's depth, so x = 20 is outside
     expect(camera.frustumIntersects(mesh, translation(20))).toBe(false)
     expect(camera.frustumIntersects(mesh, translation(20, 40))).toBe(true)
+  })
+})
+
+describe('Camera.frustumIntersects with other drawables', () => {
+  it('never culls a drawable that has no bounds to test', () => {
+    const { gl } = createMockRenderer()
+    const camera = perspectiveCamera()
+    camera.updateFrustum()
+    const drawable = new Drawable(gl)
+    drawable.position.x = 1000
+    drawable.updateMatrixWorld()
+    expect(camera.frustumIntersects(drawable)).toBe(true)
   })
 })

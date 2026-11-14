@@ -113,7 +113,7 @@ void main() {
 }
 ```
 
-The points' vertex shader reads the particle's texel at `reference` and places the point there. The default geometry's references are the bottom-left corners of the texels (`x / textureSize`), so add half a texel to sample the centre:
+The points' vertex shader reads the particle's texel at `reference` and places the point there. Each reference points at the centre of its texel, `(x + 0.5) / textureSize`, so it reads that texel exactly:
 
 ```glsl
 // pointsVertex
@@ -123,8 +123,7 @@ uniform sampler2D b_state;
 out float v_speed;
 
 void main() {
-  vec2 texel = 0.5 / vec2(textureSize(b_state, 0));
-  vec4 particle = texture(b_state, reference + texel);
+  vec4 particle = texture(b_state, reference);
   v_speed = length(particle.zw);
   gl_PointSize = 2.0;
   gl_Position = vec4(particle.xy, 0.0, 1.0);
@@ -145,14 +144,16 @@ void main() {
 }
 ```
 
-The positions here are in clip space, from -1 to 1 on both axes, so the field stretches with the window. Multiply `x` by the aspect ratio from `u_resolution` to keep it square. The recipe's default shaders are GLSL 1.00 and read a `b_position` texture you'd have to supply, so they draw nothing useful on their own; pass your own.
+The positions here are in clip space, from -1 to 1 on both axes, so the field stretches with the window. Multiply `x` by the aspect ratio from `u_resolution` to keep it square.
+
+The recipe's default shaders are placeholders, so that a new simulation shows something. They draw each particle where the point cloud started it, as a 2 pixel round point coloured by its `reference`, and need no uniforms or attributes beyond the recipe's own. They don't move: your own vertex shader reads each particle's position from your simulation texture at `reference`, as above.
 
 ## Options
 
 ```js
 const particles = new ParticleSimulation({
-  vertex, // default: reads b_position at reference, 2 pixel points
-  fragment, // default: fills each point with v_colour
+  vertex, // default: a placeholder, 2 pixel points where the cloud started
+  fragment, // default: round points coloured by reference
   textureSize: 128, // particles = textureSize²
   simDimensions: 3, // components of the default geometry's position
   createGeometry() {}, // replaces the default geometry
@@ -161,8 +162,8 @@ const particles = new ParticleSimulation({
   dimensions, // CSS size when autoResize is off: default the window's
   uniforms: {}, // added to u_time and u_resolution
   rendererProps: {}, // passed to the Renderer
-  onBeforeRender(t) {}, // each frame, before drawing
-  onAfterRender(t) {} // each frame, after drawing
+  onBeforeRender(time) {}, // each frame, before drawing
+  onAfterRender(time) {} // each frame, after drawing
 })
 ```
 
@@ -190,7 +191,7 @@ const particles = new ParticleSimulation({
     const seeds = new Float32Array(count)
 
     for (let i = 0; i < count; i++) {
-      // Texel centres, so the shader needn't add half a texel
+      // Texel centres, as the default geometry has them
       this.references[i * 2] = ((i % textureSize) + 0.5) / textureSize
       this.references[i * 2 + 1] =
         (Math.floor(i / textureSize) + 0.5) / textureSize
@@ -209,18 +210,15 @@ const particles = new ParticleSimulation({
 })
 ```
 
-`this.references` is a zeroed `Float32Array` with two numbers per particle, ready to fill. The default fills it from the same loop as the positions, which only covers every particle when `simDimensions` is at least 2; with `simDimensions: 1`, use your own `createGeometry`.
+`this.references` is a zeroed `Float32Array` with two numbers per particle, ready to fill. The default geometry fills it with the centre of each particle's texel, whatever `simDimensions` is.
 
 ## The uniforms
 
 The program gets `u_time` and `u_resolution` alongside your own, as `particles.u_time` and `particles.u_resolution`.
 
-`u_time` grows by the time since the last frame, in milliseconds, times `0.00005`: about 0.05 a second at 60 frames a second. Unlike the other recipes, that time isn't capped, and the frame clock isn't reset when the loop stops or starts:
+`u_time` grows by the time since the last frame, in milliseconds and capped at 50, times `0.00005`: about 0.05 a second at 60 frames a second. As with `FragmentShader`, the first frame starts the clock and adds nothing, and stopping the loop restarts the clock, so a frame after a pause adds no time. A frame after the tab was in the background adds at most 50 milliseconds.
 
-- The first frame adds the whole time since the page loaded, so `u_time` doesn't start at 0.
-- A frame after a pause, or after the tab was in the background, adds the whole pause.
-
-For a simulation, which can blow up when a step is too long, work out a capped step of your own from the timestamp and pass it as a uniform:
+`onBeforeRender` gets the timestamp rather than the time since the last frame. For a simulation step in seconds, work it out from the timestamp and pass it as a uniform:
 
 ```js
 const u_delta = new Uniform({ name: 'delta', value: 0, kind: 'float' })
@@ -233,7 +231,7 @@ particles.onBeforeRender = (t) => {
 }
 ```
 
-`u_resolution` is the canvas size in device pixels while `autoResize` is on. With it off, it stays at `dimensions`, in CSS pixels, and isn't updated; see below.
+`u_resolution` is the canvas size in device pixels: `dimensions` times the renderer's `dpr`. With `autoResize` off, it isn't updated when you resize; see below.
 
 ## Drawing settings
 
@@ -260,9 +258,7 @@ Like `FragmentShader`, it has a `post` property: set it to a `Framebuffer`, and 
 
 `playing` starts and stops the loop, and it starts as soon as the simulation is made.
 
-::: warning
-Setting `playing = false` doesn't cancel the frame that's already been requested; that frame still runs, then stops. Setting `playing = true` again before it has run starts a second loop alongside it, so the simulation runs twice a frame. Wait a frame before restarting.
-:::
+Stopping cancels the frame that was already requested and restarts the frame clock, so the frame after `playing = true` adds no time, however long the simulation was stopped.
 
 To drive frames yourself, stop the loop and call `particles.render(t)` with a timestamp in milliseconds.
 
@@ -270,7 +266,7 @@ To drive frames yourself, stop the loop and call `particles.render(t)` with a ti
 
 With `autoResize` on (the default), the recipe listens for the window's `resize` event and sizes the drawing buffer to the window, with `u_resolution` in device pixels.
 
-With `autoResize` off, the drawing buffer is sized to `dimensions` once, and `u_resolution` is left at `dimensions` in CSS pixels, not device pixels as with `autoResize` on. Shaders that compare it with `gl_FragCoord` will be out by the pixel ratio. Set it yourself, and do the same when you resize:
+With `autoResize` off, the drawing buffer is sized to `dimensions` once, and `u_resolution` is set to match, in device pixels. To resize, set all three yourself:
 
 ```js
 import { Vec2 } from 'wtc-gl'
@@ -288,21 +284,15 @@ function resize(width, height) {
 
 ## Cleaning up
 
-There's no `destroy()`. Stop the loop, then free things in the next frame, after the frame it had already asked for has run:
+`destroy()` stops the loop, removes the resize listener, removes the point cloud and the program, and disposes of the renderer. It takes the canvas out of the page if the renderer made it, and returns the canvas either way.
+
+What you made yourself is yours to free: a `post` framebuffer, the textures and framebuffers you passed in as uniforms, and here the step pass. Remove those first, while the renderer is still there:
 
 ```js
-particles.playing = false
-
-requestAnimationFrame(() => {
-  removeEventListener('resize', particles.resize)
-  step.program.remove()
-  step.geometry.remove()
-  state.remove()
-  particles.program.remove()
-  particles.cloud.remove()
-  particles.renderer.dispose()
-  particles.gl.canvas.remove()
-})
+step.program.remove()
+step.geometry.remove()
+state.remove()
+particles.destroy()
 ```
 
 `renderer.dispose()` releases the WebGL context when the renderer made the canvas. See [Cleaning up](/core/cleaning-up).

@@ -381,44 +381,21 @@ export class Texture {
     ] = this.id
   }
 
-  /**
-   * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
-   * @param textureUnit - The texture unit to update against.
-   */
-  update(textureUnit = 0) {
-    const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
+  /** Whether a filter, wrap, anisotropy or comparison setting has changed since it was last applied. */
+  #samplerChanged(): boolean {
+    const state = this.state
+    return (
+      this.minFilter !== state.minFilter ||
+      this.magFilter !== state.magFilter ||
+      this.wrapS !== state.wrapS ||
+      this.wrapT !== state.wrapT ||
+      this.anisotropy !== state.anisotropy ||
+      this.compareFunc !== state.compareFunc
+    )
+  }
 
-    // Make sure that texture is bound to its texture unit
-    if (
-      needsUpdate ||
-      this.gl.renderer.state.textureUnits[textureUnit] !== this.id
-    ) {
-      // set active texture unit to perform texture functions
-      this.gl.renderer.activeTexture = textureUnit
-      this.bind()
-    }
-
-    if (!needsUpdate) return
-    this.needsUpdate = false
-
-    if (this.flipY !== this.gl.renderer.state.flipY) {
-      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
-      this.gl.renderer.state.flipY = this.flipY
-    }
-
-    if (this.premultiplyAlpha !== this.gl.renderer.state.premultiplyAlpha) {
-      this.gl.pixelStorei(
-        this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
-        this.premultiplyAlpha
-      )
-      this.gl.renderer.state.premultiplyAlpha = this.premultiplyAlpha
-    }
-
-    if (this.unpackAlignment !== this.gl.renderer.state.unpackAlignment) {
-      this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
-      this.gl.renderer.state.unpackAlignment = this.unpackAlignment
-    }
-
+  /** Apply the changed filter, wrap, anisotropy and comparison settings to the bound texture. */
+  #applySampler(): void {
     if (this.minFilter !== this.state.minFilter) {
       this.gl.texParameteri(
         this.target,
@@ -447,7 +424,7 @@ export class Texture {
       this.state.wrapT = this.wrapT
     }
 
-    if (this.anisotropy && this.anisotropy !== this.state.anisotropy) {
+    if (this.anisotropy !== this.state.anisotropy) {
       const ext = this.gl.renderer.getExtension(
         'EXT_texture_filter_anisotropic'
       )
@@ -455,7 +432,8 @@ export class Texture {
         this.gl.texParameterf(
           this.target,
           ext.TEXTURE_MAX_ANISOTROPY_EXT,
-          this.anisotropy
+          // 1 is off; 0 means the same
+          Math.max(1, this.anisotropy)
         )
       this.state.anisotropy = this.anisotropy
     }
@@ -482,6 +460,52 @@ export class Texture {
         )
       }
       this.state.compareFunc = this.compareFunc
+    }
+  }
+
+  /**
+   * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
+   * @param textureUnit - The texture unit to update against.
+   */
+  update(textureUnit = 0) {
+    const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
+    // Filters, wrapping and comparison apply as soon as they change, without
+    // re-uploading the image
+    const samplerChanged = this.#samplerChanged()
+
+    // Make sure that texture is bound to its texture unit, and active when
+    // its parameters are about to be set
+    if (
+      needsUpdate ||
+      samplerChanged ||
+      this.gl.renderer.state.textureUnits[textureUnit] !== this.id
+    ) {
+      // set active texture unit to perform texture functions
+      this.gl.renderer.activeTexture = textureUnit
+      this.bind()
+    }
+
+    if (samplerChanged) this.#applySampler()
+
+    if (!needsUpdate) return
+    this.needsUpdate = false
+
+    if (this.flipY !== this.gl.renderer.state.flipY) {
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
+      this.gl.renderer.state.flipY = this.flipY
+    }
+
+    if (this.premultiplyAlpha !== this.gl.renderer.state.premultiplyAlpha) {
+      this.gl.pixelStorei(
+        this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
+        this.premultiplyAlpha
+      )
+      this.gl.renderer.state.premultiplyAlpha = this.premultiplyAlpha
+    }
+
+    if (this.unpackAlignment !== this.gl.renderer.state.unpackAlignment) {
+      this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
+      this.gl.renderer.state.unpackAlignment = this.unpackAlignment
     }
 
     if (this.image || this.data) {

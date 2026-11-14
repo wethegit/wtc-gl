@@ -164,7 +164,7 @@ drawOn(canvas)
 texture.needsUpdate = true
 ```
 
-Changing the wrapping or filtering after the first upload also needs `needsUpdate`, since the settings are applied as part of an upload.
+Wrapping, filtering and `anisotropy` don't need it. Change them at any time and they apply the next time the texture is used, without uploading the image again.
 
 To resize a data texture, set `width`, `height` and `data` together, then `needsUpdate`.
 
@@ -203,7 +203,7 @@ const sky = new Texture(gl, {
 
 ## Depth textures
 
-A [render target](/core/render-targets) can keep its depth buffer as a texture, to read in a later pass. Set its `compareFunc`, such as `gl.LEQUAL`, and a `sampler2DShadow` compares a depth against it as it samples, returning how much passes rather than the depth itself. With `gl.LINEAR` filtering, each sample blends four comparisons, which softens edges for free. As with the other settings, changing it after the first upload needs `needsUpdate`. [`Shadow`](/lighting/shadows) uses this for its shadow map.
+A [render target](/core/render-targets) can keep its depth buffer as a texture, to read in a later pass. Set its `compareFunc`, such as `gl.LEQUAL`, and a `sampler2DShadow` compares a depth against it as it samples, returning how much passes rather than the depth itself. With `gl.LINEAR` filtering, each sample blends four comparisons, which softens edges for free. Like the filtering, it can be changed at any time, and applies the next time the texture is used. [`Shadow`](/lighting/shadows) uses this for its shadow map.
 
 ## Cleaning up
 

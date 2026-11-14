@@ -194,3 +194,22 @@ describe('ScrollRenderer scissoring', () => {
     expect(enables).toBe(disables)
   })
 })
+
+describe('ScrollRenderer playing', () => {
+  it('cancels the requested frame when stopped, so restarting runs one loop', () => {
+    let frames = 0
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => ++frames)
+    )
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+    const { renderer } = createRenderer()
+    renderer.playing = true
+    renderer.playing = false
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(frames)
+    renderer.playing = true
+    expect(renderer.playing).toBe(true)
+    renderer.playing = false
+    expect(cancelAnimationFrame).toHaveBeenCalledTimes(2)
+  })
+})

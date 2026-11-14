@@ -24,8 +24,8 @@ const shader = new FragmentShader({
   uniforms: { u_pointer: pointer }, // added to u_time and u_resolution
   rendererProps: { dpr: 2, alpha: true }, // passed to the Renderer
   onInit(renderer) {}, // once, after the renderer is made
-  onBeforeRender(t) {}, // each frame, before drawing
-  onAfterRender(t) {} // each frame, after drawing
+  onBeforeRender(time) {}, // each frame, before drawing
+  onAfterRender(time) {} // each frame, after drawing
 })
 ```
 
@@ -35,7 +35,7 @@ const shader = new FragmentShader({
 - `uniforms` are added to the program alongside `u_time` and `u_resolution`. The keys are the names in the shader. A `u_time` or `u_resolution` of your own is replaced by the recipe's.
 - `rendererProps` are [RendererOptions](/api/wtc-gl/interfaces/RendererOptions) for the renderer. The recipe sets `clearColour` to opaque white unless you pass one. Pass `canvas` to draw into a canvas you already have.
 - `onInit` is called with the renderer once it's made, before the program, the triangle and the first frame. Use it for renderer state the program depends on, such as an extension.
-- `onBeforeRender` and `onAfterRender` are called every frame, with the `requestAnimationFrame` timestamp in milliseconds. Despite their parameter being called `delta` in the types, it's the timestamp, not the time since the last frame. They're bound to the shader, so a `function` (not an arrow) can use `this`.
+- `onBeforeRender` and `onAfterRender` are called every frame, with the `requestAnimationFrame` timestamp in milliseconds, `time`. It's the timestamp, not the time since the last frame. They're bound to the shader, so a `function` (not an arrow) can use `this`.
 
 See [FragmentShaderOptions](/api/wtc-gl/interfaces/FragmentShaderOptions) for the types.
 

@@ -12,7 +12,11 @@ export interface ScrollSceneOptions {
   element: HTMLElement
   /** The scene graph root to render. */
   scene: Obj
-  /** Optional camera. Defaults to the renderer's orthographic camera if omitted. */
+  /**
+   * The camera to draw the scene with. Without one, the scene is drawn
+   * without camera matrices, so its shaders work in clip space, as a
+   * full-screen `Triangle` does.
+   */
   camera?: Camera
   /**
    * When `true` (default), the GL viewport is locked to the element's bounds each frame, so all coordinates are relative to the element. When `false`, the viewport is left unlocked at the renderer level and it's up to you to use the `u_origin` uniform for element-relative math in your shader.

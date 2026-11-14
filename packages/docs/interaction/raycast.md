@@ -75,7 +75,7 @@ Both tests take options as a second argument:
 
 - `maxDistance` ignores anything further away than this, in world units. Infinity by default.
 - `cullFace` says which faces can't be hit: `gl.BACK`, `gl.FRONT`, or 0 for none. By default it's whatever the mesh's program culls when it draws, so the ray hits what you can see: the outside of a closed mesh, and both sides of a double-sided one. A mesh mirrored by a negative scale swaps its front and back, as it does when drawn.
-- `padding` grows each mesh's bounding box by this many world units. With `intersectBounds`, it makes small or thin targets easier to hit.
+- `padding` grows each mesh's bounding box by this many world units, which makes small or thin targets easier to hit. It only affects `intersectBounds`: `intersectMeshes` tests the triangles themselves, which padding doesn't change.
 
 ```js
 const hits = raycast.intersectBounds(buttons, { padding: 0.1, maxDistance: 20 })

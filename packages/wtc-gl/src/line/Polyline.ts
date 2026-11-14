@@ -271,8 +271,10 @@ const planeNormal = (points: Vec[]): Vec | undefined => {
  * point to the end and drops the first, for trails.
  *
  * Corners are mitred, up to `miterLimit` half widths. There are no round
- * joins or caps, and overlapping transparent parts double up unless depth
- * writes are off or `alphaTest` is used. A billboard line with a width in
+ * joins or caps. Where a transparent line overlaps itself, the depth test
+ * hides the later part while depth writes are on (the default); with them
+ * off, both parts blend, so the overlap is drawn twice. `alphaTest` avoids
+ * both for cut-out lines. A billboard line with a width in
  * pixels can't be measured in world space, so its culling bounds only cover
  * its points.
  *

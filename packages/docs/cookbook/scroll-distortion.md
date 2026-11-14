@@ -170,8 +170,7 @@ To take one image out while the page carries on, remove its scene and free what 
 
 ```js
 scrollRenderer.removeScene(scene)
-scene.destroy() // disconnects its observer
-scene.texture.remove()
+scene.destroy() // deletes its texture and disconnects its observer
 for (const mesh of scene.scene.children) {
   mesh.geometry.remove()
   mesh.program.remove()

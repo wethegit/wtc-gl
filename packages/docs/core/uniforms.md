@@ -30,7 +30,7 @@ The convention in wtc-gl, and in its demos, is a `u_` prefix for uniforms, `a_` 
 
 ## Kinds and values
 
-`kind` names the uniform's GLSL type. Values are numbers, booleans, arrays of numbers (or a `Float32Array`), or textures:
+`kind` names the uniform's GLSL type. Values are numbers, booleans, arrays of numbers (or a `Float32Array`), textures, or for a [struct](#structs) an object of member values:
 
 | GLSL                            | `kind`                          | Value                  |
 | ------------------------------- | ------------------------------- | ---------------------- |
@@ -98,6 +98,41 @@ const u_weights = new Uniform({
 
 For an array of samplers, pass an array of textures with `'texture_array'`; each gets its own texture unit.
 
+### Structs
+
+A struct uniform is one `Uniform` whose value is an object of member values, keyed by the members' names in the shader. An array of structs takes an array of those objects:
+
+```glsl
+struct Light {
+  vec3 colour;
+  float intensity;
+};
+uniform Light u_light;
+uniform Light u_lights[2];
+```
+
+```js
+const program = new Program(gl, {
+  vertex,
+  fragment,
+  uniforms: {
+    u_light: new Uniform({
+      name: 'light',
+      value: { colour: [1, 0.9, 0.8], intensity: 2 }
+    }),
+    u_lights: new Uniform({
+      name: 'lights',
+      value: [
+        { colour: [1, 0, 0], intensity: 1 },
+        { colour: [0, 0, 1], intensity: 0.5 }
+      ]
+    })
+  }
+})
+```
+
+Each member has its own location in the shader, and the program uploads each one from its entry in the object, as the type the shader declares. A texture member binds to a texture unit of its own. A member with no value in the object is skipped, with a warning. A member can't be an array or another struct.
+
 ## Textures
 
 A `Texture` as the value binds the texture to the next free texture unit and points the sampler at it. Uploading the image happens there too, the first time the texture is used or after you set `needsUpdate`:
@@ -164,4 +199,4 @@ const program = new Program(gl, {
 
 - [Programs and shaders](/core/programs-and-shaders)
 - [Textures](/core/textures)
-- API: [Uniform](/api/wtc-gl/classes/Uniform), [UniformOptions](/api/wtc-gl/interfaces/UniformOptions), [UniformKind](/api/wtc-gl/type-aliases/UniformKind)
+- API: [Uniform](/api/wtc-gl/classes/Uniform), [UniformOptions](/api/wtc-gl/interfaces/UniformOptions), [UniformKind](/api/wtc-gl/type-aliases/UniformKind), [WTCGLUniformStruct](/api/wtc-gl/interfaces/WTCGLUniformStruct)

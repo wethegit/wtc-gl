@@ -40,6 +40,24 @@ export interface ScrollHTMLOptions extends ScrollSceneOptions {
 }
 
 /**
+ * A hidden box the size of `element`, put in its place in the page so its
+ * position can still be tracked once `element` moves into a capture canvas.
+ */
+function placeholderFor(element: HTMLElement): HTMLDivElement {
+  const rect = element.getBoundingClientRect()
+  const placeholder = document.createElement('div')
+  Object.assign(placeholder.style, {
+    display: 'block',
+    width: `${rect.width}px`,
+    height: `${rect.height}px`,
+    visibility: 'hidden',
+    pointerEvents: 'none'
+  })
+  element.parentNode?.insertBefore(placeholder, element)
+  return placeholder
+}
+
+/**
  * A {@link ScrollScene} variant that renders an arbitrary `HTMLElement` into a
  * GPU texture using the experimental
  * [HTML-in-Canvas API](https://github.com/WICG/html-in-canvas) and exposes it
@@ -88,6 +106,7 @@ export class ScrollHTML extends ScrollScene {
   readonly #ctx: CanvasRenderingContext2DWithElementDraw | null
   readonly #htmlElement: HTMLElement
   readonly #placeholder: HTMLDivElement | null
+  readonly #home: { parent: ParentNode | null; next: ChildNode | null }
   readonly #resizeObserver: ResizeObserver
   readonly #paintHandler: () => void
 
@@ -106,10 +125,16 @@ export class ScrollHTML extends ScrollScene {
     onBeforeRender,
     ...rest
   }: ScrollHTMLOptions) {
+    // When the element itself is captured, it moves into the capture
+    // canvas: a placeholder takes its place in the page, and the scene
+    // tracks that instead
+    const isSameElement = !htmlElement || htmlElement === element
+    const placeholder = isSameElement ? placeholderFor(element) : null
+
     // Wrap onBeforeRender so we can inject our per-frame capture
     let captureThisFrame: (() => void) | null = null
     super({
-      element,
+      element: placeholder ?? element,
       onBeforeRender: (delta, rect) => {
         captureThisFrame?.()
         onBeforeRender?.(delta, rect)
@@ -117,25 +142,12 @@ export class ScrollHTML extends ScrollScene {
       ...rest
     })
 
-    const isSameElement = !htmlElement || htmlElement === element
     this.#htmlElement = htmlElement ?? element
-
-    // If htmlElement and element are the same node we need a placeholder in
-    // the original DOM position so ScrollScene's rect tracking still works.
-    if (isSameElement) {
-      const rect = element.getBoundingClientRect()
-      const ph = document.createElement('div')
-      Object.assign(ph.style, {
-        display: 'block',
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-        visibility: 'hidden',
-        pointerEvents: 'none'
-      })
-      element.parentNode?.insertBefore(ph, element)
-      this.#placeholder = ph
-    } else {
-      this.#placeholder = null
+    this.#placeholder = placeholder
+    // Where the element was, so destroy() can put it back
+    this.#home = {
+      parent: this.#htmlElement.parentNode,
+      next: this.#htmlElement.nextSibling
     }
 
     // ── Capture canvas ───────────────────────────────────────────────────
@@ -239,23 +251,30 @@ export class ScrollHTML extends ScrollScene {
   }
 
   /**
-   * Disconnects all observers, removes the capture canvas, and restores the
-   * HTML element to `document.body` if it was moved.
-   *
-   * The placeholder `<div>` (inserted when `htmlElement === element`) is also
-   * removed.
+   * Disconnects all observers, removes the capture canvas and deletes the
+   * texture. The HTML element goes back where it was: in place of the
+   * placeholder `<div>` (inserted when `htmlElement` is the element itself),
+   * or to its original parent and position, falling back to the end of
+   * `document.body`. The placeholder is removed.
    */
   destroy() {
     this.#resizeObserver.disconnect()
     this.#captureCanvas.removeEventListener('paint', this.#paintHandler)
 
-    // Return the HTML element to document.body so callers can re-attach it
-    if (this.#htmlElement.parentNode === this.#captureCanvas) {
-      document.body.appendChild(this.#htmlElement)
+    // Put the HTML element back where it was: in place of the placeholder,
+    // or where it was before it moved, falling back to the end of the body
+    const el = this.#htmlElement
+    if (el.parentNode === this.#captureCanvas) {
+      const { parent, next } = this.#home
+      if (this.#placeholder?.isConnected) this.#placeholder.replaceWith(el)
+      else if (parent?.isConnected)
+        parent.insertBefore(el, next?.parentNode === parent ? next : null)
+      else document.body.appendChild(el)
     }
 
     this.#captureCanvas.remove()
     this.#placeholder?.remove()
+    this.texture.remove()
 
     super.destroy()
   }

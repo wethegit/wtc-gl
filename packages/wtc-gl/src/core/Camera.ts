@@ -381,7 +381,8 @@ export class Camera extends Obj {
    * each instance of an instanced mesh. Its scale grows the bounds as well.
    * @param {Drawable} node - The node to test intersection against
    * @param {Mat4} worldMatrix - The matrix to place the node's bounds with. Defaults to the node's own world matrix
-   * @returns Boolean indicating intersection
+   * @returns Whether the node's bounds touch the frustum. A drawable that
+   * isn't a `Mesh` has no bounds, so it always does
    */
   frustumIntersects(
     node: Drawable,
@@ -428,7 +429,8 @@ export class Camera extends Obj {
       return true
     }
 
-    return false
+    // Other drawables have no bounds to test, so they're never culled
+    return true
   }
 
   /**

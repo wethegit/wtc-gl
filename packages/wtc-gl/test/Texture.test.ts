@@ -208,3 +208,51 @@ describe('Texture compareFunc', () => {
     ).toHaveLength(2)
   })
 })
+
+describe('Texture sampler settings', () => {
+  const paramCalls = (gl: MockGL) =>
+    (gl.texParameteri as unknown as Mock).mock.calls.map(
+      ([, pname, value]: number[]) => [pname, value]
+    )
+
+  it('applies a changed filter or wrap on the next use, without uploading again', () => {
+    const { gl } = createMockRenderer()
+    const texture = new Texture(gl, {
+      width: 2,
+      height: 2,
+      data: new Float32Array(16),
+      generateMipmaps: false
+    })
+    texture.update()
+    const uploads = (gl.texImage2D as unknown as Mock).mock.calls.length
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+
+    texture.minFilter = gl.NEAREST
+    texture.wrapS = gl.REPEAT
+    texture.update()
+    expect(paramCalls(gl)).toEqual([
+      [gl.TEXTURE_MIN_FILTER, gl.NEAREST],
+      [gl.TEXTURE_WRAP_S, gl.REPEAT]
+    ])
+    expect((gl.texImage2D as unknown as Mock).mock.calls.length).toBe(uploads)
+
+    // Nothing to do when nothing changed
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+    texture.update()
+    expect(paramCalls(gl)).toEqual([])
+  })
+
+  it('makes its unit active before setting them', () => {
+    const { gl, renderer } = createMockRenderer()
+    const texture = new Texture(gl, { width: 2, generateMipmaps: false })
+    texture.update(3)
+    // Another unit is active by the time the setting changes, so the
+    // parameter would otherwise land on whatever that unit holds
+    renderer.activeTexture = 0
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+    texture.magFilter = gl.NEAREST
+    texture.update(3)
+    expect(renderer.state.activeTextureUnit).toBe(3)
+    expect(paramCalls(gl)).toEqual([[gl.TEXTURE_MAG_FILTER, gl.NEAREST]])
+  })
+})

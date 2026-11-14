@@ -87,7 +87,30 @@ export interface WTCGLActiveInfo extends WebGLActiveInfo {
  * @category Types
  */
 export type WTCGLUniformValue =
-  Texture | Texture[] | number[] | string | number | boolean | Float32Array
+  | Texture
+  | Texture[]
+  | number[]
+  | string
+  | number
+  | boolean
+  | Float32Array
+  | WTCGLUniformStruct
+  | WTCGLUniformStruct[]
+
+/**
+ * The value of a struct uniform: each member's value by its name in the
+ * shader. An array of them is the value of an array of structs.
+ *
+ * ```ts
+ * // uniform Light { vec3 colour; float intensity; } u_light;
+ * new Uniform({ name: 'light', value: { colour: [1, 0.9, 0.8], intensity: 2 } })
+ * ```
+ * @category Types
+ */
+export interface WTCGLUniformStruct {
+  /** A member's value. */
+  [member: string]: WTCGLUniformValue
+}
 /**
  * A resource that can rebuild its GL objects after the WebGL context is
  * restored. See `Renderer.track`.

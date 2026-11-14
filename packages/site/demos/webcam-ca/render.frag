@@ -3,6 +3,8 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform vec2 u_camResolution;
+// The size of a simulation cell, in device pixels
+uniform float u_cellSize;
 uniform sampler2D b_state;
 uniform sampler2D b_webcam;
 
@@ -29,8 +31,8 @@ vec3 saturate(vec3 c, float s) {
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution;
 
-  // Snap to the same 2×2 cell grid used by the sim pass
-  vec2 cellUV = (floor(gl_FragCoord.xy / 2.0) * 2.0 + 1.0) / u_resolution;
+  // Snap to the same cell grid used by the sim pass, sampling cell centres
+  vec2 cellUV = (floor(gl_FragCoord.xy / u_cellSize) + 0.5) * u_cellSize / u_resolution;
 
   vec4 state = texture(b_state, cellUV);
   // Cell colour: snapped to cell centre → nearest-neighbour webcam pixel, no bleed

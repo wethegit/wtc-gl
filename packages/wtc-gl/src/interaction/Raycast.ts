@@ -61,7 +61,11 @@ export interface RaycastOptions {
    * @default mesh.program.cullFace
    */
   cullFace: number
-  /** Grow each mesh's bounds by this many world units, for small targets. @default 0 */
+  /**
+   * Grow each mesh's bounds by this many world units, for small targets. It
+   * only affects {@link Raycast.intersectBounds}: `intersectMeshes` tests the
+   * triangles themselves, which padding doesn't change. @default 0
+   */
   padding: number
 }
 

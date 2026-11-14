@@ -1,7 +1,7 @@
 import { Vec2 } from 'wtc-math'
 
 import type { WTCGLRenderingContext, WTCGLUniformArray } from '../../types'
-import { Renderer } from '../../core/Renderer'
+import { Renderer, type RendererOptions } from '../../core/Renderer'
 import { Program } from '../../core/Program'
 import { Mesh } from '../../core/Mesh'
 import { Uniform } from '../../core/Uniform'
@@ -22,11 +22,15 @@ const hasDocument = typeof document !== 'undefined'
  */
 export interface ParticleSimulationOptions {
   /**
-   * The vertex shader. Defaults to one that draws each particle as a 2 pixel
-   * point, at the position it reads from a `b_position` texture.
+   * The vertex shader. Defaults to a placeholder that draws each particle as
+   * a 2 pixel point where the point cloud started it; yours reads each
+   * particle's position from your simulation texture at `reference`.
    */
   vertex: string
-  /** The fragment shader. Defaults to one that fills each point with `v_colour`. */
+  /**
+   * The fragment shader. Defaults to a placeholder that draws round points
+   * coloured by their `reference`.
+   */
   fragment: string
   /**
    * The size in CSS pixels, used when `autoResize` is off. Defaults to the
@@ -53,12 +57,12 @@ export interface ParticleSimulationOptions {
    * Called each frame before rendering, with the `requestAnimationFrame`
    * timestamp in ms. Bound to the instance.
    */
-  onBeforeRender: (delta: number) => void
+  onBeforeRender: (time: number) => void
   /**
    * Called each frame after rendering, with the `requestAnimationFrame`
    * timestamp in ms. Bound to the instance.
    */
-  onAfterRender: (delta: number) => void
+  onAfterRender: (time: number) => void
   /**
    * The width and height of the simulation textures. There's a particle for
    * each texel, `textureSize²` in all.
@@ -81,7 +85,7 @@ export interface ParticleSimulationOptions {
    * black.
    * @default {}
    */
-  rendererProps: object
+  rendererProps: Partial<RendererOptions>
 }
 
 /**
@@ -188,6 +192,7 @@ export class ParticleSimulation {
       u_resolution: this.u_resolution
     })
 
+    this.#ownsCanvas = !rendererProps.canvas
     this.renderer = new Renderer({
       clearColour: [0, 0, 0, 1],
       ...rendererProps
@@ -199,6 +204,8 @@ export class ParticleSimulation {
       this.resize()
     } else {
       this.renderer.dimensions = dimensions
+      // In device pixels, as resize() sets it
+      this.u_resolution.value = dimensions.scaleNew(this.renderer.dpr).array
     }
 
     this.textureSize = textureSize
@@ -242,16 +249,13 @@ export class ParticleSimulation {
   createGeometry() {
     this.cloud = new PointCloud(this.gl, {
       fillFunction: (points, dimensions) => {
-        for (let i = 0; i < points.length; i += 2) {
-          const index = i / 2
-
-          const pos = new Vec2(
-            index % this.textureSize,
-            Math.floor(index / this.textureSize)
-          )
-
-          this.references[i] = pos.x / this.textureSize // x position of the texture particle representing this ant
-          this.references[i + 1] = pos.y / this.textureSize // y position of the texture particle representing this ant
+        // Each particle reads the centre of its own texel in the
+        // simulation textures
+        const size = this.textureSize
+        for (let index = 0; index < this.particles; index++) {
+          this.references[index * 2] = ((index % size) + 0.5) / size
+          this.references[index * 2 + 1] =
+            (Math.floor(index / size) + 0.5) / size
         }
         for (let i = 0; i < points.length; i += dimensions) {
           for (let j = 0; j < dimensions; j++) {
@@ -273,11 +277,14 @@ export class ParticleSimulation {
    * @param t - The `requestAnimationFrame` timestamp in ms.
    */
   render(t: number) {
-    const diff = t - this.lastTime
+    // The first frame starts the clock, and a long gap (a hidden tab) counts
+    // as 50ms
+    if (this.lastTime === 0) this.lastTime = t
+    const diff = Math.min(t - this.lastTime, 50)
     this.lastTime = t
 
     if (this.playing) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
     }
 
     const v = this.u_time.value as number
@@ -322,6 +329,30 @@ export class ParticleSimulation {
     this.renderer.dimensions = this.dimensions
   }
 
+  /**
+   * Stop the render loop, remove the resize listener, and delete the mesh's
+   * geometry and program. A canvas the renderer created is removed from the
+   * DOM and its WebGL context released (see `Renderer.dispose()`). A canvas
+   * passed in through `rendererProps.canvas` stays where it is.
+   *
+   * A `post` framebuffer, and any textures or framebuffers you passed in as
+   * uniforms, are left alone, as they're supplied by the caller. Call their
+   * `remove()` as well if nothing else uses them.
+   *
+   * @returns The canvas element.
+   */
+  destroy(): HTMLCanvasElement {
+    this.playing = false
+    if (hasWindow) window.removeEventListener('resize', this.resize, false)
+    this.mesh.geometry.remove()
+    this.program.remove()
+    this.renderer.dispose()
+    const canvas = this.gl.canvas as HTMLCanvasElement
+    if (this.#ownsCanvas) canvas.remove()
+    return canvas
+  }
+
+  #ownsCanvas: boolean
   #post: Framebuffer | null = null
   /** Set a framebuffer to render into, or null to render to the canvas. */
   set post(p) {
@@ -333,15 +364,15 @@ export class ParticleSimulation {
   }
 
   #playing = false
-  /**
-   * Start or stop the render loop. Stopping lets an already requested frame
-   * run, then stops.
-   */
+  #frame = 0
+  /** Start or stop the render loop. Stopping cancels the requested frame. */
   set playing(v) {
     if (this.#playing !== true && v === true) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
       this.#playing = true
     } else if (v == false) {
+      cancelAnimationFrame(this.#frame)
+      this.lastTime = 0
       this.#playing = false
     }
   }

@@ -7,6 +7,7 @@ import {
   Framebuffer,
   Texture
 } from 'wtc-gl'
+import { Pane } from 'tweakpane'
 
 import simFragment from './sim.frag'
 import renderFragment from './render.frag'
@@ -25,11 +26,62 @@ const u_camResolution = new Uniform({
   kind: 'float_vec2'
 })
 
+// The size of each simulation cell, in CSS pixels. The shaders work in
+// device pixels, so the uniform holds it times the renderer's pixel ratio.
+const params = { cellSize: 1 }
+const DPR = 2
+const u_cellSize = new Uniform({
+  name: 'cellSize',
+  value: params.cellSize * DPR,
+  kind: 'float'
+})
+
+// Life-like rules in B/S notation: the neighbour counts at which a dead cell
+// is born, and at which a live cell survives
+const RULES = {
+  'Life (B3/S23)': 'B3/S23',
+  'HighLife (B36/S23)': 'B36/S23',
+  'Day & Night (B3678/S34678)': 'B3678/S34678',
+  'Seeds (B2/S)': 'B2/S',
+  'Life without Death (B3/S012345678)': 'B3/S012345678',
+  'Maze (B3/S12345)': 'B3/S12345',
+  'Coral (B3/S45678)': 'B3/S45678',
+  'Diamoeba (B35678/S5678)': 'B35678/S5678',
+  'Anneal (B4678/S35678)': 'B4678/S35678',
+  'Morley (B368/S245)': 'B368/S245',
+  'Replicator (B1357/S1357)': 'B1357/S1357'
+}
+params.rule = RULES['Life (B3/S23)']
+
+// A list of neighbour counts ("23") as a bitmask, bit n for count n
+const mask = (digits) =>
+  [...digits].reduce((bits, digit) => bits | (1 << Number(digit)), 0)
+const parseRule = (rule) => {
+  const [, birth = '', survive = ''] = /^B(\d*)\/S(\d*)$/.exec(rule) ?? []
+  return { birth: mask(birth), survive: mask(survive) }
+}
+
+const u_birth = new Uniform({ name: 'birth', value: 0, kind: 'int' })
+const u_survive = new Uniform({ name: 'survive', value: 0, kind: 'int' })
+const setRule = (rule) => {
+  const { birth, survive } = parseRule(rule)
+  u_birth.value = birth
+  u_survive.value = survive
+}
+setRule(params.rule)
+
 const FSWrapper = new FragmentShader({
   fragment: renderFragment,
   vertex,
-  rendererProps: { dpr: 2 },
-  uniforms: { b_state: u_state, b_webcam: u_webcam, u_camResolution },
+  rendererProps: { dpr: DPR },
+  uniforms: {
+    b_state: u_state,
+    b_webcam: u_webcam,
+    u_camResolution,
+    u_cellSize,
+    u_birth,
+    u_survive
+  },
   onBeforeRender() {
     if (!caFBO || !simMesh) return
 
@@ -57,7 +109,7 @@ simMesh = new Mesh(gl, { geometry, program: simProgram })
 
 // CA runs at CSS-pixel resolution (dpr:1) so u_resolution in the sim shader matches
 caFBO = new Framebuffer(gl, {
-  dpr: 2,
+  dpr: DPR,
   name: 'state',
   width: dimensions.width,
   height: dimensions.height,
@@ -118,3 +170,29 @@ initWebcam()
 window.addEventListener('resize', () => {
   caFBO.resize(FSWrapper.dimensions.width, FSWrapper.dimensions.height)
 })
+
+// ── Controls ──────────────────────────────────────────────────────────────
+const pane = new Pane({
+  title: 'Controls',
+  expanded: window.innerWidth > 700,
+  container: document.getElementById('controls')
+})
+pane
+  .addBinding(params, 'cellSize', {
+    label: 'cell size',
+    min: 1,
+    max: 12,
+    step: 1,
+    format: (v) => `${v}px`
+  })
+  .on('change', ({ value, last }) => {
+    u_cellSize.value = value * DPR
+    // Start the automaton again on the new grid once the slider is let go:
+    // resizing makes fresh, empty state targets
+    if (last !== false) {
+      caFBO.resize(FSWrapper.dimensions.width, FSWrapper.dimensions.height)
+    }
+  })
+pane
+  .addBinding(params, 'rule', { label: 'rule', options: RULES })
+  .on('change', ({ value }) => setRule(value))

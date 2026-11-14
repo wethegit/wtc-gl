@@ -49,6 +49,8 @@ addEventListener('pointermove', (e) => {
 })
 ```
 
+`onBeforeRender(time)` is called before each frame with the `requestAnimationFrame` timestamp in milliseconds, for values that change every frame rather than on an event.
+
 ## Playing and stopping
 
 `shader.playing` starts and stops the render loop. `shader.destroy()` stops it for good, and frees the canvas and its WebGL context.

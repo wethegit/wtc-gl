@@ -135,6 +135,7 @@ export class ScrollRenderer {
   #scenes: ScrollScene[] = []
   #lastTime: number = 0
   #playing: boolean = false
+  #frame: number = 0
   #cleared: boolean = false
   #resizeObserver: ResizeObserver | null = null
   #layout: 'fixed' | 'absolute'
@@ -319,7 +320,7 @@ export class ScrollRenderer {
     const delta = Math.min(t - this.#lastTime, 50)
     this.#lastTime = t
 
-    if (this.#playing) requestAnimationFrame(this.render)
+    if (this.#playing) this.#frame = requestAnimationFrame(this.render)
 
     this.onBeforeRender(delta)
 
@@ -434,9 +435,12 @@ export class ScrollRenderer {
    */
   set playing(v: boolean) {
     if (!this.#playing && v) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
       this.#playing = true
     } else if (!v) {
+      // Cancel the requested frame, so stopping and starting again within a
+      // frame doesn't run two loops
+      cancelAnimationFrame(this.#frame)
       this.#lastTime = 0
       this.#playing = false
     }

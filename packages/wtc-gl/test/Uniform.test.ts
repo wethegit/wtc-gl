@@ -304,3 +304,75 @@ describe('Uniform kind checks', () => {
     expect(warn).not.toHaveBeenCalled()
   })
 })
+
+describe('Struct uniforms', () => {
+  let gl: MockGL
+  let program: Program
+  let warn: ReturnType<typeof vi.spyOn>
+
+  // An active uniform as Program reads it from `u_light.intensity` or
+  // `u_lights[1].colour`
+  const member = (type: number, structProperty: string, structIndex?: number) =>
+    ({
+      type,
+      name: 'u_light.' + structProperty,
+      structProperty,
+      ...(structIndex === undefined
+        ? { isStruct: true }
+        : { isStructArray: true, structIndex })
+    }) as WTCGLActiveInfo
+
+  beforeEach(() => {
+    ;({ gl } = createMockRenderer())
+    program = { gl, textureUnit: -1 } as unknown as Program
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    warn.mockRestore()
+  })
+
+  it('uploads each member of a struct to its own location', () => {
+    const u = new Uniform({
+      name: 'light',
+      value: { colour: [1, 0.5, 0.25], intensity: 2 }
+    })
+    const colourLoc = {}
+    const intensityLoc = {}
+    u.bind(program, colourLoc, member(gl.FLOAT_VEC3, 'colour'))
+    u.bind(program, intensityLoc, member(gl.FLOAT, 'intensity'))
+    expect(gl.uniform3fv).toHaveBeenCalledWith(colourLoc, [1, 0.5, 0.25])
+    expect(gl.uniform1f).toHaveBeenCalledWith(intensityLoc, 2)
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('uploads each element of an array of structs', () => {
+    const u = new Uniform({
+      name: 'lights',
+      value: [{ intensity: 1 }, { intensity: 3 }]
+    })
+    const first = {}
+    const second = {}
+    u.bind(program, first, member(gl.FLOAT, 'intensity', 0))
+    u.bind(program, second, member(gl.FLOAT, 'intensity', 1))
+    expect(gl.uniform1f).toHaveBeenCalledWith(first, 1)
+    expect(gl.uniform1f).toHaveBeenCalledWith(second, 3)
+  })
+
+  it('binds a texture member to a texture unit', () => {
+    const texture = new Texture(gl)
+    const u = new Uniform({ name: 'material', value: { map: texture } })
+    const loc = {}
+    u.bind(program, loc, member(gl.SAMPLER_2D, 'map'))
+    expect(gl.uniform1i).toHaveBeenCalledWith(loc, 0)
+  })
+
+  it('warns once, and skips, when a member is missing', () => {
+    const u = new Uniform({ name: 'light', value: { colour: [1, 1, 1] } })
+    u.bind(program, {}, member(gl.FLOAT, 'intensity'))
+    u.bind(program, {}, member(gl.FLOAT, 'intensity'))
+    expect(gl.uniform1f).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('u_light.intensity')
+  })
+})
