@@ -55,8 +55,10 @@ void main() {
 #endif
 #ifdef SHADOW
   // Pushed out along the normal, so a surface doesn't shadow itself. A
-  // primitive without normals reads (0, 0, 0) and isn't pushed.
-  vec3 worldNormal = mat3(u_modelMatrix) * localNormal;
+  // primitive without normals reads (0, 0, 0) and isn't pushed. Through the
+  // inverse transpose, so non-uniform scales keep it at right angles to the
+  // surface.
+  vec3 worldNormal = transpose(inverse(mat3(u_modelMatrix))) * localNormal;
   float normalLength = length(worldNormal);
   if (normalLength > 0.0) worldNormal /= normalLength;
   vec4 world = u_modelMatrix * local;

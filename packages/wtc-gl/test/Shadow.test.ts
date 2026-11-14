@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Vec3 } from 'wtc-math'
+import { Mat4, Vec3 } from 'wtc-math'
 
 import { InstancedMesh } from '../src/core/InstancedMesh'
 import { Mesh } from '../src/core/Mesh'
@@ -249,6 +249,49 @@ describe('Shadow', () => {
     expect(shadow.target.z).toBeCloseTo(0)
     // Two unit boxes 6 apart: 3 plus a box's bounding radius
     expect(shadow.size).toBeCloseTo(3 + Math.sqrt(3) / 2)
+  })
+
+  it('fits around the instances of an InstancedMesh', () => {
+    const { gl, shadow, program, mesh } = setup()
+    const scene = new Obj()
+    const instanced = new InstancedMesh(gl, {
+      geometry: new Box(gl),
+      program,
+      count: 3
+    })
+    instanced.position.y = 2
+    instanced.setParent(scene)
+    const at = (x: number, scale = 1) => {
+      const m = new Mat4()
+      m.a11 = m.a22 = m.a33 = scale
+      m.a41 = x
+      return m
+    }
+    instanced.setMatrixAt(0, at(-3))
+    instanced.setMatrixAt(1, at(3, 2))
+    // Past count, so left out
+    instanced.setMatrixAt(2, at(50))
+    instanced.count = 2
+    scene.updateMatrixWorld()
+
+    shadow.fit(scene)
+    // From -3 - √3/2 to 3 + √3 (the doubled box)
+    const r1 = Math.sqrt(3) / 2
+    const r2 = Math.sqrt(3)
+    expect(shadow.target.x).toBeCloseTo((-3 - r1 + 3 + r2) / 2)
+    expect(shadow.target.y).toBeCloseTo(2)
+    expect(shadow.size).toBeCloseTo((3 + r2 - (-3 - r1)) / 2)
+
+    // Alongside an ordinary mesh
+    mesh(scene, 10)
+    scene.updateMatrixWorld()
+    shadow.fit(scene)
+    // The box now runs from the left instance to the mesh at x = 10
+    expect(shadow.target.x).toBeCloseTo((-3 - r1 + 10 + r1) / 2)
+    const t = shadow.target
+    expect(shadow.size).toBeGreaterThanOrEqual(
+      Math.hypot(10 - t.x, t.y, t.z) + r1 - 1e-6
+    )
   })
 
   it('frees its target, depth texture and depth programs', () => {
