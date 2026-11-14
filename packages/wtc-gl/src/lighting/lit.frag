@@ -1,4 +1,5 @@
-// Prefixed with the version, defines, precision and lit-shading.glsl
+// Prefixed with the version, defines, precision and lit-shading.glsl, plus
+// shadow-shading.glsl with SHADOW
 
 in vec3 v_normal;
 in vec3 v_position;
@@ -8,6 +9,9 @@ in vec3 v_colour;
 #endif
 #ifdef INSTANCED
 in vec3 v_instanceColour;
+#endif
+#ifdef SHADOW
+in vec4 v_shadowCoord;
 #endif
 
 uniform mat4 u_viewMatrix;
@@ -54,7 +58,11 @@ void main() {
   bool orthographic = u_projectionMatrix[3][3] == 1.0;
   vec3 view = orthographic ? vec3(0.0, 0.0, 1.0) : normalize(-v_position);
 
-  c.rgb = litShade(c.rgb, n, view, mat3(u_viewMatrix), u_specular, u_shininess);
+  float shadow = 1.0;
+#ifdef SHADOW
+  shadow = shadowFactor(v_shadowCoord);
+#endif
+  c.rgb = litShade(c.rgb, n, view, mat3(u_viewMatrix), u_specular, u_shininess, shadow);
 
   // Light the surface gives off, which lighting doesn't touch
   vec3 emissive = u_emissive;

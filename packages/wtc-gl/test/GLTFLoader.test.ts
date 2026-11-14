@@ -6,6 +6,7 @@ import { InstancedMesh } from '../src/core/InstancedMesh'
 import { Mesh } from '../src/core/Mesh'
 import { Texture } from '../src/core/Texture'
 import { Lights } from '../src/lighting/Lights'
+import { Shadow } from '../src/lighting/Shadow'
 import { LitProgram } from '../src/lighting/LitProgram'
 import { GLTFLoader } from '../src/loaders/GLTFLoader'
 import { createMockRenderer, type MockGL } from './mockGL'
@@ -310,6 +311,8 @@ describe('GLTFLoader', () => {
       })
       const mesh = gltf.nodes[0] as Mesh
       expect(mesh.geometry.attributes.colour.size).toBe(3)
+      // Linear in glTF, shaded as sRGB
+      expect(mesh.geometry.attributes.colour.data![0]).toBeCloseTo(0.7354)
       expect((mesh.program as LitProgram).vertexColours).toBe(true)
     })
   })
@@ -356,6 +359,19 @@ describe('GLTFLoader', () => {
         primitive.material = 0
       }
 
+    it('gives every program the shadow', async () => {
+      const { gl } = createMockRenderer()
+      const lights = new Lights()
+      const shadow = new Shadow(gl, { lights })
+      const gltf = await load(gl, withMaterial({}), { lights, shadow })
+      expect(gltf.programs.length).toBeGreaterThan(0)
+      for (const program of gltf.programs) expect(program.shadow).toBe(shadow)
+      // It doesn't decide what casts
+      const draw = vi.spyOn(gltf.meshes[0], 'draw')
+      shadow.render({ scene: gltf.scene })
+      expect(draw).not.toHaveBeenCalled()
+    })
+
     it('maps base colour, emissive and an approximate specular', async () => {
       const { gl } = createMockRenderer()
       const lights = new Lights()
@@ -373,10 +389,15 @@ describe('GLTFLoader', () => {
       const program = (gltf.nodes[0] as Mesh).program as LitProgram
       expect(program).toBeInstanceOf(LitProgram)
       expect(program.lights).toBe(lights)
-      expect(program.colour).toEqual([1, 0.5, 0.25])
+      // Linear in glTF, shaded as sRGB
+      expect(program.colour.map((v) => +v.toFixed(4))).toEqual([
+        1, 0.7354, 0.5371
+      ])
       expect(program.opacity).toBe(1)
       expect(program.transparent).toBe(false)
-      expect(program.emissive.map((v) => +v.toFixed(5))).toEqual([0.2, 0.1, 0])
+      expect(program.emissive.map((v) => +v.toFixed(4))).toEqual([
+        0.4845, 0.3492, 0
+      ])
       expect(program.specular).toBeCloseTo(0.15)
       expect(program.shininess).toBeCloseTo(30)
       expect(gltf.programs).toEqual([program])

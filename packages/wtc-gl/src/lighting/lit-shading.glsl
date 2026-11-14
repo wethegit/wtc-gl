@@ -18,13 +18,16 @@ uniform float u_ambient;
 //   into view space.
 // - `specular` scales a Blinn-Phong highlight with exponent `shininess`; 0 is
 //   plain Lambert.
+// - `shadow` scales the directional light, from 0 (in shadow) to 1, e.g. from
+//   `shadowFactor`. The hemisphere and ambient light aren't shadowed.
 vec3 litShade(
   vec3 base,
   vec3 normal,
   vec3 view,
   mat3 viewRotation,
   float specular,
-  float shininess
+  float shininess,
+  float shadow
 ) {
   vec3 l = normalize(viewRotation * u_lightDirection);
   // World +Y in view space
@@ -36,7 +39,7 @@ vec3 litShade(
     u_skyColour,
     dot(normal, up) * 0.5 + 0.5
   );
-  vec3 light = u_lightColour * u_lightIntensity;
+  vec3 light = u_lightColour * u_lightIntensity * shadow;
 
   vec3 c = base * (vec3(u_ambient) + hemisphere + light * diffuse);
   if (specular > 0.0 && diffuse > 0.0) {
@@ -44,4 +47,16 @@ vec3 litShade(
     c += light * specular * pow(max(dot(normal, h), 0.0), shininess);
   }
   return c;
+}
+
+// Without a shadow
+vec3 litShade(
+  vec3 base,
+  vec3 normal,
+  vec3 view,
+  mat3 viewRotation,
+  float specular,
+  float shininess
+) {
+  return litShade(base, normal, view, viewRotation, specular, shininess, 1.0);
 }

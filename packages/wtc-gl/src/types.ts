@@ -210,6 +210,10 @@ export interface WTCGLTextureState {
    * The anistropic filtering level for the texture.
    */
   anisotropy: number
+  /**
+   * The depth comparison, or null when comparison is off.
+   */
+  compareFunc: GLenum | null
 }
 
 /**

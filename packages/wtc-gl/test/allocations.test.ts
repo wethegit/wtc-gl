@@ -9,6 +9,8 @@ import { Program } from '../src/core/Program'
 import { TransformFeedback } from '../src/core/TransformFeedback'
 import { Box } from '../src/geometry/Box'
 import { Geometry } from '../src/geometry/Geometry'
+import { Lights } from '../src/lighting/Lights'
+import { Shadow } from '../src/lighting/Shadow'
 import { createMockRenderer } from './mockGL'
 
 // Node built-ins, loaded by name since the package has no Node types
@@ -318,6 +320,45 @@ describe('Per-frame allocations', () => {
     // setters box the doubles written to the planes.
     expect(bytes).toBeLessThan(1000)
     expect(instances.geometry.instancedCount).toBeGreaterThan(0)
+  })
+
+  it(`stay small for a shadow pass over ${MESHES} meshes`, async () => {
+    const { gl } = createMockRenderer()
+    const geometry = new Box(gl)
+    const program = new Program(gl, { vertex: '', fragment: '' })
+    const scene = new Obj()
+    for (let i = 0; i < MESHES; i++) {
+      const mesh = new Mesh(gl, { geometry, program })
+      mesh.position.x = (i % 40) - 20
+      mesh.position.z = Math.floor(i / 40) - 12
+      mesh.setParent(scene)
+    }
+    const lights = new Lights()
+    const shadow = new Shadow(gl, { lights, size: 30 })
+    shadow.add(scene)
+    let t = 0
+    const frame = () => {
+      // The light moves, so the camera and uniforms are rebuilt every frame
+      t += 0.01
+      lights.direction = [Math.sin(t), 1, Math.cos(t)]
+      shadow.render({ scene })
+    }
+    frame()
+    const target = gl as unknown as Record<string, unknown>
+    for (const key of Object.keys(target)) {
+      if (typeof target[key] === 'function') target[key] = noop
+    }
+    frame()
+
+    let bytes = Infinity
+    for (let run = 0; run < 3 && bytes / MESHES >= 400; run++) {
+      bytes = Math.min(bytes, await bytesPerFrame(frame))
+    }
+    console.info(
+      `[allocations] shadow pass of ${MESHES} meshes: ${(bytes / 1024).toFixed(1)} KB/frame, ${(bytes / MESHES).toFixed(0)} B/mesh`
+    )
+    // The same budget as a normal render: what's left is drawing each mesh
+    expect(bytes / MESHES).toBeLessThan(400)
   })
 
   it('stay small for a transform feedback simulation', async () => {

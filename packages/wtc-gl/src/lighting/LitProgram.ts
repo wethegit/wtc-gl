@@ -4,8 +4,10 @@ import { Texture } from '../core/Texture'
 import { Uniform } from '../core/Uniform'
 import { blankTexture } from '../core/blankTexture'
 import { Lights } from './Lights'
+import type { Shadow } from './Shadow'
 
 import shadingSource from './lit-shading.glsl'
+import shadowSource from './shadow-shading.glsl'
 import litVertex from './lit.vert'
 import litFragment from './lit.frag'
 
@@ -14,6 +16,7 @@ type LitShaderOptions = {
   vertexColours: boolean
   doubleSided: boolean
   instanced: boolean
+  shadow: boolean
 }
 
 /** The vertex and fragment sources for a set of shader options. */
@@ -22,10 +25,12 @@ function litSources(options: LitShaderOptions) {
     (options.flatShading ? '#define FLAT_SHADING\n' : '') +
     (options.vertexColours ? '#define VERTEX_COLOURS\n' : '') +
     (options.doubleSided ? '#define DOUBLE_SIDED\n' : '') +
-    (options.instanced ? '#define INSTANCED\n' : '')
+    (options.instanced ? '#define INSTANCED\n' : '') +
+    (options.shadow ? '#define SHADOW\n' : '')
+  const shadow = options.shadow ? `${shadowSource}\n` : ''
   return {
     vertex: `#version 300 es\n${defines}${litVertex}`,
-    fragment: `#version 300 es\n${defines}precision highp float;\n${shadingSource}\n${litFragment}`
+    fragment: `#version 300 es\n${defines}precision highp float;\n${shadingSource}\n${shadow}${litFragment}`
   }
 }
 
@@ -33,10 +38,11 @@ function litSources(options: LitShaderOptions) {
  * The lighting `LitProgram` uses, as GLSL for custom shaders: the `Lights`
  * uniforms and
  *
- * `vec3 litShade(base, normal, view, viewRotation, specular, shininess)`
+ * `vec3 litShade(base, normal, view, viewRotation, specular, shininess[, shadow])`
  *
  * where `normal` and `view` (towards the camera) are view-space unit vectors
- * and `viewRotation` is `mat3(u_viewMatrix)`. Add it after the shader's
+ * and `viewRotation` is `mat3(u_viewMatrix)`. The optional `shadow` scales
+ * the directional light, from `shadowFactor` in `shadowShading`. Add it after the shader's
  * precision statement, and spread `lights.uniforms` into the program's
  * uniforms. It doesn't declare `u_viewMatrix`, so the shader can.
  */
@@ -72,6 +78,11 @@ export interface LitProgramOptions {
    * multiplies the surface colour. @default false
    */
   instanced: boolean
+  /**
+   * Receive a `Shadow` from the directional light. Its casters are added to
+   * the shadow, not here. @default null
+   */
+  shadow: Shadow | null
   /** @default opacity < 1 */
   transparent: boolean
   /** @default true */
@@ -96,8 +107,8 @@ export interface LitProgramOptions {
  *
  * It needs a camera to draw: the lighting is done in view space, from the
  * matrices the mesh sets. Everything can be changed after the program is
- * made: changing `vertexColours`, `flatShading`, `doubleSided` or `instanced`
- * (for `InstancedMesh`) recompiles the shaders with `setShaders`, while the
+ * made: changing `vertexColours`, `flatShading`, `doubleSided`, `instanced`
+ * (for `InstancedMesh`) or `shadow` recompiles the shaders with `setShaders`, while the
  * colour, opacity, map, emissive, specular and shininess are just uniforms.
  *
  * For a custom shader with the same lighting, use `litShading`.
@@ -108,6 +119,7 @@ export class LitProgram extends Program {
 
   // The options the shaders are built from
   #shader: LitShaderOptions
+  #shadow: Shadow | null
 
   constructor(
     gl: WTCGLRenderingContext,
@@ -125,6 +137,7 @@ export class LitProgram extends Program {
       flatShading = false,
       doubleSided = false,
       instanced = false,
+      shadow = null,
       transparent = opacity < 1,
       depthTest = true,
       depthWrite = true
@@ -132,6 +145,7 @@ export class LitProgram extends Program {
   ) {
     const uniforms: Record<string, Uniform> = {
       ...lights.uniforms,
+      ...shadow?.uniforms,
       u_colour: new Uniform({
         name: 'colour',
         value: [...colour],
@@ -189,7 +203,13 @@ export class LitProgram extends Program {
       })
     }
 
-    const shader = { flatShading, vertexColours, doubleSided, instanced }
+    const shader = {
+      flatShading,
+      vertexColours,
+      doubleSided,
+      instanced,
+      shadow: !!shadow
+    }
     super(gl, {
       ...litSources(shader),
       uniforms,
@@ -201,6 +221,27 @@ export class LitProgram extends Program {
 
     this.lights = lights
     this.#shader = shader
+    this.#shadow = shadow
+  }
+
+  /**
+   * The shadow this program receives, or null. Changing it to or from null
+   * recompiles; swapping one shadow for another doesn't.
+   */
+  get shadow(): Shadow | null {
+    return this.#shadow
+  }
+  set shadow(value: Shadow | null) {
+    if (value === this.#shadow) return
+    const uniforms = this.uniforms as Record<string, Uniform>
+    if (this.#shadow) {
+      for (const name of Object.keys(this.#shadow.uniforms)) {
+        delete uniforms[name]
+      }
+    }
+    if (value) Object.assign(uniforms, value.uniforms)
+    this.#shadow = value
+    this.#setShader('shadow', !!value)
   }
 
   /** Shade each triangle flat, from its face normal. Recompiles. */
@@ -278,7 +319,6 @@ export class LitProgram extends Program {
     this.uniforms.u_useMap.value = value ? 1 : 0
   }
 
-  /** The strength of the Blinn-Phong highlight. 0 is plain Lambert. */
   /** Light the surface gives off, added after the lighting. */
   get emissive(): [number, number, number] {
     return [...(this.uniforms.u_emissive.value as number[])] as [
@@ -305,6 +345,7 @@ export class LitProgram extends Program {
     this.uniforms.u_useEmissiveMap.value = value ? 1 : 0
   }
 
+  /** The strength of the Blinn-Phong highlight. 0 is plain Lambert. */
   get specular(): number {
     return this.uniforms.u_specular.value as number
   }

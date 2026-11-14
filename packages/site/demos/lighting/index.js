@@ -5,6 +5,7 @@ import {
   Mesh,
   Lights,
   LitProgram,
+  Shadow,
   Texture,
   Box,
   Sphere,
@@ -32,6 +33,8 @@ import { Pane } from 'tweakpane'
 // double-sided options can be switched, recompiling its program in place
 // with setShaders. Hovering a shape casts a Raycast into it: a dot marks the
 // hit point, a line shows the surface normal, and the label gives the uv.
+// The shapes cast a Shadow onto the ground and themselves; it follows the
+// light direction, and can be turned off or softened under Lights.
 
 const SPACING = 1.7
 const LABEL_DROP = 0.95
@@ -46,6 +49,8 @@ const lightParams = {
   sky: { r: 0.3, g: 0.32, b: 0.36 },
   ground: { r: 0.12, g: 0.1, b: 0.08 },
   ambient: 0.05,
+  shadows: true,
+  softness: 1,
   spin: true,
   grid: true,
   axes: true,
@@ -174,12 +179,28 @@ const SHAPES = [
   }
 ]
 
+// The shapes cast, over the row they stand in
+const shadow = new Shadow(gl, {
+  lights,
+  target: new Vec3(0, 0.5, 0),
+  size: ((SHAPES.length - 1) / 2) * SPACING + 1,
+  mapSize: 2048
+})
+const receivers = []
+const setShadows = () => {
+  for (const program of receivers) {
+    program.shadow = lightParams.shadows ? shadow : null
+  }
+  shadow.softness = lightParams.softness
+}
+
 const scene = new Obj()
 const labels = document.getElementById('labels')
 
 SHAPES.forEach((shape, i) => {
   shape.centre = [(i - (SHAPES.length - 1) / 2) * SPACING, 0.55, 0]
-  shape.program = new LitProgram(gl, { lights, ...shape.material })
+  shape.program = new LitProgram(gl, { lights, shadow, ...shape.material })
+  receivers.push(shape.program)
   shape.mesh = new Mesh(gl, {
     geometry: shape.geometry(),
     program: shape.program
@@ -188,6 +209,7 @@ SHAPES.forEach((shape, i) => {
   shape.mesh.rotation.x = shape.tilt ?? 0
   shape.mesh.updateRotation()
   shape.mesh.setParent(scene)
+  shadow.add(shape.mesh)
 
   shape.label = document.createElement('div')
   shape.label.className = 'label'
@@ -198,8 +220,9 @@ SHAPES.forEach((shape, i) => {
 // The ground the shapes stand over
 const ground = new Mesh(gl, {
   geometry: new Plane(gl, { width: GROUND, height: GROUND }),
-  program: new LitProgram(gl, { lights, colour: [0.86, 0.84, 0.8] })
+  program: new LitProgram(gl, { lights, shadow, colour: [0.86, 0.84, 0.8] })
 })
+receivers.push(ground.program)
 ground.rotation.x = -Math.PI / 2
 ground.updateRotation()
 ground.setParent(scene)
@@ -273,6 +296,10 @@ lightFolder.addBinding(lightParams, 'intensity', { min: 0, max: 2 })
 lightFolder.addBinding(lightParams, 'sky', colour)
 lightFolder.addBinding(lightParams, 'ground', colour)
 lightFolder.addBinding(lightParams, 'ambient', { min: 0, max: 1 })
+lightFolder.addBinding(lightParams, 'shadows').on('change', setShadows)
+lightFolder
+  .addBinding(lightParams, 'softness', { min: 0, max: 4 })
+  .on('change', setShadows)
 lightFolder.on('change', updateLights)
 pane.addBinding(lightParams, 'spin')
 
@@ -411,6 +438,7 @@ const run = (t) => {
   scene.updateMatrixWorld()
   camera.updateMatrixWorld()
   hover()
+  if (lightParams.shadows) shadow.render({ scene, update: false })
   renderer.render({ scene, camera })
 
   // Put each label just under its shape

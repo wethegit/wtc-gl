@@ -5,6 +5,7 @@ import {
   InstancedMesh,
   GLTFLoader,
   Lights,
+  Shadow,
   GridHelper,
   Raycast,
   Vec2,
@@ -18,13 +19,16 @@ import { Pane } from 'tweakpane'
 // lantern. The ring of trees is one mesh with two materials, exported with
 // EXT_mesh_gpu_instancing, so it loads as two InstancedMeshes. The file's
 // camera can be looked through, and hovering names the node under the
-// pointer with a Raycast.
+// pointer with a Raycast. The whole island casts into a Shadow that every
+// material receives, fitted to the island once it's loaded.
 
 const params = {
   azimuth: -35,
   elevation: 50,
   intensity: 0.8,
   ambient: 0.08,
+  shadows: true,
+  softness: 1,
   spin: true,
   glTFCamera: false
 }
@@ -65,6 +69,8 @@ const setLights = () => {
 }
 setLights()
 
+const shadow = new Shadow(gl, { lights, mapSize: 2048 })
+
 const scene = new Obj()
 // A faint floor far below, for a sense of height
 const grid = new GridHelper(gl, {
@@ -84,11 +90,15 @@ let fileCamera = null
 
 // Through import.meta.url, so Vite copies the file into the site build
 const url = new URL('./island.glb', import.meta.url).href
-GLTFLoader.load(gl, url, { lights })
+GLTFLoader.load(gl, url, { lights, shadow })
   .then((loaded) => {
     gltf = loaded
     island = gltf.scene
     island.setParent(scene)
+    // Around the island as it spins, with a little room
+    scene.updateMatrixWorld()
+    shadow.add(island).fit(island)
+    shadow.size *= 1.1
     fileCamera = gltf.cameras[0] ?? null
     resize()
     const instanced = gltf.meshes.filter((m) => m instanceof InstancedMesh)
@@ -150,6 +160,15 @@ lightFolder.addBinding(params, 'elevation', { min: 0, max: 90 })
 lightFolder.addBinding(params, 'intensity', { min: 0, max: 2 })
 lightFolder.addBinding(params, 'ambient', { min: 0, max: 1 })
 lightFolder.on('change', setLights)
+const shadowFolder = pane.addFolder({ title: 'Shadow' })
+shadowFolder.addBinding(params, 'shadows').on('change', ({ value }) => {
+  for (const program of gltf?.programs ?? []) {
+    program.shadow = value ? shadow : null
+  }
+})
+shadowFolder
+  .addBinding(params, 'softness', { min: 0, max: 4 })
+  .on('change', ({ value }) => (shadow.softness = value))
 pane.addBinding(params, 'spin')
 pane.addBinding(params, 'glTFCamera', { label: 'file camera' })
 
@@ -182,6 +201,7 @@ const run = (t) => {
   scene.updateMatrixWorld()
   camera.updateMatrixWorld()
   hover(camera)
+  if (params.shadows) shadow.render({ scene, update: false })
   renderer.render({ scene, camera })
 }
 requestAnimationFrame(run)

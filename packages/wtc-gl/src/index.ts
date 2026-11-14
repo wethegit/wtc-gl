@@ -44,6 +44,7 @@ export * from './line/Polyline'
 
 export * from './lighting/Lights'
 export * from './lighting/LitProgram'
+export * from './lighting/Shadow'
 
 export * from './helpers/NormalProgram'
 export * from './helpers/WireMesh'

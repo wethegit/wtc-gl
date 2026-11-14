@@ -10,8 +10,10 @@ import { composeMat4 } from '../core/matrix'
 import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { Lights } from '../lighting/Lights'
+import type { Shadow } from '../lighting/Shadow'
 import type { LitProgram } from '../lighting/LitProgram'
 import { readAccessor, readFloats, readIndices } from './gltf/accessors'
+import { linearToSRGBArray } from './gltf/colour'
 import { materialProgram, type ProgramFlags } from './gltf/materials'
 import { loadTexture, resolve } from './gltf/textures'
 import type { GLTFCamera, GLTFJson, GLTFNode } from './gltf/types'
@@ -37,6 +39,12 @@ const ATTRIBUTES: Record<string, string> = {
 export interface GLTFLoaderOptions {
   /** The lights every program shares. @default a new `Lights()` */
   lights: Lights
+  /**
+   * A `Shadow` every program receives. The loader doesn't add casters: pass
+   * `gltf.scene` (or the nodes that should cast) to `shadow.add`.
+   * @default null
+   */
+  shadow: Shadow | null
   /** What relative URIs are resolved against. @default the file's URL */
   baseURL: string
   /** Aborts the requests. */
@@ -80,7 +88,8 @@ export interface GLTF {
  *
  * Attributes are read into floats as `position`, `normal`, `uv` and
  * `colour`, so bounds, `Raycast` and the geometry tools all work on them.
- * Materials are approximated with `LitProgram`: see `materialProgram` for
+ * Vertex colours and material colour factors are linear in glTF, and are
+ * converted to sRGB, the space `LitProgram` shades in. Materials are approximated with `LitProgram`: see `materialProgram` for
  * what's mapped and what isn't. A primitive without normals is shaded flat.
  *
  * Not supported: skinning, morph targets, animation, PBR materials, other uv
@@ -117,6 +126,7 @@ export class GLTFLoader {
     data: ArrayBuffer | GLTFJson,
     {
       lights = new Lights(),
+      shadow = null,
       baseURL = '',
       signal
     }: Partial<GLTFLoaderOptions> = {}
@@ -171,7 +181,7 @@ export class GLTFLoader {
       })
     )
 
-    return build(gl, json, buffers, textures, lights)
+    return build(gl, json, buffers, textures, lights, shadow)
   }
 }
 
@@ -212,7 +222,8 @@ function build(
   json: GLTFJson,
   buffers: ArrayBuffer[],
   textures: (Texture | undefined)[],
-  lights: Lights
+  lights: Lights,
+  shadow: Shadow | null
 ): GLTF {
   const meshes: Mesh[] = []
   const cameras: Camera[] = []
@@ -228,7 +239,8 @@ function build(
         material !== undefined ? json.materials?.[material] : undefined,
         textures,
         lights,
-        flags
+        flags,
+        shadow
       )
       programs.set(key, p)
     }
@@ -245,6 +257,8 @@ function build(
         const ours = ATTRIBUTES[name]
         if (!ours) continue
         const { data, size } = readFloats(json, buffers, accessor)
+        // Vertex colours are linear in glTF, and shaded as sRGB
+        if (ours === 'colour') linearToSRGBArray(data, size)
         attributes[ours] = new GeometryAttribute({ size, data })
       }
       if (primitive.indices !== undefined) {

@@ -57,6 +57,7 @@ export default defineConfig({
         primitives: resolvePath('demos/primitives/index.html'),
         lighting: resolvePath('demos/lighting/index.html'),
         gltf: resolvePath('demos/gltf/index.html'),
+        iconSwarm: resolvePath('demos/icon-swarm/index.html'),
         paths: resolvePath('demos/paths/index.html'),
         lines: resolvePath('demos/lines/index.html'),
         polylineTrails: resolvePath('demos/polyline-trails/index.html')

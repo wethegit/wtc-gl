@@ -4,6 +4,7 @@ import { Texture } from '../src/core/Texture'
 import { blankTexture } from '../src/core/blankTexture'
 import { Lights } from '../src/lighting/Lights'
 import { LitProgram, litShading } from '../src/lighting/LitProgram'
+import { Shadow, shadowShading } from '../src/lighting/Shadow'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 const length = (v: ArrayLike<number>) => Math.hypot(v[0], v[1], v[2])
@@ -262,7 +263,89 @@ describe('LitProgram', () => {
   })
 })
 
+describe('LitProgram shadow', () => {
+  const shadowUniforms = (shadow: Shadow) =>
+    Object.keys(shadow.uniforms) as (keyof Shadow['uniforms'])[]
+
+  it('receives a shadow it is given', () => {
+    const { gl } = createMockRenderer()
+    const lights = new Lights()
+    const shadow = new Shadow(gl, { lights })
+    const program = new LitProgram(gl, { lights, shadow })
+    expect(program.shadow).toBe(shadow)
+    for (const name of shadowUniforms(shadow)) {
+      expect(program.uniforms[name]).toBe(shadow.uniforms[name])
+    }
+    const { vertex, fragment } = sources(gl)
+    expect(vertex).toContain('#define SHADOW\n')
+    expect(vertex).toContain('v_shadowCoord')
+    expect(fragment).toContain('#define SHADOW\n')
+    expect(fragment).toContain(shadowShading)
+    expect(fragment).toContain('shadowFactor(v_shadowCoord)')
+  })
+
+  it('has no shadow by default', () => {
+    const { gl } = createMockRenderer()
+    const program = new LitProgram(gl)
+    expect(program.shadow).toBe(null)
+    expect(program.uniforms.u_shadowMap).toBeUndefined()
+    expect(sources(gl).fragment).not.toContain('sampler2DShadow')
+  })
+
+  it('adds and removes the shadow, recompiling', () => {
+    const { gl } = createMockRenderer()
+    const lights = new Lights()
+    const shadow = new Shadow(gl, { lights })
+    const program = new LitProgram(gl, { lights })
+    const before = program.program
+
+    program.shadow = shadow
+    expect(program.program).not.toBe(before)
+    expect(program.uniforms.u_shadowMatrix).toBe(shadow.uniforms.u_shadowMatrix)
+    expect(sources(gl).fragment).toContain('#define SHADOW\n')
+
+    const calls = (gl.shaderSource as unknown as Mock).mock.calls.length
+    program.shadow = shadow
+    expect((gl.shaderSource as unknown as Mock).mock.calls.length).toBe(calls)
+
+    program.shadow = null
+    expect(program.shadow).toBe(null)
+    expect(program.uniforms.u_shadowMap).toBeUndefined()
+    expect(sources(gl).fragment).not.toContain('#define SHADOW\n')
+  })
+
+  it('swaps one shadow for another', () => {
+    const { gl } = createMockRenderer()
+    const lights = new Lights()
+    const a = new Shadow(gl, { lights })
+    const b = new Shadow(gl, { lights })
+    const program = new LitProgram(gl, { lights, shadow: a })
+    program.shadow = b
+    expect(program.uniforms.u_shadowMap).toBe(b.uniforms.u_shadowMap)
+  })
+})
+
+describe('shadowShading', () => {
+  it('declares shadowFactor and the fragment shadow uniforms', () => {
+    expect(shadowShading).toMatch(/float\s+shadowFactor\s*\(vec4/)
+    for (const name of [
+      'u_shadowMap',
+      'u_shadowBias',
+      'u_shadowSoftness',
+      'u_shadowTexel'
+    ]) {
+      expect(shadowShading).toMatch(
+        new RegExp(`uniform\\s+[\\w ]+\\s+${name};`)
+      )
+    }
+  })
+})
+
 describe('litShading', () => {
+  it('takes an optional shadow factor', () => {
+    expect(litShading).toMatch(/float shininess,\s*float shadow\s*\)/)
+  })
+
   it('declares litShade and the light uniforms', () => {
     expect(litShading).toMatch(/vec3\s+litShade\s*\(/)
     for (const name of lightUniforms(new Lights())) {

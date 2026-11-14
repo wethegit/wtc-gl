@@ -25,6 +25,14 @@ in vec3 instanceColour;
 out vec3 v_instanceColour;
 #endif
 
+#ifdef SHADOW
+// From Shadow
+uniform mat4 u_modelMatrix;
+uniform mat4 u_shadowMatrix;
+uniform float u_shadowNormalBias;
+out vec4 v_shadowCoord;
+#endif
+
 void main() {
   vec4 local = vec4(position, 1.0);
   vec3 localNormal = normal;
@@ -44,6 +52,15 @@ void main() {
 #endif
 #ifdef INSTANCED
   v_instanceColour = instanceColour;
+#endif
+#ifdef SHADOW
+  // Pushed out along the normal, so a surface doesn't shadow itself. A
+  // primitive without normals reads (0, 0, 0) and isn't pushed.
+  vec3 worldNormal = mat3(u_modelMatrix) * localNormal;
+  float normalLength = length(worldNormal);
+  if (normalLength > 0.0) worldNormal /= normalLength;
+  vec4 world = u_modelMatrix * local;
+  v_shadowCoord = u_shadowMatrix * vec4(world.xyz + worldNormal * u_shadowNormalBias, 1.0);
 #endif
   gl_Position = u_projectionMatrix * viewPosition;
 }

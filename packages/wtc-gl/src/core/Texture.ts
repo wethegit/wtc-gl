@@ -54,6 +54,7 @@ export interface TextureOptions {
   unpackAlignment: 1 | 2 | 4 | 8
   flipY: boolean
   anisotropy: number
+  compareFunc: GLenum | null
   level: number
   width: number
   height: number
@@ -161,6 +162,14 @@ export class Texture {
    */
   anisotropy: number
   /**
+   * For a depth texture, compare against a reference value when sampled
+   * instead of returning the depth: `gl.LEQUAL`, `gl.LESS` and so on. A
+   * shader reads it with a `sampler2DShadow`, and LINEAR filtering then
+   * gives 2×2 percentage-closer filtering for free. Null for no comparison.
+   * @default null
+   */
+  compareFunc: GLenum | null
+  /**
    * A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
    * @default 0
    */
@@ -251,6 +260,8 @@ export class Texture {
    * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
    * @param flipY - Whether to flip the Y component of the supplied image
    * @param anistropy - The anistropic filtering level for the texture.
+   * @param compareFunc - For a depth texture, the comparison a
+   * `sampler2DShadow` makes, or null for none.
    * @param unpackAlignment - The unpack alignment for pixel stores.
    * @param level - A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
    * @param width - The width of the render target.
@@ -274,6 +285,7 @@ export class Texture {
       unpackAlignment = 4,
       flipY = target == gl.TEXTURE_2D ? true : false,
       anisotropy = 0,
+      compareFunc = null,
       level = 0,
       width, // used for RenderTargets or Data Textures
       height = width
@@ -302,6 +314,7 @@ export class Texture {
       anisotropy,
       this.gl.renderer.parameters.maxAnisotropy
     )
+    this.compareFunc = compareFunc
     this.level = level
 
     if (width) this.width = width
@@ -432,6 +445,30 @@ export class Texture {
           this.anisotropy
         )
       this.state.anisotropy = this.anisotropy
+    }
+
+    if (this.compareFunc !== this.state.compareFunc) {
+      if (this.compareFunc === null) {
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_COMPARE_MODE,
+          this.gl.NONE
+        )
+      } else {
+        if (this.state.compareFunc === null) {
+          this.gl.texParameteri(
+            this.target,
+            this.gl.TEXTURE_COMPARE_MODE,
+            this.gl.COMPARE_REF_TO_TEXTURE
+          )
+        }
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_COMPARE_FUNC,
+          this.compareFunc
+        )
+      }
+      this.state.compareFunc = this.compareFunc
     }
 
     if (this.image || this.data) {
@@ -567,6 +604,7 @@ function defaultTextureState(gl: WTCGLRenderingContext): WTCGLTextureState {
     magFilter: gl.LINEAR,
     wrapS: gl.REPEAT,
     wrapT: gl.REPEAT,
-    anisotropy: 0
+    anisotropy: 0,
+    compareFunc: null
   }
 }

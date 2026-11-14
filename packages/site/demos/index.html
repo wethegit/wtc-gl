@@ -759,6 +759,35 @@
         <div class="demo">
           <div class="demo__preview">
             <img
+              src="./screenshots/icon-swarm.jpg"
+              alt="A clump of chunky coloured icons — red hearts, blue crosses, yellow bolts, green triangles and white discs — casting a soft shadow onto a dark backdrop"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">GLTFLoader</span>
+              <span class="demo__class">Shadow</span>
+              <span class="demo__class">InstancedMesh</span>
+              <span class="demo__class">Raycast</span>
+            </div>
+            <h3>Icon swarm</h3>
+            <p>
+              Five icons loaded from <code>.glb</code>s, their materials made
+              into instanced <code>LitProgram</code>s so every copy of an icon
+              is one <code>InstancedMesh</code>. Their convex colliders drive
+              Rapier physics with no gravity: the icons drip in and clump, the
+              pointer's <code>Raycast</code> pushes them aside and a click
+              blasts them apart. They cast a <code>Shadow</code> onto each other
+              and onto a backdrop drawn with <code>shadowShading</code>.
+            </p>
+            <a class="btn" href="./icon-swarm/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
               src="./screenshots/paths.jpg"
               alt="A translucent trefoil-knot tube with small red, green and blue axes along its centre line"
               loading="lazy"
