@@ -73,7 +73,7 @@ declare module '*.glsl' {
 
 ## React
 
-The React package wraps `ScrollRenderer` in a provider and hooks. It needs React 18 or later, and wtc-gl alongside it:
+The [React package](/react/) wraps `ScrollRenderer` in a provider and hooks. It needs React 18 or later, and wtc-gl alongside it:
 
 ```sh
 npm install @wethegit/react-wtc-gl wtc-gl

@@ -93,6 +93,58 @@ const guide: DefaultTheme.SidebarItem[] = [
     items: [
       { text: 'TransformFeedback', link: '/simulation/transform-feedback' }
     ]
+  },
+  {
+    text: 'Recipes',
+    items: [
+      { text: 'FragmentShader', link: '/recipes/fragment-shader' },
+      { text: 'ParticleSimulation', link: '/recipes/particle-simulation' },
+      { text: 'ScrollRenderer', link: '/recipes/scroll-renderer' }
+    ]
+  },
+  {
+    text: 'Cookbook',
+    items: [
+      { text: 'Feedback with ping-pong buffers', link: '/cookbook/ping-pong' },
+      {
+        text: 'Pointer, time and resolution',
+        link: '/cookbook/pointer-uniforms'
+      },
+      { text: 'Pick and drag', link: '/cookbook/pick-and-drag' },
+      {
+        text: 'A glTF model with shadows',
+        link: '/cookbook/gltf-with-shadows'
+      },
+      { text: 'Carve a model with CSG', link: '/cookbook/carve-with-csg' },
+      { text: 'Pointer trails', link: '/cookbook/pointer-trails' },
+      { text: 'A field of instances', link: '/cookbook/instance-field' },
+      {
+        text: 'Images that ripple on scroll',
+        link: '/cookbook/scroll-distortion'
+      }
+    ]
+  },
+  {
+    text: 'React',
+    items: [
+      { text: 'Setup', link: '/react/' },
+      {
+        text: 'ScrollRendererProvider',
+        link: '/react/scroll-renderer-provider'
+      },
+      { text: 'useScrollScene', link: '/react/use-scroll-scene' },
+      { text: 'useScrollImage', link: '/react/use-scroll-image' }
+    ]
+  },
+  {
+    text: 'Examples',
+    items: [
+      { text: 'Gallery', link: '/showcase/' },
+      { text: 'Lighting walkthrough', link: '/showcase/lighting' },
+      { text: 'Paths walkthrough', link: '/showcase/paths' },
+      { text: 'Icon swarm walkthrough', link: '/showcase/icon-swarm' },
+      { text: 'Scroll cloth walkthrough', link: '/showcase/scroll-image-cloth' }
+    ]
   }
 ]
 

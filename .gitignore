@@ -35,6 +35,8 @@ packages/docs/api/wtc-gl/
 packages/docs/api/react/
 packages/docs/.vitepress/dist/
 packages/docs/.vitepress/cache/
+# Copied from the demos for the docs gallery
+packages/docs/public/screenshots/
 dist-site/
 test-results/
 playwright-report/

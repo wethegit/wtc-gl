@@ -8,7 +8,7 @@ Draw a full-screen fragment shader with the `FragmentShader` recipe. {.lead}
 
 <<< @/examples/first-shader.js
 
-On a page of its own, the shader can fill the window. Leave out `container` and `autoResize`, and `FragmentShader` appends its canvas to the body and resizes with the window:
+On a page of its own, the shader can fill the window. Leave out `container` and `autoResize`, and `FragmentShader` appends its canvas to the body and resizes with the window. It sizes the drawing buffer, so give the canvas its size on the page with CSS, for example `canvas { position: fixed; inset: 0; width: 100%; height: 100% }`:
 
 ```js
 import { FragmentShader } from 'wtc-gl'
@@ -52,3 +52,5 @@ addEventListener('pointermove', (e) => {
 ## Playing and stopping
 
 `shader.playing` starts and stops the render loop. `shader.destroy()` stops it for good, and frees the canvas and its WebGL context.
+
+The [FragmentShader recipe](/recipes/fragment-shader) covers every option, including `post` for feedback effects.

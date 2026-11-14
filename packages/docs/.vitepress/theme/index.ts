@@ -2,6 +2,7 @@ import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
 
+import DemoGallery from './components/DemoGallery.vue'
 import Example from './components/Example.vue'
 import PageHeader from './components/PageHeader.vue'
 import './custom.css'
@@ -14,6 +15,7 @@ export default {
       'doc-before': () => h(PageHeader)
     }),
   enhanceApp({ app }) {
+    app.component('DemoGallery', DemoGallery)
     app.component('Example', Example)
   }
 } satisfies Theme

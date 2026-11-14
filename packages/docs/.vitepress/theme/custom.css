@@ -305,3 +305,31 @@
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+
+/* ── Examples ────────────────────────────────────────────────────────── */
+
+/* The gallery takes the outline's space; its prose keeps a reading width */
+.showcase-gallery .vp-doc > div > p {
+  max-width: 688px;
+}
+/* A walkthrough's screenshot, and the links under it */
+.vp-doc img.showcase-shot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--docs-ring);
+  background: var(--docs-stage-bg);
+}
+.vp-doc p:has(> img.showcase-shot) {
+  margin: 32px 0 0;
+}
+.vp-doc .showcase-links {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--vp-c-text-3);
+}
+.vp-doc .showcase-links a {
+  text-decoration: none;
+}

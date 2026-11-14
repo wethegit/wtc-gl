@@ -176,8 +176,9 @@ Easy-to-browse, complete documentation for both packages. Today there's only a T
   - instancing, `Raycast` and `TransformFeedback`;
   - render targets and `ScrollRenderer`.
 - [x] A full API reference for every export of `wtc-gl`, generated from TSDoc comments, with gaps in those comments filled. TypeDoc writes Markdown pages for both packages, grouped by `@category`; every option has a description and a default.
-- [ ] `react-wtc-gl`: its components and hooks, with a React getting-started page.
-- [ ] Annotated examples drawn from the demos, each linking to the live demo and its source.
+- [x] `react-wtc-gl`: its components and hooks, with a React getting-started page.
+- [x] Annotated examples drawn from the demos, each linking to the live demo and its source. A gallery built from the demo index at build time, with walkthroughs of the lighting, paths, icon swarm and scroll cloth demos.
+- [x] Recipes (`FragmentShader`, `ParticleSimulation`, `ScrollRenderer`) and a Cookbook of task-based how-tos, most with live examples.
 - [x] A CI check that the docs build and that every export is documented. TypeDoc's validation is strict, and VitePress fails on dead links.
 
 ---

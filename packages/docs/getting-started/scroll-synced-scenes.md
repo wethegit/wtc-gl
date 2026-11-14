@@ -209,10 +209,11 @@ export function Page() {
 }
 ```
 
-The [React API](/api/react/) covers the provider, `useScrollScene` and `useScrollImage`.
+The [React guide](/react/) covers the provider, `useScrollScene` and `useScrollImage`, and the [React API](/api/react/) lists every prop and option.
 
 ## See also
 
+- [The ScrollRenderer recipe](/recipes/scroll-renderer), for every option, `ScrollImage` and `ScrollHTML`, layouts and performance.
 - [ScrollRenderer](/api/wtc-gl/classes/ScrollRenderer), [ScrollRendererOptions](/api/wtc-gl/interfaces/ScrollRendererOptions), [ScrollScene](/api/wtc-gl/classes/ScrollScene) and [ScrollSceneOptions](/api/wtc-gl/interfaces/ScrollSceneOptions) in the API reference.
 - [ScrollImage](/api/wtc-gl/classes/ScrollImage), a scene that loads an `<img>` into a texture for its shader, and [ScrollHTML](/api/wtc-gl/classes/ScrollHTML), which does the same for an element's HTML with the experimental HTML-in-Canvas API.
 - [Renderer](/core/renderer), for the viewport and scissor underneath.

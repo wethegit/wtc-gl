@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "api": "typedoc --options typedoc.wtc-gl.json && typedoc --options typedoc.react.json",
-    "dev": "pnpm run api && vitepress dev",
-    "build": "pnpm run api && vitepress build",
-    "preview": "vitepress preview"
+    "dev": "pnpm run assets && pnpm run api && vitepress dev",
+    "build": "pnpm run assets && pnpm run api && vitepress build",
+    "preview": "vitepress preview",
+    "assets": "rm -rf public/screenshots && cp -r ../site/demos/screenshots public/screenshots"
   },
   "devDependencies": {
     "@wethegit/react-wtc-gl": "workspace:*",

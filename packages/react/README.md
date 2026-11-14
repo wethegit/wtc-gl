@@ -4,6 +4,8 @@ React components and hooks for [wtc-gl](https://github.com/wethegit/wtc-gl) reci
 
 Currently wraps the **ScrollRenderer** recipe: render multiple independent WebGL scenes on a single full-viewport canvas, each scissor-tested to a DOM element's bounds and driven by one `requestAnimationFrame` loop.
 
+See [the React docs](https://wethegit.github.io/wtc-gl/docs/react/) for a full guide.
+
 ## Install
 
 ```sh
