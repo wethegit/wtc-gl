@@ -11,6 +11,7 @@ export * from './core/VideoTexture'
 export * from './core/Camera'
 export * from './core/InstancedMesh'
 export * from './core/DollyCamera'
+export * from './core/FlyCamera'
 export * from './core/RenderTarget'
 export * from './core/TransformFeedback'
 

@@ -20,6 +20,8 @@
       }
       #hud {
         position: fixed;
+        /* Above the canvas, which the stage adds after it */
+        z-index: 10;
         left: 12px;
         bottom: 12px;
         margin: 0;
@@ -36,6 +38,7 @@
       }
       #labels {
         position: fixed;
+        z-index: 10;
         inset: 0;
         pointer-events: none;
       }
