@@ -123,6 +123,12 @@ camera.frustumIntersectsSphere(centre, radius)
 - Scroll the wheel, drag with the middle button or pinch to zoom.
 - Drag with the right button or two fingers to pan.
 
+The example below has limits: it stays between 4 and 12 units from its target, and above the floor. Try orbiting underneath, or click it and zoom all the way in and out, and the readout shows the limits holding. Its zoom only turns on once it's been clicked, so scrolling past doesn't zoom it, and panning is off.
+
+<Example src="dolly-camera" :height="360" demo="lighting" />
+
+<<< @/examples/dolly-camera.js
+
 It takes its own options first and the usual [camera options](#perspective) second. Both are optional, and as with `Camera` you only pass the camera options you want to change, so `new DollyCamera({ element })` works. Place it with `setPosition`, and call `update()` every frame: input sets where the camera is heading, and `update()` eases it there, applies the limits and points it at the target.
 
 ```js
