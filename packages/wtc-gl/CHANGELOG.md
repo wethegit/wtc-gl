@@ -1,5 +1,92 @@
 # wtc-gl
 
+## 2.1.0
+
+### Minor Changes
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`68be43f`](https://github.com/wethegit/wtc-gl/commit/68be43fbcbda15233596a2d99294d35fdcc49dc6) Thanks [@liamegan](https://github.com/liamegan)! - Add camera projection helpers and per-instance frustum culling.
+
+  - `Camera.project(v, out?)` takes a world-space point to normalised device coordinates, and `Camera.unproject(v, out?)` takes it back. Both work in place by default, or write to `out` and return it, and neither allocates. Unprojecting z = -1 and z = 1 gives the near and far points of the ray under a screen position.
+  - `Camera.updateProjectionMatrix()` rebuilds the projection after `fov`, `aspect`, `near`, `far`, the orthographic bounds or `zoom` are changed directly. `perspective()` and `orthographic()` now use it.
+  - `Camera.frustumIntersects(node, worldMatrix?)` takes an optional matrix to place the node's bounds with, such as one instance's matrix. Its scale grows the bounds too.
+
+  `projectionMatrix` is now updated in place, so it keeps its reference. `projectionViewMatrix` is also refreshed whenever the projection changes, rather than at the next `updateMatrixWorld()`, so it's no longer out of date between a resize and the next render. Frustum culling no longer allocates per mesh, which roughly halves per-frame allocations in a scene of many meshes.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`e6f4668`](https://github.com/wethegit/wtc-gl/commit/e6f466848aafefef346257ea7c68d3271c9ad20b) Thanks [@liamegan](https://github.com/liamegan)! - Add `toManifold` and `fromManifold`, a thin adapter for CSG with manifold-3d. wtc-gl doesn't depend on manifold-3d: load it yourself and pass the module in. Booleans and transforms use manifold's own API, vertex attributes listed in `properties` carry through, and normals are oriented correctly after transforms and subtractions.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`b225f43`](https://github.com/wethegit/wtc-gl/commit/b225f43d612b6b372c035bed0337b792162d9b9c) Thanks [@liamegan](https://github.com/liamegan)! - Add debug helpers for inspecting geometry.
+
+  - `NormalProgram` colours a mesh by its normals, in view space or, with `space: 'world'`, in world space so the colours stay put as the camera moves. `flatShading` and `doubleSided` work as on `LitProgram`. One instance can be shared by any number of meshes.
+  - `WireMesh` draws each edge of a triangle geometry once. It reads the source geometry's position buffer rather than copying it, so position updates show in the wire, and removing the wire never deletes the source's buffer. `update()` rebuilds the edges after the source's index changes.
+  - `AxesHelper` draws the x, y and z axes in red, green and blue, from the origin or through it with `symmetric`.
+  - `GridHelper` draws a square grid on the XZ plane, with its centre lines in `centreColour`.
+  - `VertexNormalsHelper` and `FaceNormalsHelper` draw a line along each vertex normal, or out of each triangle's centre along its face normal. They parent themselves to the mesh, stay `size` world units long however it's scaled, and re-read its geometry on `update()`.
+
+  The helpers draw with `gl.LINES`, so their lines are one device pixel wide. They pull their lines slightly towards the camera, so a grid or wireframe drawn on a surface shows on top of it.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`26a7c8d`](https://github.com/wethegit/wtc-gl/commit/26a7c8dbc910ab0d7073809d32654710aa1ea0c9) Thanks [@liamegan](https://github.com/liamegan)! - Fix bugs found while writing the docs:
+
+  - Struct uniforms work: give a `Uniform` an object of member values (or an array of them for an array of structs), and each member is uploaded to its own location. Adds the `WTCGLUniformStruct` type.
+  - `Texture` applies changed filter, wrap, anisotropy and comparison settings on its next use, without `needsUpdate` or a re-upload.
+  - `ParticleSimulation` gives every particle a reference, at its texel's centre; starts its clock on the first frame and caps long gaps at 50 ms; cancels the requested frame when stopped; gives `u_resolution` in device pixels without `autoResize`; and gains `destroy()`. Its default shaders draw the point cloud without unsupplied inputs.
+  - `ScrollRenderer.playing = false` cancels the requested frame, so restarting can't run two loops.
+  - `ScrollImage` gains `destroy()`, which deletes its texture, and `ScrollHTML.destroy()` deletes its texture too, so `useScrollImage` no longer leaks on unmount.
+  - `ScrollHTML` tracks its placeholder when it captures the element itself, and `destroy()` puts the element back where it was.
+  - `Camera.frustumIntersects` no longer culls drawables that aren't meshes.
+  - `DollyCamera`'s camera options are optional.
+  - `Sphere`'s index has no trailing degenerate triangles.
+  - The render callbacks of `FragmentShader` and `ParticleSimulation` name their argument `time`, as it's the frame's timestamp.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`8df4465`](https://github.com/wethegit/wtc-gl/commit/8df44655d26c84615919f536a59a316bc8fa9854) Thanks [@liamegan](https://github.com/liamegan)! - Document every export, with defaults on every option, for the new API reference. Types that public options already used are now exported: `UniformKind`, `MeshCallback`, `BaseMeshOptions`, `ProgramFlags`, and the glTF JSON types `GLTFAccessor`, `GLTFBufferView`, `GLTFCamera`, `GLTFMaterial`, `GLTFNode`, `GLTFPrimitive` and `GLTFTextureInfo`.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`8a3267a`](https://github.com/wethegit/wtc-gl/commit/8a3267a9d2d351abd0c5b419ddd975af77b8f0f4) Thanks [@liamegan](https://github.com/liamegan)! - Add `FlyCamera`, a camera that flies forward on its own and is steered like a plane: drag like a joystick, W/S or the up and down arrows to pitch, A/D or the left and right arrows to turn, Q/E to roll, R/F to change speed and space to stop. With `accelerationMode`, holding W/S or the up and down arrows boosts, or brakes and then reverses (up to `maxReverseSpeed`), instead, returning quickly to the cruising speed once let go; `currentSpeed` includes the boost. Held keys ramp up and turns die away the same at any frame rate, keys are ignored while typing in a field, and `keyTarget` scopes the keys to one element. Use it with a `Stage` through `stage.camera`.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`a6bd6e2`](https://github.com/wethegit/wtc-gl/commit/a6bd6e2334cf4a05eecf32dd79e135204d133ef4) Thanks [@liamegan](https://github.com/liamegan)! - Add `GLTFLoader`, `Texture.fromURL` and emissive light on `LitProgram`.
+
+  - `Texture.fromURL(gl, url, options)` fetches an image and resolves with a texture, decoded with `createImageBitmap`, which also flips and premultiplies it. It takes an abort `signal`. `Texture.fromBlob` does the same for an image already in hand.
+  - `GLTFLoader.load(gl, url, options)` and `GLTFLoader.parse(gl, data, options)` read glTF 2.0 files, `.glb` or `.gltf`, with embedded, `data:` or external buffers and images. Nodes become named `Obj`s, meshes become `Mesh`es (a group of them for several primitives), and cameras become `Camera`s. Meshes shared between nodes share their geometry and program. `EXT_mesh_gpu_instancing` nodes become `InstancedMesh`es. The result lists the nodes, meshes, cameras, programs and textures, and `remove()` frees them.
+  - Attributes are read into floats, dequantised and with sparse values applied, as `position`, `normal`, `uv` and `colour`, so bounds, `Raycast` and the geometry tools work on loaded models.
+  - Materials are approximated with `LitProgram` (also exported as `materialProgram`): base colour factor and texture, alpha modes, double-sided, vertex colours, emissive (with `KHR_materials_emissive_strength`) and a highlight from roughness. A primitive without normals is shaded flat. Normal, occlusion and metallic-roughness textures are ignored, and colours aren't colour-managed.
+  - Skinning, morph targets, animation and compression aren't supported. A file that requires an unsupported extension is rejected, naming it.
+  - `LitProgram` gains `emissive` and `emissiveMap`: light the surface gives off, added after lighting.
+  - `Obj` gains a `name`.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`ba0983b`](https://github.com/wethegit/wtc-gl/commit/ba0983b64a4247d5e255628b7965a5c3a81a22fa) Thanks [@liamegan](https://github.com/liamegan)! - `GLTFLoader` converts base colour and emissive factors, and `COLOR_0` vertex colours, from glTF's linear values to sRGB, the space `LitProgram` shades in. Loaded models now show the colours they had in the modelling tool, where before they came out darker and more saturated.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`bf205c7`](https://github.com/wethegit/wtc-gl/commit/bf205c7e2fb968d2ee7537574f263d14a0e70ffc) Thanks [@liamegan](https://github.com/liamegan)! - Add `InstancedMesh`: many copies of one geometry in a single draw call, each with its own matrix and colour.
+
+  - `setMatrixAt(i, matrix)` and `setColourAt(i, colour)` set an instance, and `getMatrixAt` and `getColourAt` read one back. Matrices start as the identity and colours as white. `count` draws only the first instances, up to the `capacity` the mesh was made with.
+  - Programs read the instances from `in mat4 instanceMatrix` and `in vec3 instanceColour`. `LitProgram` and `NormalProgram` take a new `instanced` option, which transforms positions and normals by the instance matrix (correct for non-uniform scale) and, for `LitProgram`, multiplies the colour by the instance colour.
+  - The geometry is shared rather than changed: the instanced mesh draws from its buffers through a geometry of its own, so the same geometry can also be drawn by an ordinary mesh, and removing the instanced mesh never deletes its buffers. `update()` follows changes to the geometry.
+  - With `frustumCulled`, each instance is culled against the camera every draw, without allocating per instance, and only the visible ones are drawn. Nothing is uploaded when neither the instances nor the visible set changed. `cullCamera` culls against a different camera than the one drawing, and `cull(camera)` can be called directly.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`b37a301`](https://github.com/wethegit/wtc-gl/commit/b37a301d80b31eafdd86d9189da8938fb69bf1ae) Thanks [@liamegan](https://github.com/liamegan)! - Add `LitProgram` and `Lights`, a built-in lit program for any mesh with positions and normals.
+
+  - `LitProgram` shades with Lambert diffuse and an optional Blinn-Phong highlight (`specular`, `shininess`), over a `colour`, a texture `map` read with `uv`, or both. `opacity` and `alphaTest` work as on `Polyline`, and the output is premultiplied when the renderer is.
+  - `flatShading` shades each triangle from its face normal without needing `toNonIndexed`. `vertexColours` multiplies by a `colour` attribute, and `doubleSided` draws and lights the back faces. These three change the shaders, so they're set when the program is made. The colour, opacity, map, specular and shininess can be changed at any time.
+  - `Lights` holds one directional light (`direction`, `colour`, `intensity`), a sky/ground hemisphere and flat `ambient` light, all in world space. Programs given the same `Lights` share its uniforms, so changing a light updates every one of them without allocating.
+  - `litShading` exports the lighting as GLSL for custom shaders: the light uniforms and `litShade(base, normal, view, viewRotation, specular, shininess)`. Add it after the shader's precision statement and spread `lights.uniforms` into the program's uniforms.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`d148357`](https://github.com/wethegit/wtc-gl/commit/d14835709acb183c3d35ad29c0c3371f701a6aa2) Thanks [@liamegan](https://github.com/liamegan)! - Add `Raycast`, for picking meshes under the pointer.
+
+  - `castMouse(camera, [x, y])` casts from a camera through a point in normalised device coordinates; `set(origin, direction)` sets the ray directly.
+  - `intersectMeshes(target)` returns the meshes whose triangles the ray meets, nearest first, each with its distance, world and local point, face index, normal (interpolated, or the face normal), face normal and uv. `intersectBounds(target)` stops at each mesh's bounding box, which is cheaper. The target is a mesh, a list of them, or a scene to walk, skipping hidden objects.
+  - Hits on an `InstancedMesh` say which instance with `instanceId`. Face culling follows each mesh's program, mirrored meshes included, unless `cullFace` is given. `padding` grows the bounds for small targets, and `maxDistance` limits the search.
+  - `intersectPlane`, `intersectSphere` and `intersectBox` test the ray against single shapes, for dragging and simple hit tests.
+
+  Only `gl.TRIANGLES` meshes whose positions are on the CPU can be hit.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`c86e47b`](https://github.com/wethegit/wtc-gl/commit/c86e47b393823df513f8b5a2bc47228eb919b59d) Thanks [@liamegan](https://github.com/liamegan)! - Add `Program.setShaders` and scissoring through the renderer.
+
+  - `program.setShaders({ vertex, fragment })` replaces a program's shaders, keeping its uniforms and state. Either source can be left out. If the new shaders fail to compile or link, the reason is logged and the program keeps drawing with the old ones, so a broken edit never blanks the screen. The current sources are available as `program.vertex` and `program.fragment`.
+  - `LitProgram`'s `flatShading`, `vertexColours`, `doubleSided` and `instanced`, and `NormalProgram`'s `space`, `flatShading`, `doubleSided` and `instanced`, can now be changed after the program is made. Changing one recompiles the shaders.
+  - `renderer.setScissor(size, position)` sets the scissor rect, and `render({ scissor })` keeps a render's clear and drawing inside its viewport (`true`) or a given rect, turning the scissor test off again afterwards.
+  - `ScrollRenderer` scissors through the renderer instead of calling `gl.scissor` and `gl.enable(gl.SCISSOR_TEST)` directly. The scissor test is now only on while a clipped scene renders, not during the scenes' `onBeforeRender` and `onAfterRender` callbacks, so renders made there (into a render target, say) are no longer clipped to the previous scene's rect.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`ba0983b`](https://github.com/wethegit/wtc-gl/commit/ba0983b64a4247d5e255628b7965a5c3a81a22fa) Thanks [@liamegan](https://github.com/liamegan)! - Add `Shadow`, a shadow map for the `Lights` directional light. Casters are added with `shadow.add(node)`, and `LitProgram` and `GLTFLoader` take a `shadow` to receive it, with hardware-filtered soft edges. `Texture` gains `compareFunc` for depth comparison, `shadowShading` exports the lookup for custom shaders, and `litShade` takes an optional shadow factor.
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`b791e6a`](https://github.com/wethegit/wtc-gl/commit/b791e6a2e8dca70e1a4554b4439796dcaf27b44b) Thanks [@liamegan](https://github.com/liamegan)! - Add two recipes. `Stage` sets up a 3D scene: a renderer sized to its container, an orbiting camera, shared `Lights`, a `Shadow` and a render loop, with `add`, `fit` to frame a node, and `load` to load, add and frame a glTF model. Set `stage.camera` to draw through another camera (the orbit controls pause until it's set back), and pass `render()` a camera, viewport and scissor to draw extra views such as a minimap. `GPUSimulation` runs a simulation in float textures, with up to four named state textures written in one pass, a step shader, and `points()` to draw the results. `ParticleSimulation` is deprecated in favour of `GPUSimulation`, and is removed in 3.0.
+
 ## 2.0.1
 
 ### Patch Changes

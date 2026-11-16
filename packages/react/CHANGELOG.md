@@ -1,5 +1,11 @@
 # @wethegit/react-wtc-gl
 
+## 0.2.2
+
+### Patch Changes
+
+- [#181](https://github.com/wethegit/wtc-gl/pull/181) [`8df4465`](https://github.com/wethegit/wtc-gl/commit/8df44655d26c84615919f536a59a316bc8fa9854) Thanks [@liamegan](https://github.com/liamegan)! - Document `ScrollRendererProviderProps.children`, `onBeforeRender` and `onAfterRender`.
+
 ## 0.2.1
 
 ### Patch Changes
