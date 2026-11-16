@@ -4,6 +4,7 @@ import { Vec2 } from 'wtc-math'
 import { Geometry } from '../src/geometry/Geometry'
 import { GeometryAttribute } from '../src/geometry/GeometryAttribute'
 import { Cylinder } from '../src/geometry/Cylinder'
+import { Sphere } from '../src/geometry/Sphere'
 import { Torus } from '../src/geometry/Torus'
 import { Lathe } from '../src/geometry/Lathe'
 import { Capsule } from '../src/geometry/Capsule'
@@ -1024,5 +1025,30 @@ describe('Extrude', () => {
     const extra = new GeometryAttribute({ size: 1, data: new Float32Array(1) })
     const extrude = new Extrude(gl, { shape: square(1), attributes: { extra } })
     expect(extrude.attributes.extra).toBe(extra)
+  })
+})
+
+describe('Sphere index', () => {
+  it('has no degenerate triangles left over from the poles', () => {
+    const { gl } = createMockRenderer()
+    const sphere = new Sphere(gl, { widthSegments: 8, heightSegments: 4 })
+    const index = sphere.attributes.index.data
+    // Each pole row skips one triangle per segment
+    expect(index.length).toBe((8 * 4 * 2 - 2 * 8) * 3)
+    for (let i = 0; i < index.length; i += 3) {
+      const [a, b, c] = [index[i], index[i + 1], index[i + 2]]
+      expect(a !== b && b !== c && a !== c).toBe(true)
+    }
+  })
+
+  it('keeps every triangle of an open band', () => {
+    const { gl } = createMockRenderer()
+    const band = new Sphere(gl, {
+      widthSegments: 6,
+      heightSegments: 3,
+      thetaStart: 0.5,
+      thetaLength: 1
+    })
+    expect(band.attributes.index.data.length).toBe(6 * 3 * 6)
   })
 })

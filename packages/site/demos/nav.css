@@ -1,0 +1,182 @@
+/*
+ * The top bar shared by the demos gallery and every demo, matching the docs
+ * site's: the logo and a breadcrumb on the left, the site links on the
+ * right, at the docs' height with the same blur and fonts. Pages with their
+ * own sections add a second row of jump links under it.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --nav-height: 64px;
+  --subnav-height: 40px;
+  /* What fixed content must clear: the bar, plus the row when there is one */
+  --nav-offset: var(--nav-height);
+
+  --nav-bg: color-mix(in srgb, #07070e 85%, transparent);
+  --nav-border: rgb(255 255 255 / 0.08);
+  --nav-text: #eef0f7;
+  --nav-text-2: rgb(221 224 238 / 0.7);
+  --nav-text-3: rgb(221 224 238 / 0.5);
+  --nav-brand: #4a9eff;
+  --nav-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --nav-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root:has(.site-subnav) {
+  --nav-offset: calc(var(--nav-height) + var(--subnav-height));
+}
+
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: var(--nav-height);
+  padding: 0 32px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--nav-border);
+  font-family: var(--nav-font);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--nav-text-2);
+}
+.site-nav a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.site-nav a:hover {
+  color: var(--nav-text);
+}
+
+/* Logo and breadcrumb */
+.site-nav__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.site-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--nav-text) !important;
+}
+.site-nav__brand svg {
+  width: 24px;
+  height: 24px;
+}
+.site-nav__sep {
+  color: var(--nav-text-3);
+}
+.site-nav__current {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--nav-text);
+}
+
+/* Site links */
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.site-nav__links [aria-current='page'] {
+  color: var(--nav-brand);
+}
+.site-nav__icon {
+  display: flex;
+  padding-left: 24px;
+  border-left: 1px solid var(--nav-border);
+}
+.site-nav__icon svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* A demo's own controls, between the breadcrumb and the site links */
+.site-nav__tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  min-width: 0;
+  color: var(--nav-text-2);
+  font-size: 13px;
+}
+.site-nav__tools + .site-nav__links {
+  margin-left: 0;
+}
+
+/* The second row: jump links to the page's sections */
+.site-subnav {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: var(--subnav-height);
+  padding: 0 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--nav-border);
+  font-family: var(--nav-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.site-subnav a {
+  flex-shrink: 0;
+  color: var(--nav-text-3);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.site-subnav a:hover {
+  color: var(--nav-text);
+}
+
+/* Jumps land below the bars */
+html {
+  scroll-padding-top: calc(var(--nav-offset) + 16px);
+}
+
+@media (max-width: 640px) {
+  .site-nav,
+  .site-subnav {
+    padding: 0 16px;
+  }
+  .site-nav,
+  .site-nav__links {
+    gap: 16px;
+  }
+  .site-nav__icon {
+    padding-left: 16px;
+  }
+  /* The breadcrumb shortens to the demo's name */
+  .site-nav__brand span,
+  .site-nav__crumbs .site-nav__demos,
+  .site-nav__crumbs .site-nav__demos + .site-nav__sep,
+  .site-nav__api {
+    display: none;
+  }
+}

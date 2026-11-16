@@ -6,6 +6,7 @@ import { Program, type ProgramOptions } from '../src/core/Program'
 import { Geometry } from '../src/geometry/Geometry'
 import { RenderTarget } from '../src/core/RenderTarget'
 import { Renderer } from '../src/core/Renderer'
+import { Vec2 } from 'wtc-math'
 import { createMockRenderer, type MockGL } from './mockGL'
 
 describe('Renderer.getRenderList', () => {
@@ -212,5 +213,67 @@ describe('Renderer context and extensions', () => {
     // A VAO bound outside Geometry makes the next geometry draw rebind
     renderer.bindVertexArray(vao)
     expect(renderer.currentGeometry).toBe('')
+  })
+})
+
+describe('Renderer scissor', () => {
+  // The SCISSOR_TEST enable and disable calls, in order
+  const scissorTests = (gl: MockGL) =>
+    [
+      ...vi.mocked(gl.enable).mock.calls.map((c, i) => ({
+        order: vi.mocked(gl.enable).mock.invocationCallOrder[i],
+        on: true,
+        id: c[0]
+      })),
+      ...vi.mocked(gl.disable).mock.calls.map((c, i) => ({
+        order: vi.mocked(gl.disable).mock.invocationCallOrder[i],
+        on: false,
+        id: c[0]
+      }))
+    ]
+      .filter((c) => c.id === gl.SCISSOR_TEST)
+      .sort((a, b) => a.order - b.order)
+      .map((c) => c.on)
+
+  it('sets the scissor rect once for the same values', () => {
+    const { gl, renderer } = createMockRenderer()
+    renderer.setScissor(new Vec2(10, 20), new Vec2(1, 2))
+    renderer.setScissor(new Vec2(10, 20), new Vec2(1, 2))
+    expect(gl.scissor).toHaveBeenCalledTimes(1)
+    expect(gl.scissor).toHaveBeenCalledWith(1, 2, 10, 20)
+  })
+
+  it('scissors a render to its viewport, around the clear', () => {
+    const { gl, renderer } = createMockRenderer()
+    renderer.render({
+      scene: new Obj(),
+      viewport: [new Vec2(30, 40), new Vec2(5, 6)],
+      scissor: true
+    })
+    expect(gl.scissor).toHaveBeenLastCalledWith(5, 6, 30, 40)
+    expect(scissorTests(gl)).toEqual([true, false])
+    const enabled = vi.mocked(gl.enable).mock.invocationCallOrder[
+      vi.mocked(gl.enable).mock.calls.findIndex((c) => c[0] === gl.SCISSOR_TEST)
+    ]
+    expect(enabled).toBeLessThan(
+      vi.mocked(gl.clear).mock.invocationCallOrder[0]
+    )
+  })
+
+  it('takes a scissor rect of its own', () => {
+    const { gl, renderer } = createMockRenderer()
+    renderer.render({
+      scene: new Obj(),
+      scissor: [new Vec2(8, 9), new Vec2(3, 4)]
+    })
+    expect(gl.scissor).toHaveBeenLastCalledWith(3, 4, 8, 9)
+    expect(scissorTests(gl)).toEqual([true, false])
+  })
+
+  it('leaves scissoring off without the option', () => {
+    const { gl, renderer } = createMockRenderer()
+    renderer.render({ scene: new Obj() })
+    expect(gl.scissor).not.toHaveBeenCalled()
+    expect(scissorTests(gl)).toEqual([])
   })
 })

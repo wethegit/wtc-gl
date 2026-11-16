@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 
 import { Texture, type TextureImage } from '../src/core/Texture'
 import { VideoTexture } from '../src/core/VideoTexture'
@@ -141,5 +141,118 @@ describe('VideoTexture', () => {
 
     texture.remove()
     expect(video.cancelVideoFrameCallback).toHaveBeenCalledWith(7)
+  })
+})
+
+describe('Texture compareFunc', () => {
+  const compareCalls = (gl: MockGL) =>
+    (gl.texParameteri as unknown as Mock).mock.calls.filter(
+      ([, pname]: number[]) =>
+        pname === gl.TEXTURE_COMPARE_MODE || pname === gl.TEXTURE_COMPARE_FUNC
+    )
+
+  it('leaves comparison off by default', () => {
+    const { gl } = createMockRenderer()
+    const texture = new Texture(gl, { width: 2, generateMipmaps: false })
+    texture.update()
+    expect(texture.compareFunc).toBe(null)
+    expect(compareCalls(gl)).toEqual([])
+  })
+
+  it('turns on depth comparison once', () => {
+    const { gl } = createMockRenderer()
+    const texture = new Texture(gl, {
+      width: 2,
+      generateMipmaps: false,
+      format: gl.DEPTH_COMPONENT,
+      internalFormat: gl.DEPTH_COMPONENT24,
+      type: gl.UNSIGNED_INT,
+      compareFunc: gl.LEQUAL
+    })
+    texture.update()
+    texture.needsUpdate = true
+    texture.update()
+    expect(compareCalls(gl)).toEqual([
+      [gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE],
+      [gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL]
+    ])
+
+    texture.compareFunc = null
+    texture.needsUpdate = true
+    texture.update()
+    const calls = compareCalls(gl)
+    expect(calls[calls.length - 1]).toEqual([
+      gl.TEXTURE_2D,
+      gl.TEXTURE_COMPARE_MODE,
+      gl.NONE
+    ])
+  })
+
+  it('sets it again after the context is restored', () => {
+    const { gl, renderer } = createMockRenderer()
+    const texture = new Texture(gl, {
+      width: 2,
+      generateMipmaps: false,
+      compareFunc: gl.LESS
+    })
+    texture.update()
+    const canvas = gl.canvas as unknown as EventTarget
+    canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true }))
+    canvas.dispatchEvent(new Event('webglcontextrestored'))
+    expect(renderer.contextVersion).toBe(1)
+    texture.update()
+    expect(
+      compareCalls(gl).filter(
+        ([, p]: number[]) => p === gl.TEXTURE_COMPARE_FUNC
+      )
+    ).toHaveLength(2)
+  })
+})
+
+describe('Texture sampler settings', () => {
+  const paramCalls = (gl: MockGL) =>
+    (gl.texParameteri as unknown as Mock).mock.calls.map(
+      ([, pname, value]: number[]) => [pname, value]
+    )
+
+  it('applies a changed filter or wrap on the next use, without uploading again', () => {
+    const { gl } = createMockRenderer()
+    const texture = new Texture(gl, {
+      width: 2,
+      height: 2,
+      data: new Float32Array(16),
+      generateMipmaps: false
+    })
+    texture.update()
+    const uploads = (gl.texImage2D as unknown as Mock).mock.calls.length
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+
+    texture.minFilter = gl.NEAREST
+    texture.wrapS = gl.REPEAT
+    texture.update()
+    expect(paramCalls(gl)).toEqual([
+      [gl.TEXTURE_MIN_FILTER, gl.NEAREST],
+      [gl.TEXTURE_WRAP_S, gl.REPEAT]
+    ])
+    expect((gl.texImage2D as unknown as Mock).mock.calls.length).toBe(uploads)
+
+    // Nothing to do when nothing changed
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+    texture.update()
+    expect(paramCalls(gl)).toEqual([])
+  })
+
+  it('makes its unit active before setting them', () => {
+    const { gl, renderer } = createMockRenderer()
+    const texture = new Texture(gl, { width: 2, generateMipmaps: false })
+    texture.update(3)
+    // Another unit is active by the time the setting changes, so the
+    // parameter would otherwise land on whatever that unit holds
+    renderer.activeTexture = 0
+    ;(gl.texParameteri as unknown as Mock).mockClear()
+    texture.magFilter = gl.NEAREST
+    texture.update(3)
+    expect(renderer.state.activeTextureUnit).toBe(3)
+    expect(paramCalls(gl)).toEqual([[gl.TEXTURE_MAG_FILTER, gl.NEAREST]])
   })
 })

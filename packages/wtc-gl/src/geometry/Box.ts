@@ -4,17 +4,38 @@ import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 import { Plane } from './Plane'
 
+/**
+ * Options for creating a {@link Box}.
+ * @category Geometry
+ */
 export interface BoxOptions {
+  /** Size along x. @default 1 */
   width: number
+  /** Size along y. @default 1 */
   height: number
+  /** Size along z. @default 1 */
   depth: number
+  /** Number of divisions along x. @default 1 */
   widthSegments: number
+  /** Number of divisions along y. @default 1 */
   heightSegments: number
+  /** Number of divisions along z. @default 1 */
   depthSegments: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: object
 }
 
+/**
+ * A box centred on the origin. Each face is a separate grid, so the edges are
+ * hard and each face has its own uvs from 0 to 1.
+ * @category Geometry
+ */
 export class Box extends Geometry {
+  /**
+   * Create a box
+   * @param gl - The WTCGL rendering context
+   * @param options - Size and divisions; see {@link BoxOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {

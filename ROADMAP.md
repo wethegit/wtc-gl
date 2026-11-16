@@ -128,29 +128,67 @@ A `Polyline` class (a MeshLine equivalent) based on OGL's `Polyline`. Each point
 
 ### Shading and viewing
 
-- [ ] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. Ship the lighting as GLSL snippets alongside the `#include` work in Future features item 2. _New._
-- [ ] `NormalProgram` and `WireMesh` for debugging (OGL).
-- [ ] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL).
+- [x] A built-in lit program: Lambert/Blinn-Phong with a directional light, hemisphere/ambient light and a colour or texture. _New._ `LitProgram`, lit by a shared `Lights` object in world space, with `flatShading`, `vertexColours` and `doubleSided`. The lighting ships as the `litShading` GLSL string for custom shaders, the way `polylineExtrude` does; the `#include` work in Future features item 2 can register it as a named chunk later. The `lighting` demo shows each option, and the primitives, building-geometry and paths demos now use `litShading`.
+- [x] `NormalProgram` and `WireMesh` for debugging (OGL). `NormalProgram` shows normals in view or world space, optionally flat or double-sided. `WireMesh` draws each edge once from the source geometry's own position buffer (an external attribute), so it never copies or deletes it.
+- [x] `AxesHelper`, `GridHelper`, `VertexNormalsHelper`, `FaceNormalsHelper` (OGL). All of them, and `WireMesh`, draw `gl.LINES`, so the lines are one device pixel wide, and pull their lines slightly towards the camera so they show on a surface. The normals helpers parent themselves to the mesh and keep `size` world units long however it's scaled. They're shown in the primitives and lighting demos. The many-meshes demo's hand-built frustum lines could move onto the same line program later.
+
+### Import
+
+For the occasional hero model from Blender. It lands after the lit program, which is what it draws with. Moved here from Future features item 6.
+
+- [x] Async `Texture.fromURL`, decoded with `createImageBitmap`. GLB textures need it, and it's useful on its own. It takes an abort `signal`, and `Texture.fromBlob` decodes an image already in hand.
+- [x] `GLTFLoader` for `.glb` and `.gltf` (embedded or external buffers) (OGL). Nodes become `Transform`s, meshes become `Geometry` and `Mesh`, with every accessor type, indices and multiple primitives per mesh. Cameras are imported too. Nodes become named `Obj`s (`Obj` gained a `name`), attributes are read into floats (dequantised, sparse applied) so the CPU-side tools work on loaded models, and `remove()` frees everything a file made. Colour factors and vertex colours are converted from glTF's linear values to sRGB, which `LitProgram` shades in, so colours match the modelling tool.
+- [x] Materials map the base colour factor and texture, normals and UVs onto the lit program. glTF materials are PBR and the lit program is Blinn-Phong, so this is an approximation, and the docs should say so. Also alpha modes, double-sided, vertex colours, emissive (`LitProgram` gained `emissive` and `emissiveMap`, with `KHR_materials_emissive_strength`) and a roughness-to-highlight approximation. A primitive without normals is shaded flat.
+- [x] `EXT_mesh_gpu_instancing` creates an `InstancedMesh`, once that exists. The `gltf` demo loads an island made in Blender whose trees are exported this way.
+- Out of scope: skinning, morph targets and animation (a whole animation system, and three.js territory); PBR materials and IBL; Draco/meshopt compression. If compression is ever needed, it ships as an opt-in entry point, like the CSG adapter, so the decoder dependency stays optional.
 
 ### Core additions this depends on
 
-- [ ] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL).
-- [ ] `Camera.frustumIntersectsMesh(node, worldMatrix)` — the `worldMatrix` override is what allows per-instance culling (OGL).
-- [ ] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL).
-- [ ] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL).
-- [ ] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8.
+- [x] `Camera.project(v)` / `unproject(v)` and `updateProjectionMatrix()` (OGL). They return the vector rather than the camera, take an optional `out`, and don't allocate. The `paths` demo uses them for picking and dragging.
+- [x] Per-instance culling, as an optional `worldMatrix` argument to `Camera.frustumIntersects(node, worldMatrix)` rather than OGL's separate `frustumIntersectsMesh` (OGL).
+- [x] Renderer state setters: `setScissor`, `setStencilMask`/`Func`/`Op`, `setDepthFunc`, `setDepthMask`, `setCullFace`, `setFrontFace`; plus `Program.setStencilFunc`/`Op` (OGL). Most of this already existed: each `Program` sets its cull face, front face, depth mask and func, colour write and full stencil test (`program.stencil`), through the renderer's cached `cullFace`, `frontFace`, `depthMask`, `depthFunc`, `colourWrite` and `setStencil`. Added `Renderer.setScissor` and a `scissor` option on `render()`. ScrollRenderer and the demos now scissor through it rather than calling `gl.scissor` directly.
+- [x] `Program.setShaders()` — swap shaders on an existing program. Also needed for hot reload (Future features item 4) (OGL). If the new shaders fail to link, the old ones keep drawing. `LitProgram` and `NormalProgram` use it so their shader options (flat shading, double-sided, instanced and so on) can be changed after they're made.
+- [x] `InstancedMesh` with per-instance matrix and colour attributes, and per-instance frustum culling (OGL). Replaces Future features item 8. It draws from the source geometry's buffers through its own geometry, so the source can still be drawn by ordinary meshes. Culling packs the visible instances and only re-uploads when they or the instances change; `cullCamera` culls against another camera. `LitProgram` and `NormalProgram` read the instances with `instanced: true`. The many-meshes demo has an instanced mode: about a tenth of the CPU time of separate meshes. `camera-and-instancing` still builds its instances by hand.
 
 ### Interaction
 
-- [ ] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9.
-  - Once it lands, regroup on the `paths` demo. Its handles are picked by their projected screen position and dragged in the plane facing the camera, as a stand-in. Decide whether to switch to raycast picking, and to dragging along a surface or constrained plane.
+- [x] `Raycast` — `castMouse`, then `intersectBounds`, then `intersectMeshes` returning point, UV and normal (OGL). Replaces Future features item 9. Hits also give the face, the face normal and, for an `InstancedMesh`, the `instanceId`. It follows each program's face culling, and takes `padding` for small targets. `intersectPlane`, `intersectSphere` and `intersectBox` test single shapes. Only `gl.TRIANGLES` meshes with positions on the CPU can be hit.
+  - The `paths` demo now picks its handles with padded bounds and drags them on a plane through `intersectPlane`: the one facing the camera, or z = 0 when extruding. The lighting, many-meshes and primitives demos show hits too.
 
 ### Later
 
-- [ ] `Shadow` — shadow-map pass from a light camera (OGL).
-- [ ] OBJ/STL/GLB export, if models need to leave the browser. _New._
-- [ ] CSG via a thin `manifold-3d` adapter, e.g. `Geometry.fromManifold(mesh)` / `toManifold()`, rather than writing CSG ourselves. Ship it as a separate entry point so the WASM dependency stays opt-in.
-- glTF import stays under Future features item 6.
+- [x] `Shadow` — shadow-map pass from a light camera (OGL). For the `Lights` directional light: an orthographic light camera covering a sphere of `size` around `target` follows `lights.direction`, and `fit(node)` sets both from a model's bounds. Casters are added explicitly with `shadow.add(node)` and drawn with a depth-only program (instanced for an `InstancedMesh`, both sides so planes cast), or a custom one for shaders that move vertices. `LitProgram` (and `GLTFLoader`) take `shadow` to receive it, and only the directional light is shadowed. The map is a depth texture compared as it's sampled (`Texture` gained `compareFunc`), so each tap is hardware PCF, and a 3×3 kernel spread by `softness` softens the edges. `bias` and a `normalBias` in texels keep acne away. The lookup ships as `shadowShading` for custom shaders, and `litShade` takes an optional shadow factor. Shown in the `gltf`, `lighting` and `icon-swarm` demos; the icon swarm also catches shadows on a transparent backdrop with `shadowShading`.
+  - Limits: one directional light and one map (no cascades, point or spot lights); alpha-masked surfaces cast solid shadows unless given their own depth program; an `InstancedMesh` culled differently by the light and view cameras re-uploads its instances for each.
+- [x] CSG via a thin `manifold-3d` adapter, rather than writing CSG ourselves: `toManifold(wasm, geometry)` and `fromManifold(gl, manifold)`, with the booleans, transforms and the rest left to manifold's own API. It's in the main entry rather than a separate one: you install and load manifold-3d and pass the module in, and wtc-gl only declares structural types for it, so the WASM stays opt-in without a second build. Positions plus a `properties` list of attributes (`normal` and `uv` by default) carry through, and `fill` gives a geometry the attributes it lacks, so a cutter can colour the faces it leaves. Normals are rotated with each part's transform and flipped where a subtraction turns them inside out; missing normals are computed. Shown in the `csg` demo.
+- Model export moved to Future features item 11.
+
+### Documentation
+
+Easy-to-browse, complete documentation for both packages. Today there's only a TypeDoc build of `wtc-gl` copied into the site by `build:site`. It misses `react-wtc-gl`, has no guides, and nothing checks that it builds or covers every export. The tooling (TypeDoc with a theme, VitePress with generated API pages, or similar) needs a plan first.
+
+- [x] A docs site published with the demos, with navigation, search and links between guides, API pages and demos. VitePress in `packages/docs`, laid out like the Tailwind docs, published at `/docs/` (the site root redirects there), with live examples (`<Example>`) that only run on screen.
+- [x] Getting started: installing, a full-screen `FragmentShader`, a first 3D scene with a camera and lit meshes, and a `ScrollRenderer` page.
+- [x] Guides for each area, 21 pages with live examples:
+  - the renderer, scene graph and cameras;
+  - programs, uniforms and textures;
+  - geometry, primitives, paths and `Polyline`;
+  - lighting, shadows and `GLTFLoader`;
+  - instancing, `Raycast` and `TransformFeedback`;
+  - render targets and `ScrollRenderer`.
+- [x] A full API reference for every export of `wtc-gl`, generated from TSDoc comments, with gaps in those comments filled. TypeDoc writes Markdown pages for both packages, grouped by `@category`; every option has a description and a default.
+- [x] `react-wtc-gl`: its components and hooks, with a React getting-started page.
+- [x] Annotated examples drawn from the demos, each linking to the live demo and its source. A gallery built from the demo index at build time, with walkthroughs of the lighting, paths, icon swarm and scroll cloth demos.
+- [x] Recipes (`FragmentShader`, `ParticleSimulation`, `ScrollRenderer`) and a Cookbook of task-based how-tos, most with live examples.
+- [x] A CI check that the docs build and that every export is documented. TypeDoc's validation is strict, and VitePress fails on dead links.
+
+## Phase 7 — Recipes
+
+Ready-made setups for what the demos and docs kept writing by hand.
+
+- [x] `Stage`: a 3D scene recipe, as `FragmentShader` is for a full-screen shader. It makes a renderer sized to its container, an orbiting `DollyCamera` (zoom off, so pages still scroll; `controls: false` for a fixed camera), shared `Lights`, a `Shadow` and a render loop. `add(node)` makes a node cast, `load(url)` loads a glTF model lit and shadowed and frames it, and `fit(node)` points the camera at a node and backs off until it's all in view, fitting the shadow too. The `gltf` demo is built on it.
+- [x] `GPUSimulation`: a simulation in float textures, one texel per item, with up to four named state textures written in one pass (multiple render targets). It owns the ping-pong state and the step pass, gives the shaders `b_<name>`, `u_time` and `u_delta`, and `points()` draws one point per item from its `reference`. It replaces `ParticleSimulation`, which is deprecated and goes in 3.0, and covers Future features item 7. The webcam automaton demo runs on it, one texel per cell.
+- [x] `FlyCamera`: a camera that flies forward on its own and is steered like a plane, by dragging like a joystick or with WASD, the arrows, Q/E to roll and R/F for speed (`accelerationMode` makes W/S a held boost, and a brake that carries on into reverse, both falling back to the cruising speed), ported from HN-PORTALS with frame-rate-independent easing and removable listeners. The `fly` demo flies through endless space, grown from a small rule grammar.
+- [ ] Post-processing (Future features item 1), next: a `PostProcess` chain for `FragmentShader`, `Stage` and each `ScrollScene`.
 
 ---
 
@@ -188,11 +226,9 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
 
 ### Worth considering
 
-6. **Loaders.**
-   - [ ] Async `Texture.fromURL`, decoded with `createImageBitmap`.
+6. **Loaders.** `Texture.fromURL` and the glTF loader moved to Phase 6 (Import).
    - [ ] KTX2/Basis compressed textures for large image-heavy pages.
-   - [ ] A minimal glTF loader for the occasional 3D hero model.
-7. **A GPGPU helper.** Generalise `ParticleSimulation` into a "simulate N values in textures" utility. That would cover fluid, reaction-diffusion and flocking without each one re-implementing the ping-pong setup.
+7. **A GPGPU helper.** Done as `GPUSimulation` in Phase 7.
    - [ ] Neighbour awareness for `TransformFeedback` simulations, which can only see their own vertex. For example, render the results into a small density target and let the simulation steer down its gradient. That would give the `swarm` demo real separation.
 8. **Instancing helpers.** Moved to Phase 6 (Core additions).
 9. **Picking.** Ray casting moved to Phase 6 (Interaction). A GPU ID-buffer pass is still worth considering for dense scenes.
@@ -200,6 +236,8 @@ These come after Phases 1–5 and run alongside Phase 6. They build on what wtc-
     - [ ] `useFragmentShader`
     - [ ] `useUniform`, for reactive uniform values without React re-renders
     - [ ] `useTexture`
+11. **Model export.** Moved here from Phase 6 (Later). Only worth doing if a project needs models to leave the browser, for example to 3D-print or hand off something generated in code.
+    - [ ] OBJ/STL/GLB export from a `Geometry` or a scene graph. _New._ GLB export can share its accessor and buffer layout code with the Phase 6 glTF loader.
 
 ### Longer term
 

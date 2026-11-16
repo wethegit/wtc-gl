@@ -5,7 +5,13 @@ import { ScrollRenderer, type ScrollRendererOptions } from 'wtc-gl'
 const ScrollRendererContext = createContext<ScrollRenderer | null>(null)
 
 /** Props for {@link ScrollRendererProvider}. */
+/**
+ * Props for `ScrollRendererProvider`.
+ *
+ * @category Types
+ */
 export interface ScrollRendererProviderProps {
+  /** The page content; components inside it can register scenes. */
   children?: ReactNode
   /**
    * Props forwarded to the underlying `Renderer`. `canvas` is always the
@@ -38,7 +44,15 @@ export interface ScrollRendererProviderProps {
    * @default 0.25
    */
   overscan?: number
+  /**
+   * Called every frame before the scenes render, with the milliseconds since
+   * the last frame (at most 50). The latest callback is always used.
+   */
   onBeforeRender?: (delta: number) => void
+  /**
+   * Called every frame after the scenes render, with the milliseconds since
+   * the last frame (at most 50). The latest callback is always used.
+   */
   onAfterRender?: (delta: number) => void
   /**
    * Whether the render loop runs.
@@ -90,6 +104,7 @@ const absoluteCanvasStyle: CSSProperties = {
  *   <HeroSection />
  *   <FeatureSection />
  * </ScrollRendererProvider>
+ * @category Components
  */
 export function ScrollRendererProvider({
   children,
@@ -167,6 +182,7 @@ export function ScrollRendererProvider({
  * The {@link ScrollRenderer} owned by the nearest {@link ScrollRendererProvider},
  * or `null` while it is being created (first render pass) or when no provider
  * is present.
+ * @category Hooks
  */
 export function useScrollRenderer(): ScrollRenderer | null {
   return useContext(ScrollRendererContext)

@@ -10,19 +10,36 @@ import type {
 
 let ID = 1
 
+/**
+ * Options for creating a {@link Program}.
+ * @category Core
+ */
 export interface ProgramOptions {
+  /** The vertex shader source. */
   vertex: string
+  /** The fragment shader source. */
   fragment: string
+  /** The uniforms for the program, keyed by their name in the shaders. @default {} */
   uniforms?: WTCGLUniformArray
+  /** Whether to render with transparency. Sets an alpha blend function. @default false */
   transparent?: boolean
+  /** The face to cull, or 0 to draw both. @default gl.BACK */
   cullFace?: GLenum
+  /** Which winding counts as front facing. @default gl.CCW */
   frontFace?: GLenum
+  /** Whether to test fragments against the depth buffer. @default true */
   depthTest?: boolean
+  /** Whether to write to the depth buffer. @default true */
   depthWrite?: boolean
+  /** The depth comparison function. @default gl.LESS */
   depthFunc?: GLenum
+  /** The stencil test to apply, or null for none. @default null */
   stencil?: StencilOptions | null
+  /** Whether to write colour. @default true */
   colourWrite?: boolean
+  /** The varyings to capture with a `TransformFeedback`, in buffer order. @default [] */
   transformFeedbackVaryings?: string[]
+  /** Whether the varyings are written to separate buffers or interleaved into one. @default 'separate' */
   transformFeedbackBufferMode?: TransformFeedbackBufferMode
 }
 
@@ -30,12 +47,14 @@ export interface ProgramOptions {
  * How transform feedback writes its varyings: each to its own buffer
  * (`'separate'`), or all into one buffer, one vertex after another
  * (`'interleaved'`).
+ * @category Simulation
  */
 export type TransformFeedbackBufferMode = 'separate' | 'interleaved'
 
 /**
  * Stencil test settings for a program. Anything left out uses the WebGL
  * default. See `gl.stencilFunc`, `gl.stencilOp` and `gl.stencilMask`.
+ * @category Core
  */
 export interface StencilOptions {
   /** The comparison, e.g. `gl.EQUAL`. @default gl.ALWAYS */
@@ -56,6 +75,7 @@ export interface StencilOptions {
 
 /**
  * The program class prvides the rendering setup, internal logic, and state for rendering an object.
+ * @category Core
  */
 export class Program {
   /**
@@ -129,6 +149,7 @@ export class Program {
       ...options
     }
   }
+  /** The stencil test with defaults filled in, or null for none. */
   get stencil(): Required<StencilOptions> | null {
     return this.#stencil
   }
@@ -143,9 +164,9 @@ export class Program {
   blendEquation: WTCGLBlendEquation
 
   /**
-   * The webgl program store
+   * The webgl program store. Set when the shaders are compiled.
    */
-  program: WebGLProgram
+  program!: WebGLProgram
 
   /**
    * A map of uniform locations in use within the program shaders
@@ -187,20 +208,7 @@ export class Program {
   /**
    * Create a Program
    * @param gl - The WTCGL Rendering context
-   * @param __namedParameters - The parameters for the Program
-   * @param vertex - The vertext shader
-   * @param fragment - The fragment shader
-   * @param uniforms - An object of uniforms for use in the program
-   * @param transparent - Whether to render the program with transparency
-   * @param cullFace - What method to use for determining face culling
-   * @param frontFace - What method to use for determining the front of a face
-   * @param depthTest - Whether to test the depth of a fragment against the depth buffer
-   * @param depthWrite - Whether to write the depth information
-   * @param depthFunc - The function to use when depth testing
-   * @param stencil - The stencil test to apply, if any
-   * @param colourWrite - Whether to write colour
-   * @param transformFeedbackVaryings - The varyings to capture with a `TransformFeedback`, in buffer order
-   * @param transformFeedbackBufferMode - Whether the varyings are written to separate buffers or interleaved into one
+   * @param options - The shaders, uniforms and render state; see {@link ProgramOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -258,20 +266,87 @@ export class Program {
     this.transformFeedbackVaryings = transformFeedbackVaryings
     this.transformFeedbackBufferMode = transformFeedbackBufferMode
     this.#contextVersion = gl.renderer.contextVersion
-    this.program = this.#compile()
+    this.#commit(this.#compile(vertex, fragment))
 
     gl.renderer.track(this)
   }
 
+  /** The vertex shader source. */
+  get vertex(): string {
+    return this.#vertex
+  }
+
+  /** The fragment shader source. */
+  get fragment(): string {
+    return this.#fragment
+  }
+
   /**
-   * Compile and link the shaders, then read the active uniforms and
-   * attributes. Returns the program even if linking failed, in which case
-   * `linked` stays false.
+   * Replace the shaders, keeping the uniforms and state. Either source can be
+   * left out to keep the current one. If the new shaders fail to compile or
+   * link, the reason is logged and the program keeps drawing with the old
+   * ones, so a broken edit (in hot reloading, say) never blanks what's on
+   * screen.
+   * @param shaders - The new vertex and/or fragment source.
+   * @returns Whether the new shaders linked and are now in use.
    */
-  #compile(): WebGLProgram {
+  setShaders({
+    vertex = this.#vertex,
+    fragment = this.#fragment
+  }: {
+    vertex?: string
+    fragment?: string
+  }): boolean {
+    const compiled = this.#compile(vertex, fragment)
+    if (!compiled.linked) {
+      this.gl.deleteProgram(compiled.program)
+      return false
+    }
+
+    const renderer = this.gl.renderer
+    this.#forgetLocations()
+    this.gl.deleteProgram(this.program)
+    // So the next use binds the new program
+    if (renderer.currentProgram === this.id) renderer.currentProgram = -1
+
+    this.#vertex = vertex
+    this.#fragment = fragment
+    this.#commit(compiled)
+    return true
+  }
+
+  /** Make a compile result this program's. */
+  #commit(compiled: CompiledProgram) {
+    this.program = compiled.program
+    this.linked = compiled.linked
+    this.uniformLocations = compiled.uniformLocations
+    this.attributeLocations = compiled.attributeLocations
+    this.attributeOrder = compiled.attributeOrder
+  }
+
+  /** Drop this program's uniform values from the renderer's cache. */
+  #forgetLocations() {
+    const cache = this.gl.renderer.state.uniformLocations
+    this.uniformLocations.forEach((location) => cache.delete(location))
+  }
+
+  /**
+   * Compile and link shaders, then read the active uniforms and attributes.
+   * Doesn't change the program: the result is committed separately, so a
+   * failed recompile can be thrown away. Returns the program even if linking
+   * failed, with `linked` false.
+   */
+  #compile(vertex: string, fragment: string): CompiledProgram {
     const gl = this.gl
-    const vertex = this.#vertex
-    const fragment = this.#fragment
+    const uniformLocations: WTCGLUniformMap = new Map()
+    const attributeLocations: WTCGLAttributeMap = new Map()
+    const failed = (program: WebGLProgram): CompiledProgram => ({
+      program,
+      linked: false,
+      uniformLocations,
+      attributeLocations,
+      attributeOrder: ''
+    })
     const transformFeedbackVaryings = this.transformFeedbackVaryings
 
     // compile vertex shader and log errors
@@ -327,16 +402,15 @@ export class Program {
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       console.warn(gl.getProgramInfoLog(program))
-      return program
+      return failed(program)
     }
-    this.linked = true
 
     // Get active uniform locations
     const numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS)
     for (let uIndex = 0; uIndex < numUniforms; uIndex++) {
       const uniform: WTCGLActiveInfo = gl.getActiveUniform(program, uIndex)!
 
-      this.uniformLocations.set(
+      uniformLocations.set(
         uniform,
         gl.getUniformLocation(program, uniform.name)!
       )
@@ -366,11 +440,16 @@ export class Program {
       const attribute = gl.getActiveAttrib(program, aIndex)!
       const location = gl.getAttribLocation(program, attribute.name)
       locations[location] = attribute.name
-      this.attributeLocations.set(attribute, location)
+      attributeLocations.set(attribute, location)
     }
-    this.attributeOrder = locations.join('')
 
-    return program
+    return {
+      program,
+      linked: true,
+      uniformLocations,
+      attributeLocations,
+      attributeOrder: locations.join('')
+    }
   }
 
   /**
@@ -381,11 +460,7 @@ export class Program {
     if (this.#contextVersion === this.gl.renderer.contextVersion) return
     this.#contextVersion = this.gl.renderer.contextVersion
 
-    this.linked = false
-    this.uniformLocations = new Map()
-    this.attributeLocations = new Map()
-    this.attributeOrder = ''
-    this.program = this.#compile()
+    this.#commit(this.#compile(this.#vertex, this.#fragment))
   }
 
   /**
@@ -450,10 +525,7 @@ export class Program {
     )
   }
 
-  /**
-   * Set up the program for use
-   * @param flipFaces - Flip the faces, for when a mesh is scaled in teh negative
-   */
+  /** Upload one active uniform's value, warning if it wasn't supplied. */
   #bindUniform = (
     location: WebGLUniformLocation,
     activeUniform: WTCGLActiveInfo
@@ -472,6 +544,12 @@ export class Program {
     uniform.bind(this, location, activeUniform)
   }
 
+  /**
+   * Set up the program for use: bind it, upload its uniforms and apply its
+   * state to the renderer. A program that failed to link is unbound instead.
+   * @param options - The use settings.
+   * @param options.flipFaces - Flip the front face, for when a mesh is scaled in the negative
+   */
   use({ flipFaces = false }: { flipFaces?: boolean } = {}): void {
     this.textureUnit = -1
 
@@ -508,13 +586,20 @@ export class Program {
   remove() {
     if (this.gl.renderer.currentProgram === this.id)
       this.gl.renderer.currentProgram = -1
-    this.uniformLocations.forEach((location) =>
-      this.gl.renderer.state.uniformLocations.delete(location)
-    )
+    this.#forgetLocations()
     this.uniformLocations.clear()
     this.gl.deleteProgram(this.program)
     this.gl.renderer.untrack(this)
   }
+}
+
+/** The result of compiling and linking a pair of shaders. */
+type CompiledProgram = {
+  program: WebGLProgram
+  linked: boolean
+  uniformLocations: WTCGLUniformMap
+  attributeLocations: WTCGLAttributeMap
+  attributeOrder: string
 }
 
 function addLineNumbers(string: string) {

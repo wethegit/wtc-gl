@@ -15,21 +15,45 @@ import {
   writeMat4
 } from './matrix'
 
-type BaseMeshOptions = { mesh: Mesh; camera: Camera }
+/**
+ * What a {@link MeshCallback} receives.
+ * @category Core
+ */
+export type BaseMeshOptions = {
+  /** The mesh being drawn. */
+  mesh: Mesh
+  /** The camera it's drawn with. */
+  camera: Camera
+}
 
-type MeshCallback = (props: BaseMeshOptions) => void
+/**
+ * A function run just before or after a mesh is drawn; see
+ * {@link Mesh.addBeforeRender} and {@link Mesh.addAfterRender}.
+ * @category Core
+ */
+export type MeshCallback = (props: BaseMeshOptions) => void
 
+/**
+ * Options for creating a {@link Mesh}.
+ * @category Core
+ */
 export interface MeshOptions {
+  /** The geometry for the mesh to render. */
   geometry: Geometry
+  /** The program (shaders and uniforms) used to render the geometry. */
   program: Program
+  /** The draw mode, e.g. `gl.TRIANGLES` or `gl.LINES`. @default gl.TRIANGLES */
   mode?: GLenum
+  /** Whether to skip the mesh when it's outside the camera's frustum. @default true */
   frustumCulled?: boolean
+  /** An explicit render order. When 0, the order comes from the mesh's depth at render time. @default 0 */
   renderOrder?: number
 }
 
 /**
  * Class representing a mesh. A mesh is a binding point between geometry and a program.
  * @extends Drawable
+ * @category Core
  **/
 export class Mesh extends Drawable {
   /**
@@ -86,13 +110,8 @@ export class Mesh extends Drawable {
 
   /**
    * Create a mesh
-   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
-   * @param {Object} __namedParameters - The parameters for the attribute
-   * @param {Geometry} geometry - The geometry for the mesh to render
-   * @param {Program} program - The program - shaders and uniforms - used to render the geometry
-   * @param {GLenum} mode - The mode to render using
-   * @param {boolean} frustumCulled - Whether to apply culling to this object
-   * @param {number} renderOrder - The explicit render order of the object. If this is zero, then it will be instead calculated at render time.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The geometry, program and draw settings; see {@link MeshOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -172,8 +191,9 @@ export class Mesh extends Drawable {
   }
 
   /**
-   * Drw the mesh. If a camera is supplied to the draw call, its various matrices will be added to the program uniforms
-   * @param {Camera} camera - The camera to use to supply transformation matrices
+   * Draw the mesh. If a camera is supplied to the draw call, its various matrices will be added to the program uniforms
+   * @param options - The draw settings.
+   * @param options.camera - The camera to use to supply transformation matrices
    */
   draw({ camera }: { camera: Camera }): void {
     const before = this.beforeRenderCallbacks

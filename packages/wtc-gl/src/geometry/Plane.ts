@@ -3,15 +3,33 @@ import type { WTCGLRenderingContext } from '../types'
 import { Geometry } from './Geometry'
 import { GeometryAttribute } from './GeometryAttribute'
 
+/**
+ * Options for creating a {@link Plane}.
+ * @category Geometry
+ */
 export interface PlaneOptions {
+  /** Size along x. @default 1 */
   width: number
+  /** Size along y. @default 1 */
   height: number
+  /** Number of divisions along x. @default 1 */
   widthSegments: number
+  /** Number of divisions along y. @default 1 */
   heightSegments: number
+  /** Extra attributes to add. The generated `position`, `normal`, `uv` and `index` replace any with the same name. @default {} */
   attributes: object
 }
 
+/**
+ * A flat rectangle in the xy plane, centred on the origin and facing +z.
+ * @category Geometry
+ */
 export class Plane extends Geometry {
+  /**
+   * Create a plane
+   * @param gl - The WTCGL rendering context
+   * @param options - Size and divisions; see {@link PlaneOptions}.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -60,6 +78,14 @@ export class Plane extends Geometry {
     super(gl, attr)
   }
 
+  /**
+   * Writes a grid of vertices, normals, uvs and indices into existing arrays.
+   * Used by `Plane`, and by `Box` for each face. `u`, `v` and `w` pick the
+   * position components for the grid's width, height and depth axes, and
+   * `uDir` and `vDir` flip the first two. The grid sits at `depth / 2` along
+   * `w`, facing +w, or -w when `depth` is negative. `i` is the vertex to start
+   * writing at, and `ii` the quad.
+   */
   static buildPlane(
     position: Float32Array,
     normal: Float32Array,

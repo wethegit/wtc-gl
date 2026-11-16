@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "extends": ["./typedoc.base.json"],
+  "name": "wtc-gl",
+  "entryPoints": ["../wtc-gl/src/index.ts"],
+  "tsconfig": "../wtc-gl/tsconfig.json",
+  "out": "./api/wtc-gl",
+  "docsRoot": "./",
+  "categoryOrder": [
+    "Core",
+    "Geometry",
+    "Paths",
+    "Lines",
+    "Lighting",
+    "Helpers",
+    "Loaders",
+    "Interaction",
+    "Simulation",
+    "Recipes",
+    "Types",
+    "*"
+  ]
+}

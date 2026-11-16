@@ -1,21 +1,15 @@
+// A placeholder: draws each particle where the point cloud started it, so a
+// new ParticleSimulation shows something. Your own vertex shader reads each
+// particle's current position from the simulation texture at `reference`.
+attribute vec3 position;
 attribute vec2 reference;
-attribute vec2 position;
-attribute float property;
 
 uniform vec2 u_resolution;
-uniform vec2 u_screen;
 
-uniform sampler2D b_velocity;
-uniform sampler2D b_position;
-
-varying vec3 v_colour;
-varying float v_fogDepth;
+varying vec2 v_reference;
 
 void main() {
-  vec2 position = texture2D(b_position, reference).xy;
+  v_reference = reference;
   gl_PointSize = 2.;
-  vec2 p = position/u_resolution;
-  v_colour = property == 1. ? vec3(1,0,0) : vec3(1,1,1);
-  vec4 pos = vec4(position / u_resolution * 2. - 1., 0., 1.);
-  gl_Position = vec4(pos.xy, 0., 1.);
+  gl_Position = vec4(position.xy / u_resolution * 2., 0., 1.);
 }

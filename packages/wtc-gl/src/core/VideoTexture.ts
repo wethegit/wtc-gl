@@ -5,9 +5,16 @@ import { Texture, type TextureOptions } from './Texture'
 // HTMLMediaElement.HAVE_CURRENT_DATA, as a literal so this works without a window
 const HAVE_CURRENT_DATA = 2
 
+/**
+ * Options for creating a {@link VideoTexture}: texture options other than
+ * `image` and `data`, plus the video to follow. Unlike a plain texture,
+ * `generateMipmaps` defaults to false.
+ * @category Core
+ */
 export interface VideoTextureOptions extends Partial<
   Omit<TextureOptions, 'image' | 'data'>
 > {
+  /** The video element to follow. It doesn't need to have loaded yet. */
   video: HTMLVideoElement
 }
 
@@ -19,6 +26,7 @@ export interface VideoTextureOptions extends Partial<
  *
  * Until the video has a frame, the texture is a single transparent pixel.
  * Mipmaps are off by default, as regenerating them for every frame is costly.
+ * @category Core
  */
 export class VideoTexture extends Texture {
   /**
@@ -32,8 +40,7 @@ export class VideoTexture extends Texture {
   /**
    * Create a video texture.
    * @param gl - The WTCGL rendering context.
-   * @param __namedParameters - Texture options, plus the video to follow.
-   * @param video - The video element. It doesn't need to have loaded yet.
+   * @param options - Texture options, plus the video to follow; see {@link VideoTextureOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -55,7 +62,7 @@ export class VideoTexture extends Texture {
   /**
    * Upload the current frame if there's a new one, then bind the texture.
    * Called when the uniform is bound.
-   * @param textureUnit The texture unit to update against.
+   * @param textureUnit - The texture unit to update against.
    */
   update(textureUnit = 0) {
     if (!this.image) {

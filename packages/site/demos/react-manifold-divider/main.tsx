@@ -11,8 +11,13 @@ function App() {
   const [clip, setClip] = useState(false)
 
   return (
-    // premultiplied, so unclipped dividers blend over their neighbours
-    <ScrollRendererProvider rendererProps={{ premultipliedAlpha: true }}>
+    // Premultiplied, so unclipped dividers blend over their neighbours.
+    // Absolute layout, so the compositor scrolls the canvas with the page and
+    // the dividers stay attached to their elements during momentum scrolling.
+    <ScrollRendererProvider
+      layout="absolute"
+      rendererProps={{ premultipliedAlpha: true }}
+    >
       <div className="content">
         <section className="copy">
           <span className="tag">React · ScrollRenderer</span>

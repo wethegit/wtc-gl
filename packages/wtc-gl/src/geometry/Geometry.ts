@@ -9,6 +9,12 @@ import type {
 import { Program } from '../core/Program'
 import { determinantMat4, normalMatrix } from '../core/matrix'
 import { GeometryAttribute } from './GeometryAttribute'
+import {
+  elementLayout,
+  indexArray,
+  indexEntries,
+  type AttributeData
+} from './attributeData'
 
 let ID = 1
 
@@ -19,19 +25,6 @@ let isTransformWarned = false
 
 // Reused by applyMatrix
 const scratchNormalMatrix = new Mat3()
-
-// An attribute's offset and stride are in bytes, as GL expects; convert them
-// to array indices
-const elementLayout = function (attr: WTCGLGeometryAttribute): {
-  offset: number
-  stride: number
-} {
-  const bytes = attr.data.BYTES_PER_ELEMENT
-  return {
-    offset: (attr.offset || 0) / bytes,
-    stride: (attr.stride || 0) / bytes || attr.size
-  }
-}
 
 // Components past `size` are 0, so 2D positions don't read into the next vertex
 const originArrayToVec3 = function (
@@ -51,8 +44,6 @@ const warnExternalCopy = function (key: string): void {
   isExternalCopyWarned = true
   console.warn(`External attribute ${key} can't be copied, so it's left out`)
 }
-
-type AttributeData = WTCGLGeometryAttribute['data']
 
 // Allocate an empty array of the same typed-array type as `source`
 const allocate = function (
@@ -110,22 +101,6 @@ const copyVertices = function (
   return attributeLike(attr, data)
 }
 
-// The index's entries, from its offset
-const indexEntries = function (index: WTCGLGeometryAttribute): AttributeData {
-  const start = (index.offset || 0) / index.data.BYTES_PER_ELEMENT
-  return index.data.subarray(start, start + index.count)
-}
-
-// The smallest index array type that can hold `vertexCount` vertices
-const indexArray = function (
-  entries: ArrayLike<number>,
-  vertexCount: number
-): Uint16Array | Uint32Array {
-  return vertexCount <= 65536
-    ? new Uint16Array(entries)
-    : new Uint32Array(entries)
-}
-
 // The context generation each attribute's buffer was last rebuilt for
 const restoredAttributes = new WeakMap<WTCGLGeometryAttribute, number>()
 
@@ -140,6 +115,7 @@ interface AttributeBinding {
 
 /**
  * Class representing some Geometry.
+ * @category Geometry
  **/
 export class Geometry {
   /**
@@ -174,7 +150,12 @@ export class Geometry {
   /**
    * The range of supplied elements to draw.
    */
-  drawRange: { start: number; count: number }
+  drawRange: {
+    /** The first element to draw: an index into `index` if there is one, otherwise a vertex. */
+    start: number
+    /** The number of elements to draw. */
+    count: number
+  }
   /**
    * The number of instances to draw.
    */
@@ -419,17 +400,17 @@ export class Geometry {
     }
   }
 
-  /**
-   * Draw the geometry
-   * @param {Object} __namedParameters - The parameters to be used for the draw command
-   * @param {Program} program - The Program object to draw to
-   * @param {GLenum} mode - The mode to draw the object in
-   */
   #updateAttribute = (_: unknown, { name }: { name: string }) => {
     const attr = this.attributes[name]
     if (attr && attr.needsUpdate) attr.updateAttribute(this.gl)
   }
 
+  /**
+   * Draw the geometry
+   * @param options - The draw settings.
+   * @param options.program - The Program object to draw to
+   * @param options.mode - The mode to draw the object in, e.g. `gl.TRIANGLES`
+   */
   draw({
     program,
     mode = this.gl.TRIANGLES
@@ -959,6 +940,7 @@ export class Geometry {
  * index. Draw ranges are ignored and the inputs are unchanged.
  * @param {Geometry[]} geometries - The geometries to combine
  * @returns {Geometry} The combined geometry
+ * @category Geometry
  */
 export function mergeGeometries(geometries: Geometry[]): Geometry {
   if (!geometries.length) throw new Error('mergeGeometries needs a geometry')

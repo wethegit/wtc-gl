@@ -11,7 +11,7 @@ import {
   Uniform,
   Vec3
 } from 'wtc-gl'
-import { useScrollScene } from '@wethegit/react-wtc-gl'
+import { useScrollRenderer, useScrollScene } from '@wethegit/react-wtc-gl'
 
 import helixVert from './helix.vert'
 import moduleFrag from './module.frag'
@@ -193,6 +193,9 @@ export function ManifoldDivider({
   className = ''
 }: ManifoldDividerProps) {
   const ref = useRef<HTMLDivElement>(null)
+  // In absolute layout the canvas extends past the viewport, so scenes start
+  // drawing before they scroll into view. 0 in fixed layout.
+  const overscan = useScrollRenderer()?.overscanPx ?? 0
   const playingRef = useRef(playing)
   playingRef.current = playing
 
@@ -601,9 +604,8 @@ export function ManifoldDivider({
           strand.hB[2] = flow % len
         }
 
-        // G-buffer pass. The shared renderer leaves its scissor on between
-        // scenes; the offscreen target needs all of it.
-        gl.disable(gl.SCISSOR_TEST)
+        // G-buffer pass, into the whole offscreen target. The scroll
+        // renderer only scissors a scene's own render, so nothing clips it.
         renderer.renderer.clearColour = [0, 0, 0, 0]
         renderer.renderer.render({
           scene: gScene,
@@ -611,7 +613,6 @@ export function ManifoldDivider({
           target,
           clear: true
         })
-        gl.enable(gl.SCISSOR_TEST)
       }
 
       return () => {
@@ -629,8 +630,9 @@ export function ManifoldDivider({
       useViewport: false,
       clipToViewport: false,
       elementSpace: true,
-      // keep rendering while overflow above/below may still be on screen
-      margin: clip ? 0 : OVERFLOW_MARGIN,
+      // keep rendering while the band, or its overflow above/below, may still
+      // be on the canvas
+      margin: Math.max(overscan, clip ? 0 : OVERFLOW_MARGIN),
       onBeforeRender: (delta, rect) => frameRef.current?.(delta, rect)
     }
   )

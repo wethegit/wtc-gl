@@ -1,9 +1,17 @@
 #version 300 es
 precision highp float;
 
+// From GPUSimulation: the grid size in cells (one texel each), and the time
 uniform vec2 u_resolution;
+// The canvas size, for the camera's aspect
+uniform vec2 u_screen;
 uniform vec2 u_camResolution;
 uniform float u_time;
+// The rule, as bitmasks of neighbour counts: bit n of u_birth means a dead
+// cell with n live neighbours is born; bit n of u_survive means a live one
+// survives. Conway's Life (B3/S23) is birth 8, survive 12.
+uniform int u_birth;
+uniform int u_survive;
 uniform sampler2D b_state;
 uniform sampler2D b_webcam;
 
@@ -12,7 +20,7 @@ out vec4 colour;
 // Aspect-correct "cover" UV — mirrors horizontally for selfie orientation.
 // Maintains the webcam's native aspect ratio, cropping as needed to fill the screen.
 vec2 camUV(vec2 screenUV) {
-  float sAR = u_resolution.x / u_resolution.y;
+  float sAR = u_screen.x / u_screen.y;
   float cAR = u_camResolution.x / u_camResolution.y;
   vec2 uv = vec2(1.0 - screenUV.x, screenUV.y); // mirror
   if (cAR > sAR) {
@@ -36,12 +44,10 @@ float hash21b(vec2 p) {
 }
 
 void main() {
-  const float PIXEL_SIZE = 2.0;
-
-  // Snap to PIXEL_SIZE cell grid — all pixels in a block compute identically
-  vec2 cellCoord = floor(gl_FragCoord.xy / PIXEL_SIZE);
-  vec2 cellUV    = (cellCoord * PIXEL_SIZE + 1.0) / u_resolution; // sample at cell centre
-  vec2 px        = PIXEL_SIZE / u_resolution;                      // one step = one cell
+  // One texel is one cell
+  vec2 cellCoord = floor(gl_FragCoord.xy);
+  vec2 cellUV    = (cellCoord + 0.5) / u_resolution; // the cell's centre
+  vec2 px        = 1.0 / u_resolution;               // one step = one cell
 
   vec3 cam  = texture(b_webcam, camUV(cellUV)).rgb;
   float luma = dot(cam, vec3(0.299, 0.587, 0.114));
@@ -51,7 +57,7 @@ void main() {
   float alive = step(0.5, curr.r);
   float age   = curr.g;
 
-  // Count Moore neighbourhood (each step moves one full cell = 2px)
+  // Count Moore neighbourhood (each step moves one full cell)
   float count = 0.0;
   for (int dy = -1; dy <= 1; dy++) {
     for (int dx = -1; dx <= 1; dx++) {
@@ -60,9 +66,10 @@ void main() {
     }
   }
 
-  // Conway Game of Life rules
-  float survives = alive        * step(1.5, count) * step(count, 3.5);
-  float born     = (1.0 - alive) * step(2.5, count) * step(count, 3.5);
+  // The chosen Life-like rule
+  int n = int(count + 0.5);
+  float survives = alive         * float((u_survive >> n) & 1);
+  float born     = (1.0 - alive) * float((u_birth >> n) & 1);
 
   // Use cellCoord for randomness so all pixels in the same cell agree
   float frameId = floor(u_time * 60.0);

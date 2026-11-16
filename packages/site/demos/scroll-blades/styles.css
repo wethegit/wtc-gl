@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* The top bar shared with every demo */
+@import '../nav.css';
 
 *,
 *::before,
@@ -147,7 +149,8 @@ body {
 
 .site-header {
   position: fixed;
-  top: 0;
+  /* Under the shared top bar */
+  top: var(--nav-height);
   left: 0;
   right: 0;
   z-index: 100;

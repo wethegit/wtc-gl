@@ -1,0 +1,335 @@
+/*
+ * A light restyle of VitePress's default theme after tailwindcss.com/docs:
+ * mono section labels, a ruled sidebar with the active page marked on the
+ * rule, a section name above each title with a lead paragraph under it,
+ * and dark code blocks in both themes.
+ */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --vp-font-family-mono:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --vp-c-brand-1: #1f6fd1;
+  --vp-c-brand-2: #2f7fe0;
+  --vp-c-brand-3: #4a9eff;
+  --vp-c-brand-soft: rgb(74 158 255 / 0.12);
+
+  --vp-c-text-1: #0b0d12;
+  --vp-c-text-2: #4b5563;
+  --vp-c-text-3: #6b7280;
+  --vp-c-divider: rgb(11 13 18 / 0.08);
+  --vp-c-gutter: rgb(11 13 18 / 0.05);
+
+  --vp-code-block-bg: #0e1016;
+  --vp-code-block-divider-color: rgb(255 255 255 / 0.08);
+  --vp-code-copy-code-bg: rgb(255 255 255 / 0.06);
+  --vp-code-copy-code-hover-bg: rgb(255 255 255 / 0.1);
+  --vp-code-lang-color: rgb(255 255 255 / 0.4);
+  /* Code groups sit on the dark code background in both themes */
+  --vp-code-tab-bg: var(--vp-code-block-bg);
+  --vp-code-tab-divider: rgb(255 255 255 / 0.08);
+  --vp-code-tab-text-color: rgb(255 255 255 / 0.5);
+  --vp-code-tab-hover-text-color: rgb(255 255 255 / 0.8);
+  --vp-code-tab-active-text-color: #fff;
+  --vp-code-tab-active-bar-color: var(--vp-c-brand-3);
+  --vp-code-color: var(--vp-c-text-1);
+  --vp-code-bg: rgb(11 13 18 / 0.05);
+
+  --vp-layout-max-width: 1560px;
+  --vp-sidebar-width: 288px;
+
+  --docs-ring: rgb(11 13 18 / 0.1);
+  --docs-stage-bg: #f3f4f6;
+}
+
+.dark {
+  --vp-c-bg: #07070e;
+  --vp-c-bg-alt: #07070e;
+  --vp-c-bg-elv: #10111a;
+  --vp-c-bg-soft: #10111a;
+
+  --vp-c-brand-1: #4a9eff;
+  --vp-c-brand-2: #6cb0ff;
+  --vp-c-brand-3: #2f7fe0;
+  --vp-c-brand-soft: rgb(74 158 255 / 0.16);
+
+  --vp-c-text-1: #eef0f7;
+  --vp-c-text-2: rgb(221 224 238 / 0.7);
+  --vp-c-text-3: rgb(221 224 238 / 0.5);
+  --vp-c-divider: rgb(255 255 255 / 0.08);
+  --vp-c-gutter: rgb(255 255 255 / 0.04);
+
+  --vp-code-block-bg: #10111a;
+  --vp-code-color: var(--vp-c-text-1);
+  --vp-code-bg: rgb(255 255 255 / 0.07);
+
+  --docs-ring: rgb(255 255 255 / 0.1);
+  --docs-stage-bg: #0c0d15;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+
+.VPNavBar,
+.VPNavBar.has-sidebar .content,
+.VPNavBar:not(.home).top .content {
+  background: transparent !important;
+}
+.VPNav {
+  background: color-mix(in srgb, var(--vp-c-bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.VPNavBar .divider,
+.VPNavBar.has-sidebar .divider-line {
+  display: none;
+}
+.VPNavBarTitle .title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.VPNavBarMenuLink,
+.VPNavBarMenuGroup .button {
+  font-size: 14px;
+}
+
+/* ── Sidebar: mono group labels, links on a rule ─────────────────────── */
+
+.VPSidebar {
+  border-right: 1px solid var(--vp-c-divider);
+}
+.VPSidebarItem.level-0 {
+  padding-bottom: 20px;
+}
+.VPSidebarItem.level-0 > .item > .text,
+.VPSidebarItem.level-0 > .item .text {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+}
+.VPSidebarItem.level-0 > .items {
+  margin-top: 6px;
+  border-left: 1px solid var(--vp-c-divider);
+}
+.VPSidebarItem.level-1 > .item,
+.VPSidebarItem.level-2 > .item {
+  margin-left: -1px;
+  padding-left: 15px;
+  border-left: 1px solid transparent;
+}
+.VPSidebarItem.level-1 .text,
+.VPSidebarItem.level-2 .text {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+}
+.VPSidebarItem.level-1 > .item:hover,
+.VPSidebarItem.level-2 > .item:hover {
+  border-left-color: var(--vp-c-text-3);
+}
+.VPSidebarItem.level-1 > .item:hover .text,
+.VPSidebarItem.level-2 > .item:hover .text {
+  color: var(--vp-c-text-1);
+}
+.VPSidebarItem.is-active > .item {
+  border-left-color: var(--vp-c-brand-1);
+}
+.VPSidebarItem.is-active > .item .text {
+  color: var(--vp-c-text-1);
+  font-weight: 600;
+}
+.VPSidebarItem .indicator {
+  display: none;
+}
+
+/* ── Page header: section, title, lead ───────────────────────────────── */
+
+.page-section {
+  margin: 0 0 10px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vp-c-brand-1);
+}
+.vp-doc h1 {
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.vp-doc h2 {
+  border-top: none;
+  margin-top: 56px;
+  padding-top: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.vp-doc h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+.vp-doc p.lead,
+.vp-doc .lead {
+  margin-top: 12px;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--vp-c-text-2);
+}
+.vp-doc h1 + p {
+  margin-top: 12px;
+}
+
+/* ── Code ────────────────────────────────────────────────────────────── */
+
+.vp-doc div[class*='language-'] {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--docs-ring);
+}
+.dark .vp-doc div[class*='language-'] {
+  box-shadow: 0 0 0 1px var(--docs-ring);
+}
+.vp-doc :not(pre) > code {
+  font-weight: 500;
+  font-size: 0.875em;
+}
+.vp-code-group .tabs {
+  border-radius: 12px 12px 0 0;
+}
+
+/* ── Tables: the option and property tables ──────────────────────────── */
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.vp-doc tr {
+  background: transparent !important;
+  border-top: none;
+}
+.vp-doc th,
+.vp-doc td {
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+  padding: 10px 16px 10px 0;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+/* Names on one line; types and descriptions wrap */
+.vp-doc td:first-child {
+  white-space: nowrap;
+}
+.vp-doc th {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+  background: transparent;
+}
+.vp-doc td:first-child code {
+  color: var(--vp-c-brand-1);
+  background: transparent;
+  padding: 0;
+}
+
+/* ── Live examples ───────────────────────────────────────────────────── */
+
+.example {
+  margin: 24px 0 0;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--docs-ring);
+  overflow: hidden;
+  background: var(--docs-stage-bg);
+}
+.example__stage {
+  position: relative;
+  width: 100%;
+}
+.example__stage canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.example__message {
+  margin: 0 !important;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+}
+.example__bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  font-size: 13px;
+}
+.example__button {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+}
+.example__button:hover {
+  color: var(--vp-c-text-1);
+}
+.example__link {
+  margin-left: auto;
+  font-weight: 500;
+  text-decoration: none !important;
+}
+/* The example's code sits straight under it, as one card */
+.example + div[class*='language-'],
+.example + .vp-code-group {
+  margin-top: 0;
+}
+.example:has(+ div[class*='language-']),
+.example:has(+ .vp-code-group) {
+  border-radius: 12px 12px 0 0;
+}
+.example + div[class*='language-'],
+.example + .vp-code-group .tabs {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ── Examples ────────────────────────────────────────────────────────── */
+
+/* The gallery takes the outline's space; its prose keeps a reading width */
+.showcase-gallery .vp-doc > div > p {
+  max-width: 688px;
+}
+/* A walkthrough's screenshot, and the links under it */
+.vp-doc img.showcase-shot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--docs-ring);
+  background: var(--docs-stage-bg);
+}
+.vp-doc p:has(> img.showcase-shot) {
+  margin: 32px 0 0;
+}
+.vp-doc .showcase-links {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--vp-c-text-3);
+}
+.vp-doc .showcase-links a {
+  text-decoration: none;
+}

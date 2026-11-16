@@ -40,6 +40,30 @@ jobs:
       - name: Test
         run: pnpm run test
 
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Generates the API pages from TSDoc and builds the site; fails on
+      # dead links (and, once every export is documented, on missing docs)
+      - name: Build docs
+        run: pnpm --filter wtc-gl-docs build
+
   e2e:
     name: Demo smoke tests
     runs-on: ubuntu-latest

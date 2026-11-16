@@ -1,0 +1,25 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "extends": ["./typedoc.base.json"],
+  "name": "react-wtc-gl",
+  "entryPoints": ["../react/src/index.ts"],
+  "tsconfig": "../react/tsconfig.json",
+  "out": "./api/react",
+  "docsRoot": "./",
+  "externalSymbolLinkMappings": {
+    "wtc-gl": {
+      "ScrollRenderer": "/api/wtc-gl/classes/ScrollRenderer",
+      "ScrollScene": "/api/wtc-gl/classes/ScrollScene",
+      "ScrollImage": "/api/wtc-gl/classes/ScrollImage",
+      "ScrollHTML": "/api/wtc-gl/classes/ScrollHTML",
+      "Renderer": "/api/wtc-gl/classes/Renderer",
+      "Obj": "/api/wtc-gl/classes/Obj",
+      "Mesh": "/api/wtc-gl/classes/Mesh",
+      "Program": "/api/wtc-gl/classes/Program"
+    },
+    "wtc-math": {
+      "*": "https://wethegit.github.io/wtc-math/"
+    }
+  },
+  "categoryOrder": ["Components", "Hooks", "Types", "*"]
+}

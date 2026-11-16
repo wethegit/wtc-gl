@@ -2,7 +2,7 @@
    reordered in the build, letting the shared rules override this file's */
 @import '../styles.css';
 
-/* Light, manifold-ish page. The provider's canvas is fixed at z-index 0;
+/* Light, manifold-ish page. The provider's canvas is absolute at z-index 0;
    content here stays unpositioned so the canvas paints above section
    backgrounds (dividers never overlap text, and the canvas ignores pointers). */
 :root {
@@ -16,14 +16,6 @@
 body {
   background: var(--bg);
   color: var(--text);
-}
-
-.demo-nav {
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-}
-.demo-nav__sep,
-.demo-nav__title {
-  color: var(--muted);
 }
 
 .content {

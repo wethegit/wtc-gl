@@ -3,22 +3,29 @@ import type { Obj } from '../../core/Object'
 import type { Camera } from '../../core/Camera'
 import { Uniform } from '../../core/Uniform'
 
-/** Options passed to the {@link ScrollScene} constructor. */
+/**
+ * Options passed to the {@link ScrollScene} constructor.
+ * @category Recipes
+ */
 export interface ScrollSceneOptions {
   /** The DOM element this scene is anchored to. */
   element: HTMLElement
   /** The scene graph root to render. */
   scene: Obj
-  /** Optional camera. Defaults to the renderer's orthographic camera if omitted. */
+  /**
+   * The camera to draw the scene with. Without one, the scene is drawn
+   * without camera matrices, so its shaders work in clip space, as a
+   * full-screen `Triangle` does.
+   */
   camera?: Camera
   /**
    * When `true` (default), the GL viewport is locked to the element's bounds each frame, so all coordinates are relative to the element. When `false`, the viewport is left unlocked at the renderer level and it's up to you to use the `u_origin` uniform for element-relative math in your shader.
    */
   useViewport?: boolean
   /**
-   * When `true` (default), the renderer clears the scissored region before
-   * drawing this scene. Set to `false` to composite on top of previously
-   * rendered scenes — useful for particle overlays.
+   * When `true` (default), drawing is scissored to the element's bounds. Set
+   * to `false` to let the scene draw outside the element; it's then never
+   * cleared, whatever `clearOnRender` says.
    */
   clipToViewport?: boolean
   /**
@@ -93,6 +100,7 @@ export interface ScrollSceneOptions {
  * const scene = new ScrollScene({ element: document.querySelector('.hero'), scene: drawable })
  * new Mesh(gl, { geometry: new Triangle(gl), program }).setParent(drawable)
  * renderer.addScene(scene)
+ * @category Recipes
  */
 export class ScrollScene {
   /** The DOM element this scene tracks. */
@@ -146,6 +154,10 @@ export class ScrollScene {
 
   #observer: IntersectionObserver
 
+  /**
+   * Start observing the element's visibility and make the uniforms.
+   * @param options - The element, scene and how it's drawn.
+   */
   constructor({
     element,
     scene,
@@ -218,7 +230,18 @@ export class ScrollScene {
     canvasHeight: number,
     dpr: number,
     offsetY: number = 0
-  ): { x: number; y: number; width: number; height: number; rect: DOMRect } {
+  ): {
+    /** The left edge in physical pixels. */
+    x: number
+    /** The bottom edge in physical pixels, from the bottom of the canvas. */
+    y: number
+    /** The width in physical pixels. */
+    width: number
+    /** The height in physical pixels. */
+    height: number
+    /** The element's bounding rect, in CSS pixels. */
+    rect: DOMRect
+  } {
     const rect = this.element.getBoundingClientRect()
     return {
       x: Math.round(rect.left * dpr),

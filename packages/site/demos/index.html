@@ -7,20 +7,44 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <nav class="nav">
-      <div class="nav__brand">wtc-gl</div>
-      <ul class="nav__links">
-        <li><a href="#recipes">Recipes</a></li>
-        <li><a href="#demos">Demos</a></li>
-        <li><a href="#getting-started">Get started</a></li>
-        <li><a href="#core">Core</a></li>
-        <li><a href="./docs/">Docs</a></li>
-        <li>
-          <a href="https://github.com/wethegit/wtc-gl" target="_blank"
-            >GitHub ↗</a
-          >
-        </li>
-      </ul>
+    <header class="site-nav">
+      <nav class="site-nav__crumbs" aria-label="Breadcrumb">
+        <a class="site-nav__brand" href="../docs/"
+          ><svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path
+              d="M16 3 29 27H3Z"
+              fill="#4a9eff"
+              fill-opacity=".18"
+              stroke="#4a9eff"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+            <path d="M16 13 22.5 25h-13Z" fill="#4a9eff" /></svg
+          ><span>wtc-gl</span></a
+        >
+        <span class="site-nav__sep">/</span>
+        <span class="site-nav__current" aria-current="page">Demos</span>
+      </nav>
+      <nav class="site-nav__links" aria-label="Site">
+        <a href="../docs/">Docs</a>
+        <a class="site-nav__api" href="../docs/api/wtc-gl/">API</a>
+        <a href="./" aria-current="page">Demos</a>
+        <a
+          class="site-nav__icon"
+          href="https://github.com/wethegit/wtc-gl"
+          aria-label="GitHub"
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.82-.26.82-.57v-2.04c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.21.69.82.57A12 12 0 0 0 12 .3"
+            /></svg
+        ></a>
+      </nav>
+    </header>
+    <nav class="site-subnav" aria-label="On this page">
+      <a href="#recipes">Recipes</a>
+      <a href="#demos">Demos</a>
+      <a href="#getting-started">Get started</a>
+      <a href="#core">Core</a>
     </nav>
 
     <div class="content">
@@ -239,29 +263,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #0a0a1a 0%,
-                #16203a 50%,
-                #0d1a2e 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(97, 218, 251, 0.5);
-                letter-spacing: 0.1em;
-              "
-              >&lt;REACT /&gt;</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/react-scroll-renderer.jpg"
+              alt="A full-width rainbow plasma shader behind a dark card titled React ScrollRenderer"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -331,29 +338,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #0a0a1a 0%,
-                #1a1030 50%,
-                #0d1a2e 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(97, 218, 251, 0.5);
-                letter-spacing: 0.1em;
-              "
-              >✥ DRAG</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/react-drag-world.jpg"
+              alt="A rainbow plasma shader panel on a cream, dotted map, with region tabs along the bottom"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -372,29 +362,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #f4efe6 0%,
-                #e8e0d0 50%,
-                #efe6d6 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(36, 86, 200, 0.6);
-                letter-spacing: 0.1em;
-              "
-              >✥ DRAG ∞</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/react-drag-world-infinite.jpg"
+              alt="A glowing blue Voronoi shader panel on a cream, dotted map, with region tabs along the bottom"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -413,29 +386,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #0a0a1a 0%,
-                #0d1a2e 40%,
-                #0a1a10 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(74, 158, 255, 0.4);
-                letter-spacing: 0.1em;
-              "
-              >WEBCAM</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/webcam-ca.jpg"
+              alt="A webcam portrait redrawn as speckled cellular-automaton noise, in warm and cool tones on black"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -455,29 +411,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #000d1a 0%,
-                #000814 50%,
-                #0d001a 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(100, 180, 255, 0.4);
-                letter-spacing: 0.1em;
-              "
-              >SDF</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/raymarching-webgl2.jpg"
+              alt="A blue, softly glowing raymarched box nested inside a cube, on a dark background"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -524,29 +463,12 @@
         </div>
 
         <div class="demo">
-          <div
-            class="demo__preview"
-            style="
-              background: linear-gradient(
-                135deg,
-                #07070e 0%,
-                #05051a 40%,
-                #040814 100%
-              );
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <span
-              style="
-                font-family: monospace;
-                font-size: 0.7em;
-                color: rgba(74, 158, 255, 0.4);
-                letter-spacing: 0.1em;
-              "
-              >BLADES</span
-            >
+          <div class="demo__preview">
+            <img
+              src="./screenshots/scroll-blades.jpg"
+              alt="The heading Scroll Image. over a dark blue, cloudy shader background"
+              loading="lazy"
+            />
           </div>
           <div class="demo__body">
             <div class="demo__classes">
@@ -605,6 +527,7 @@
               <span class="demo__class">Renderer</span>
               <span class="demo__class">DollyCamera</span>
               <span class="demo__class">Camera</span>
+              <span class="demo__class">InstancedMesh</span>
             </div>
             <h3>Many meshes</h3>
             <p>
@@ -612,7 +535,10 @@
               rotated every frame. One pane is the camera you control; the other
               watches it from above, showing its frustum and only the meshes it
               didn't cull. Matrices, uniforms and render lists are updated in
-              place, so the render loop makes almost no garbage.
+              place, so the render loop makes almost no garbage. Switch to one
+              <code>InstancedMesh</code> to draw the same galaxy in a single
+              draw call, still culled cube by cube, for a fraction of the CPU
+              time, and hover to pick out one cube with a <code>Raycast</code>.
             </p>
             <a class="btn" href="./many-meshes/">Open demo →</a>
           </div>
@@ -667,18 +593,174 @@
               <span class="demo__class">Torus</span>
               <span class="demo__class">Capsule</span>
               <span class="demo__class">Lathe</span>
+              <span class="demo__class">NormalProgram</span>
+              <span class="demo__class">VertexNormalsHelper</span>
+              <span class="demo__class">FaceNormalsHelper</span>
             </div>
             <h3>Primitives</h3>
             <p>
               Every built-in primitive side by side, with its options in the
               pane: segments, radii, partial sweeps and open ends. Changing an
-              option rebuilds that shape. Switch between lit, normals and a uv
-              checker, flat and smooth shading, and turn off back-face culling
-              to see inside the open shapes. The vase is a <code>Lathe</code> of
-              a 2D profile, and a cone is a <code>Cylinder</code> with
+              option rebuilds that shape. Switch between lit, a uv checker and
+              <code>NormalProgram</code> in view or world space, flat and smooth
+              shading, and turn off back-face culling to see inside the open
+              shapes. The helpers add vertex normals, face normals and local
+              axes to every shape, and clicking one shows the triangle and uv
+              under the pointer. The vase is a <code>Lathe</code> of a 2D
+              profile, and a cone is a <code>Cylinder</code> with
               <code>radiusTop: 0</code>.
             </p>
             <a class="btn" href="./primitives/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/lighting.jpg"
+              alt="A sphere, torus, checkered box, faceted sphere, two-tone capsule and open cup in a row on a grey floor, lit from the upper left by a small yellow sun"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">LitProgram</span>
+              <span class="demo__class">Lights</span>
+              <span class="demo__class">GridHelper</span>
+              <span class="demo__class">AxesHelper</span>
+              <span class="demo__class">WireMesh</span>
+              <span class="demo__class">Raycast</span>
+            </div>
+            <h3>Lighting</h3>
+            <p>
+              The built-in lit program, one option per shape: plain Lambert, a
+              Blinn-Phong highlight, a texture <code>map</code>, flat shading,
+              vertex colours and a double-sided open cylinder. Every shape
+              shares one <code>Lights</code>, so moving the sun or changing the
+              sky and ground colours relights them all. The light is fixed in
+              the world as you orbit, and the highlights follow the camera. A
+              <code>GridHelper</code> and <code>AxesHelper</code> mark the floor
+              and origin, and a <code>WireMesh</code> can show each shape's
+              triangles. Hover a shape to see a <code>Raycast</code> hit: the
+              point, the surface normal, the face and the uv.
+            </p>
+            <a class="btn" href="./lighting/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/gltf.jpg"
+              alt="A low-poly floating island with pine trees, grey rocks, a lamp post with a glowing orange lamp and a wooden sign with an arrow"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">GLTFLoader</span>
+              <span class="demo__class">Texture.fromURL</span>
+              <span class="demo__class">InstancedMesh</span>
+              <span class="demo__class">LitProgram</span>
+            </div>
+            <h3>glTF</h3>
+            <p>
+              A floating island made in Blender and loaded from a
+              <code>.glb</code> with <code>GLTFLoader</code>. Its materials
+              become <code>LitProgram</code>s sharing one <code>Lights</code>:
+              vertex-coloured rocks, a textured double-sided sign and an
+              emissive lamp. The trees are exported with
+              <code>EXT_mesh_gpu_instancing</code>, so they load as
+              <code>InstancedMesh</code>es. Look through the file's camera, or
+              hover to name the node under the pointer.
+            </p>
+            <a class="btn" href="./gltf/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/fly.jpg"
+              alt="Twisting towers of navy and plum hexagons, rings of yellow and lilac triangles and pink pillars crowding a pale blue haze"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">FlyCamera</span>
+              <span class="demo__class">Stage</span>
+              <span class="demo__class">InstancedMesh</span>
+              <span class="demo__class">litShading</span>
+            </div>
+            <h3>Fly</h3>
+            <p>
+              Fly through endless space with a <code>FlyCamera</code>: drag to
+              steer like a joystick, or use WASD or the arrows, Q and E to roll,
+              R and F to change speed and space to stop. Each cell of space
+              grows towers, spirals and rings of prisms from a small rule
+              grammar, seeded by where it is, and cells are regrown ahead of you
+              as you fly. Each cell is two <code>InstancedMesh</code>es, drawn
+              with <code>litShading</code> and fog.
+            </p>
+            <a class="btn" href="./fly/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/icon-swarm.jpg"
+              alt="A clump of chunky coloured icons — red hearts, blue crosses, yellow bolts, green triangles and white discs — casting a soft shadow onto a dark backdrop"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">GLTFLoader</span>
+              <span class="demo__class">Shadow</span>
+              <span class="demo__class">InstancedMesh</span>
+              <span class="demo__class">Raycast</span>
+            </div>
+            <h3>Icon swarm</h3>
+            <p>
+              Five icons loaded from <code>.glb</code>s, their materials made
+              into instanced <code>LitProgram</code>s so every copy of an icon
+              is one <code>InstancedMesh</code>. Their convex colliders drive
+              Rapier physics with no gravity: the icons drip in and clump, the
+              pointer's <code>Raycast</code> pushes them aside and a click
+              blasts them apart. They cast a <code>Shadow</code> onto each other
+              and onto a backdrop drawn with <code>shadowShading</code>.
+            </p>
+            <a class="btn" href="./icon-swarm/">Open demo →</a>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo__preview">
+            <img
+              src="./screenshots/csg.jpg"
+              alt="A pale cube with a spherical bite taken out of one corner, the hollow coloured orange, casting a shadow onto a grid floor"
+              loading="lazy"
+            />
+          </div>
+          <div class="demo__body">
+            <div class="demo__classes">
+              <span class="demo__class">toManifold</span>
+              <span class="demo__class">fromManifold</span>
+              <span class="demo__class">LitProgram</span>
+              <span class="demo__class">Shadow</span>
+            </div>
+            <h3>CSG</h3>
+            <p>
+              Booleans with manifold-3d, which wtc-gl doesn't depend on: the
+              demo loads the WASM and <code>toManifold</code> converts wtc-gl
+              primitives for it. A cutter orbits through a box, cylinder, torus
+              or extruded star and the subtraction, intersection or union is
+              redone every frame. The cut faces keep the cutter's colour and its
+              normals, flipped to face the right way.
+            </p>
+            <a class="btn" href="./csg/">Open demo →</a>
           </div>
         </div>
 
@@ -697,6 +779,7 @@
               <span class="demo__class">Tube</span>
               <span class="demo__class">Extrude</span>
               <span class="demo__class">computeFrames</span>
+              <span class="demo__class">Raycast</span>
             </div>
             <h3>Paths</h3>
             <p>
@@ -710,7 +793,8 @@
               curve, and the B-spline type is smoother still, pulled towards the
               points rather than through them. The extrude preset turns a flat
               outline and hole into a bevelled solid as you drag, with hard
-              edges wherever it turns sharper than the crease angle.
+              edges wherever it turns sharper than the crease angle. Handles are
+              picked and dragged with a <code>Raycast</code>.
             </p>
             <a class="btn" href="./paths/">Open demo →</a>
           </div>

@@ -1,13 +1,19 @@
 import type {
   WTCGLRenderingContext,
   WTCGLUniformValue,
+  WTCGLUniformStruct,
   WTCGLActiveInfo
 } from '../types'
 
 import { Texture } from './Texture'
 import { Program } from './Program'
 
-type Kind =
+/**
+ * The GLSL type of a {@link Uniform}. Textures and texture arrays are
+ * detected from the value, so `kind` is only used to warn about mismatches.
+ * @category Core
+ */
+export type UniformKind =
   | 'int'
   | 'float'
   | 'boolean'
@@ -33,14 +39,22 @@ type Kind =
   | 'mat4x2'
   | 'mat4x3'
 
+/**
+ * Options for creating a {@link Uniform}.
+ * @category Core
+ */
 export interface UniformOptions {
+  /** The name of the uniform, used in warnings. The key in the program's `uniforms` is what matches it to the shader. @default 'uniform' */
   name: string
+  /** The value to upload. @default [1, 1] */
   value: WTCGLUniformValue
-  kind: Kind
+  /** The GLSL type of the uniform, e.g. `'float'`, `'float_vec3'` or `'texture'`. @default 'float_vec2' */
+  kind: UniformKind
 }
 
 /**
  * A uniform is just a basic container for simple uniform information.
+ * @category Core
  */
 export class Uniform {
   /**
@@ -55,17 +69,14 @@ export class Uniform {
    * The uniform kind. Textures are detected from the value, so this is only
    * used to warn when it doesn't match.
    */
-  kind: Kind
+  kind: UniformKind
   /**
    * Whether a mismatch warning has already been shown for this uniform.
    */
   private warned = false
   /**
-   * Create a unform object
-   * @param __namedParameters
-   * @param name - The name of the uniform.
-   * @param value - The value for the uniform.
-   * @param kind - The type of uniform.
+   * Create a uniform object
+   * @param options - The uniform's name, value and kind; see {@link UniformOptions}.
    */
   constructor({
     name = 'uniform',
@@ -223,11 +234,18 @@ export class Uniform {
       return
     }
 
+    // A struct's members each have their own location: pick this one's value
+    const value = structMember(this.value, activeUniform)
+    if (value === undefined) {
+      return this.warnOnce(
+        `${this.name} has no value for ${activeUniform.name}; give a struct uniform an object of member values, or an array of them for an array of structs`
+      )
+    }
+
     // Decide how to bind from the value rather than `kind`, so a texture
     // passed with the wrong (or default) kind still binds as a texture
-    const isTexture = this.value instanceof Texture
-    const isTextureArray =
-      Array.isArray(this.value) && this.value[0] instanceof Texture
+    const isTexture = value instanceof Texture
+    const isTextureArray = Array.isArray(value) && value[0] instanceof Texture
     const samplerTarget = getSamplerTarget(program.gl, activeUniform.type)
     const isSampler = samplerTarget !== undefined
 
@@ -238,18 +256,22 @@ export class Uniform {
         )
       }
       // WebGL refuses to draw when a texture's target doesn't match its sampler
-      const textures = (isTexture ? [this.value] : this.value) as Texture[]
+      const textures = (isTexture ? [value] : value) as Texture[]
       if (textures.some((texture) => texture.target !== samplerTarget)) {
         return this.warnOnce(
           `${this.name} has a texture whose target doesn't match the shader's sampler type (e.g. a cube map on a sampler2D); skipping`
         )
       }
-      if (this.kind !== (isTexture ? 'texture' : 'texture_array')) {
+      // A struct's kind can't describe all its members, so it isn't checked
+      if (
+        value === this.value &&
+        this.kind !== (isTexture ? 'texture' : 'texture_array')
+      ) {
         this.warnOnce(
           `${this.name} is a texture but has kind '${this.kind}'; binding it as a texture`
         )
       }
-    } else if (isSampler && !isTextureUnitValue(this.value)) {
+    } else if (isSampler && !isTextureUnitValue(value)) {
       // A null texture binds to unit 0, which is common while a target is being set up
       return this.warnOnce(
         `${this.name} is a sampler in the shader but its value isn't a texture; skipping`
@@ -257,7 +279,7 @@ export class Uniform {
     }
 
     if (isTexture) {
-      const texture = this.value as Texture
+      const texture = value as Texture
       const textureUnit = ++program.textureUnit
 
       // Check if texture needs to be updated
@@ -275,7 +297,7 @@ export class Uniform {
     if (isTextureArray) {
       const textureUnits: number[] = []
 
-      ;(this.value as Texture[]).forEach((value) => {
+      ;(value as Texture[]).forEach((value) => {
         const textureUnit = ++program.textureUnit
         if (value instanceof Texture) value.update(textureUnit)
         textureUnits.push(textureUnit)
@@ -289,7 +311,7 @@ export class Uniform {
       )
     }
 
-    this.setUniform(program.gl, activeUniform.type, location)
+    this.setUniform(program.gl, activeUniform.type, location, value)
   }
   /**
    * Warn about a mismatch once per uniform, since `bind` runs every frame.
@@ -299,6 +321,38 @@ export class Uniform {
     this.warned = true
     console.warn(message)
   }
+}
+
+/**
+ * The value for one active uniform. For a struct (`u_light.colour`) it's the
+ * member of the uniform's object value, and for an array of structs
+ * (`u_lights[1].colour`) the member of that element; otherwise the value
+ * itself.
+ */
+function structMember(
+  value: WTCGLUniformValue,
+  activeUniform: WTCGLActiveInfo
+): WTCGLUniformValue | undefined {
+  const { isStruct, isStructArray, structIndex, structProperty } = activeUniform
+  if (!structProperty || (!isStruct && !isStructArray)) return value
+  const struct = isStructArray
+    ? Array.isArray(value)
+      ? (value as WTCGLUniformStruct[])[structIndex ?? 0]
+      : undefined
+    : value
+  if (!isStructValue(struct)) return undefined
+  return struct[structProperty]
+}
+
+/** Whether a value is a plain object of struct member values. */
+function isStructValue(value: unknown): value is WTCGLUniformStruct {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    !ArrayBuffer.isView(value) &&
+    !(value instanceof Texture)
+  )
 }
 
 /**

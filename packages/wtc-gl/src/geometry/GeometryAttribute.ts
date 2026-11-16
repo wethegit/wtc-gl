@@ -1,20 +1,35 @@
 import type { WTCGLRenderingContext, WTCGLGeometryAttribute } from '../types'
 
+/**
+ * Options for creating a {@link GeometryAttribute}.
+ * @category Geometry
+ */
 export interface GeometryAttributeOptions {
+  /** Components per element, e.g. 3 for a vec3. @default 1 */
   size?: number
+  /** Bytes from the start of one element to the next, for interleaved attributes. 0 means tightly packed. @default 0 */
   stride?: number
+  /** Bytes from the start of the buffer to the first element. @default 0 */
   offset?: number
+  /** The number of elements. Worked out from `data`, `size` and `stride` when left out. */
   count?: number
+  /** For an instanced attribute, the number of instances each element is used for (its divisor). 0 for a per-vertex attribute. @default 0 */
   instanced?: number
+  /** The GL data type. Worked out from `data` when left out: FLOAT for a Float32Array, UNSIGNED_SHORT for a Uint16Array, otherwise UNSIGNED_INT. */
   type?: GLenum
+  /** Whether integer values are normalised into the 0 to 1 (or -1 to 1) range when read as floats. @default false */
   normalized?: boolean
+  /** The attribute's data. */
   data: Float32Array | Float64Array | Uint16Array | Uint32Array
+  /** An existing WebGL buffer to use instead of creating one. @default null */
   buffer?: WebGLBuffer | null
+  /** Whether something other than the geometry, such as a `TransformFeedback`, manages `buffer`. @default false */
   external?: boolean
 }
 
 /**
  * Class representing a geometry attribute. A discrete piece of data used to render some geometry.
+ * @category Geometry
  **/
 export class GeometryAttribute implements WTCGLGeometryAttribute {
   /**
@@ -80,15 +95,7 @@ export class GeometryAttribute implements WTCGLGeometryAttribute {
 
   /**
    * Create a geometry attribute
-   * @param {Object} __namedParameters - The parameters for the attribute
-   * @param {number} size - The size of the attribute elements, this will determine the type of attribute in the shader.
-   * @param {number} stride - How many bytes to stride by in instances of combined attributes
-   * @param {number} offset - How many bytes to offset the attribute.
-   * @param {number} instanced - The number of instances this attribute has
-   * @param {GLenum} type - FLOAT, UNSIGNED_SHORT, or UNSIGNED_INT
-   * @param {boolean} normalized - whether integer data values should be normalized into a certain range when being cast to a float.
-   * @param buffer - An existing buffer to use instead of creating one.
-   * @param external - Whether something other than the geometry manages `buffer`.
+   * @param options - The data and its layout; see {@link GeometryAttributeOptions}.
    */
   constructor({
     size = 1,

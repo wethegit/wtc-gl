@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
+import { Mat4, Vec3 } from 'wtc-math'
 
 import { Camera } from '../src/core/Camera'
+import { InstancedMesh } from '../src/core/InstancedMesh'
 import { Mesh } from '../src/core/Mesh'
 import { Obj } from '../src/core/Object'
 import { Program } from '../src/core/Program'
 import { TransformFeedback } from '../src/core/TransformFeedback'
 import { Box } from '../src/geometry/Box'
 import { Geometry } from '../src/geometry/Geometry'
+import { Lights } from '../src/lighting/Lights'
+import { Shadow } from '../src/lighting/Shadow'
 import { createMockRenderer } from './mockGL'
 
 // Node built-ins, loaded by name since the package has no Node types
@@ -213,6 +217,147 @@ describe('Per-frame allocations', () => {
       `[allocations] ${MESHES} meshes: ${(bytes / 1024).toFixed(1)} KB/frame, ${(bytes / MESHES).toFixed(0)} B/mesh`
     )
     // Was ~7.8 KB per mesh before the matrix and render-list work
+    expect(bytes / MESHES).toBeLessThan(400)
+  })
+
+  it('are none for camera projection and per-instance culling', async () => {
+    const { gl } = createMockRenderer()
+    const mesh = new Mesh(gl, {
+      geometry: new Box(gl),
+      program: new Program(gl, { vertex: '', fragment: '' })
+    })
+    const camera = new Camera({ fov: 60, aspect: 1, near: 0.1, far: 100 })
+    camera.position.z = 40
+    camera.updateMatrixWorld()
+    camera.updateFrustum()
+    const matrices = Array.from({ length: MESHES }, (_, i) => {
+      const m = mesh.worldMatrix.clone()
+      m.a41 = (i % 40) - 20
+      m.a43 = Math.floor(i / 40) - 12
+      return m
+    })
+    const point = new Vec3()
+    const ndc = new Vec3()
+
+    // Measured one method at a time. Calling them together in one frame
+    // makes V8 box doubles between the inlined calls, which shifts with JIT
+    // state rather than anything the methods do.
+    const project = () => {
+      for (let i = 0; i < MESHES; i++) {
+        // Fields, not reset(), whose rest parameter allocates an array
+        point.x = i % 40
+        point.y = i % 7
+        point.z = -(i % 13) - 1
+        camera.project(point)
+      }
+    }
+    const unproject = () => {
+      for (let i = 0; i < MESHES; i++) {
+        ndc.x = (i % 40) / 20 - 1
+        ndc.y = (i % 7) / 3.5 - 1
+        ndc.z = (i % 13) / 6.5 - 1
+        camera.unproject(ndc)
+      }
+    }
+    let visible = 0
+    const cull = () => {
+      visible = 0
+      for (let i = 0; i < MESHES; i++) {
+        if (camera.frustumIntersects(mesh, matrices[i])) visible++
+      }
+    }
+
+    for (const [name, frame] of Object.entries({ project, unproject, cull })) {
+      // The lowest of a few runs: a stray JIT or GC allocation can land in
+      // any one of them, while a real allocation per call shows in all
+      let bytes = Infinity
+      for (let run = 0; run < 3 && bytes >= 100; run++) {
+        bytes = Math.min(bytes, await bytesPerFrame(frame))
+      }
+      console.info(
+        `[allocations] ${MESHES}× ${name}: ${bytes.toFixed(0)} B/frame`
+      )
+      expect(bytes).toBeLessThan(100)
+    }
+    expect(visible).toBeGreaterThan(0)
+  })
+
+  it('are none for culling an InstancedMesh', async () => {
+    const { gl } = createMockRenderer()
+    const instances = new InstancedMesh(gl, {
+      geometry: new Box(gl),
+      program: new Program(gl, { vertex: '', fragment: '' }),
+      count: MESHES
+    })
+    instances.updateMatrixWorld()
+    const m = new Mat4()
+    for (let i = 0; i < MESHES; i++) {
+      m.a41 = (i % 40) - 20
+      m.a43 = Math.floor(i / 40) - 12
+      instances.setMatrixAt(i, m)
+    }
+    const camera = new Camera({ fov: 60, aspect: 1, near: 0.1, far: 100 })
+    camera.position.z = 40
+    camera.updateMatrixWorld()
+
+    // Marked as changed every frame, so the visible instances are packed
+    // again every time: the most work culling does. (Through `count`, as
+    // copying a matrix in and out of a Mat4 boxes its fields.)
+    const frame = () => {
+      instances.count = MESHES
+      instances.cull(camera)
+    }
+
+    let bytes = Infinity
+    for (let run = 0; run < 3 && bytes >= 1000; run++) {
+      bytes = Math.min(bytes, await bytesPerFrame(frame))
+    }
+    console.info(
+      `[allocations] InstancedMesh cull of ${MESHES}: ${bytes.toFixed(0)} B/frame`
+    )
+    // Nothing per instance, which would be 16 KB or more here. What's left
+    // is camera.updateFrustum, a few hundred bytes per call: wtc-math's Vec3
+    // setters box the doubles written to the planes.
+    expect(bytes).toBeLessThan(1000)
+    expect(instances.geometry.instancedCount).toBeGreaterThan(0)
+  })
+
+  it(`stay small for a shadow pass over ${MESHES} meshes`, async () => {
+    const { gl } = createMockRenderer()
+    const geometry = new Box(gl)
+    const program = new Program(gl, { vertex: '', fragment: '' })
+    const scene = new Obj()
+    for (let i = 0; i < MESHES; i++) {
+      const mesh = new Mesh(gl, { geometry, program })
+      mesh.position.x = (i % 40) - 20
+      mesh.position.z = Math.floor(i / 40) - 12
+      mesh.setParent(scene)
+    }
+    const lights = new Lights()
+    const shadow = new Shadow(gl, { lights, size: 30 })
+    shadow.add(scene)
+    let t = 0
+    const frame = () => {
+      // The light moves, so the camera and uniforms are rebuilt every frame
+      t += 0.01
+      lights.direction = [Math.sin(t), 1, Math.cos(t)]
+      shadow.render({ scene })
+    }
+    frame()
+    const target = gl as unknown as Record<string, unknown>
+    for (const key of Object.keys(target)) {
+      if (typeof target[key] === 'function') target[key] = noop
+    }
+    frame()
+
+    let bytes = Infinity
+    for (let run = 0; run < 3 && bytes / MESHES >= 400; run++) {
+      bytes = Math.min(bytes, await bytesPerFrame(frame))
+    }
+    console.info(
+      `[allocations] shadow pass of ${MESHES} meshes: ${(bytes / 1024).toFixed(1)} KB/frame, ${(bytes / MESHES).toFixed(0)} B/mesh`
+    )
+    // The same budget as a normal render: what's left is drawing each mesh
     expect(bytes / MESHES).toBeLessThan(400)
   })
 

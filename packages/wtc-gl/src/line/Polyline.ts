@@ -7,6 +7,7 @@ import { Mesh } from '../core/Mesh'
 import { Program } from '../core/Program'
 import { Uniform } from '../core/Uniform'
 import { Texture } from '../core/Texture'
+import { blankTexture } from '../core/blankTexture'
 import { Geometry } from '../geometry/Geometry'
 import { GeometryAttribute } from '../geometry/GeometryAttribute'
 import { Path } from '../path/Path'
@@ -23,46 +24,173 @@ import polylineFragment from './polyline.frag'
  * `vec4 polylineExtrude(projection, modelView, position, prev, next, side,
  * width, resolution, sizeAttenuation, miterLimit)` returning the clip-space
  * position.
+ * @category Lines
  */
 export const polylineExtrude: string = extrudeSource
 
 /**
  * A width multiplier along the line, for tapers: a function of `u` (0 to 1 by
  * distance along the line) and `i`, the point's index.
+ * @category Lines
  */
 export type PolylineTaper = (u: number, i: number) => number
-/** A tilt in radians, or a function of `u` (0 to 1 by distance). */
+/**
+ * A tilt in radians, or a function of `u` (0 to 1 by distance).
+ * @category Lines
+ */
 export type PolylineTilt = number | ((u: number) => number)
 
+/**
+ * Options passed to the {@link Polyline} constructor.
+ * @category Lines
+ */
 export interface PolylineOptions {
+  /** The points, or a `Path` or `Curve` to sample. Required. */
   points: Path | PathPoint[]
+  /**
+   * Whether the last point joins the first. Defaults to the path's `closed`,
+   * or false for a list of points.
+   */
   closed: boolean
+  /**
+   * The points per curved segment when sampling a `Path`, passed to
+   * `toPolyline`.
+   * @default 12
+   */
   curveDivisions: number
+  /**
+   * The width: CSS pixels for a billboard, or world units with
+   * `sizeAttenuation` or for a ribbon.
+   * @default 1
+   */
   width: number
+  /**
+   * Multiplies the width along the line, for tapers.
+   * @default null
+   */
   taper: PolylineTaper | null
+  /**
+   * Billboards only: whether `width` is in world units rather than pixels.
+   * @default false
+   */
   sizeAttenuation: boolean
+  /**
+   * Whether the line faces the camera. When false it's a flat ribbon in world
+   * space. Can't be changed later.
+   * @default true
+   */
   billboard: boolean
+  /**
+   * Ribbons only: the direction the face starts out facing. Defaults to the
+   * normal of the plane the points lie in, when they're flat.
+   */
   facing: PathPoint
+  /**
+   * Ribbons only: the roll about the line, in radians, or a function of `u`.
+   * Defaults to the path's tilt, or 0.
+   */
   tilt: PolylineTilt
+  /**
+   * Ribbons only: how far the ribbon rolls into turns, in proportion to how
+   * tightly it curves. 0 is level.
+   * @default 0
+   */
   bank: number
+  /**
+   * How far a sharp corner can reach, in half widths.
+   * @default 4
+   */
   miterLimit: number
+  /**
+   * The colour as `[r, g, b]`, from 0 to 1.
+   * @default [1, 1, 1]
+   */
   colour: [number, number, number]
+  /**
+   * The opacity, from 0 to 1.
+   * @default 1
+   */
   opacity: number
+  /**
+   * A texture drawn along the line: u runs along it and v across it.
+   * @default null
+   */
   map: Texture | null
+  /**
+   * How many times the map repeats along the line, or `[along, across]`.
+   * @default 1
+   */
   repeat: number | [number, number]
+  /**
+   * Fragments with an alpha below this are discarded.
+   * @default 0
+   */
   alphaTest: number
+  /**
+   * The length of a dash and its gap, in world units. 0 is solid.
+   * @default 0
+   */
   dashArray: number
+  /**
+   * The fraction of each dash length that's a gap.
+   * @default 0.5
+   */
   dashRatio: number
+  /**
+   * Moves the dashes along the line, in world units.
+   * @default 0
+   */
   dashOffset: number
+  /**
+   * How much of the line is drawn, from its start: 0 to 1.
+   * @default 1
+   */
   visibility: number
+  /**
+   * A vertex shader to use instead of the default. It's used as is, so it
+   * needs its own `#version` line.
+   */
   vertex: string
+  /**
+   * A fragment shader to use instead of the default. It's used as is, so it
+   * needs its own `#version` line.
+   */
   fragment: string
+  /**
+   * Uniforms added to the line's own. One with the same key replaces the
+   * line's.
+   * @default {}
+   */
   uniforms: Record<string, Uniform>
+  /**
+   * Attributes added to the geometry, such as instanced ones.
+   * @default {}
+   */
   attributes: Record<string, WTCGLGeometryAttribute>
+  /**
+   * Whether the line is drawn with alpha blending. Defaults to true when
+   * `opacity` is below 1 or there's a `map`.
+   */
   transparent: boolean
+  /**
+   * Whether the line is depth tested.
+   * @default true
+   */
   depthTest: boolean
+  /**
+   * Whether the line writes to the depth buffer.
+   * @default true
+   */
   depthWrite: boolean
+  /**
+   * Whether the line is skipped when it's outside the camera's frustum.
+   * @default true
+   */
   frustumCulled: boolean
+  /**
+   * The order it's drawn in among the other meshes in its group: lower first.
+   * @default 0
+   */
   renderOrder: number
 }
 
@@ -93,23 +221,6 @@ const OWN = new Set([
   'across',
   'normal'
 ])
-
-// A white pixel per context, bound in place of a missing map: a sampler
-// always needs a texture
-const blanks = new WeakMap<WTCGLRenderingContext, Texture>()
-const blank = (gl: WTCGLRenderingContext) => {
-  let texture = blanks.get(gl)
-  if (!texture) {
-    texture = new Texture(gl, {
-      data: new Uint8Array([255, 255, 255, 255]),
-      width: 1,
-      height: 1,
-      generateMipmaps: false
-    })
-    blanks.set(gl, texture)
-  }
-  return texture
-}
 
 // The normal of the plane a point set lies in (Newell's method), or undefined
 // when the points aren't flat or don't span a plane
@@ -160,8 +271,10 @@ const planeNormal = (points: Vec[]): Vec | undefined => {
  * point to the end and drops the first, for trails.
  *
  * Corners are mitred, up to `miterLimit` half widths. There are no round
- * joins or caps, and overlapping transparent parts double up unless depth
- * writes are off or `alphaTest` is used. A billboard line with a width in
+ * joins or caps. Where a transparent line overlaps itself, the depth test
+ * hides the later part while depth writes are on (the default); with them
+ * off, both parts blend, so the overlap is drawn twice. `alphaTest` avoids
+ * both for cut-out lines. A billboard line with a width in
  * pixels can't be measured in world space, so its culling bounds only cover
  * its points.
  *
@@ -171,6 +284,7 @@ const planeNormal = (points: Vec[]): Vec | undefined => {
  * `uniforms` and `attributes` add to the line's own, for example a texture
  * the points are read from and an instanced attribute, to draw many lines
  * at once.
+ * @category Lines
  */
 export class Polyline extends Mesh {
   /** Whether the line faces the camera. Set when it's made. */
@@ -190,6 +304,12 @@ export class Polyline extends Mesh {
   #maxWidth = 1
   #baseRadius = 0
 
+  /**
+   * @param gl - The WebGL context.
+   * @param options - The points and how the line looks. `points` is
+   *   required.
+   * @throws If there are no points, or fewer than 2.
+   */
   constructor(
     gl: WTCGLRenderingContext,
     {
@@ -289,7 +409,7 @@ export class Polyline extends Mesh {
       }),
       u_map: new Uniform({
         name: 'map',
-        value: map ?? blank(gl),
+        value: map ?? blankTexture(gl),
         kind: 'texture'
       }),
       u_useMap: new Uniform({
@@ -433,6 +553,7 @@ export class Polyline extends Mesh {
   get closed(): boolean {
     return this.#closed ?? this.#path?.closed ?? false
   }
+  /** Set whether the line is closed. Rebuilds the attributes. */
   set closed(value: boolean) {
     this.#closed = value
     this.#build()
@@ -450,6 +571,7 @@ export class Polyline extends Mesh {
   get width(): number {
     return this.uniforms.u_width.value as number
   }
+  /** Set the width. */
   set width(value: number) {
     this.uniforms.u_width.value = value
     this.#pad()
@@ -459,15 +581,17 @@ export class Polyline extends Mesh {
   get taper(): PolylineTaper | null {
     return this.#taper
   }
+  /** Set the taper. Rebuilds the attributes. */
   set taper(value: PolylineTaper | null) {
     this.#taper = value
     this.#build()
   }
 
   /** Ribbons only: the direction the face starts out facing. */
-  get facing(): XYZ | undefined {
+  get facing(): [number, number, number] | undefined {
     return this.#facing
   }
+  /** Set the facing direction. Rebuilds the attributes. */
   set facing(value: PathPoint | undefined) {
     this.#facing = value === undefined ? undefined : toXYZ(value)
     this.#build()
@@ -477,6 +601,7 @@ export class Polyline extends Mesh {
   get tilt(): PolylineTilt | undefined {
     return this.#tilt
   }
+  /** Set the tilt. Rebuilds the attributes. */
   set tilt(value: PolylineTilt | undefined) {
     this.#tilt = value
     this.#build()
@@ -486,6 +611,7 @@ export class Polyline extends Mesh {
   get bank(): number {
     return this.#bank
   }
+  /** Set the bank. Rebuilds the attributes. */
   set bank(value: number) {
     this.#bank = value
     this.#build()
@@ -495,6 +621,7 @@ export class Polyline extends Mesh {
   get miterLimit(): number {
     return this.#miterLimit
   }
+  /** Set the miter limit. Rebuilds the attributes of a ribbon. */
   set miterLimit(value: number) {
     this.#miterLimit = value
     this.uniforms.u_miterLimit.value = value
@@ -506,14 +633,17 @@ export class Polyline extends Mesh {
   get sizeAttenuation(): boolean {
     return this.uniforms.u_sizeAttenuation.value === 1
   }
+  /** Set whether `width` is in world units. */
   set sizeAttenuation(value: boolean) {
     this.uniforms.u_sizeAttenuation.value = value ? 1 : 0
     this.#pad()
   }
 
+  /** The colour as `[r, g, b]`, from 0 to 1. */
   get colour(): [number, number, number] {
     return this.uniforms.u_colour.value as [number, number, number]
   }
+  /** Set the colour. The values are copied into the uniform. */
   set colour(value: [number, number, number]) {
     const colour = this.uniforms.u_colour.value as number[]
     colour[0] = value[0]
@@ -521,9 +651,11 @@ export class Polyline extends Mesh {
     colour[2] = value[2]
   }
 
+  /** The opacity, from 0 to 1. */
   get opacity(): number {
     return this.uniforms.u_opacity.value as number
   }
+  /** Set the opacity. */
   set opacity(value: number) {
     this.uniforms.u_opacity.value = value
   }
@@ -532,6 +664,7 @@ export class Polyline extends Mesh {
   get dashArray(): number {
     return this.uniforms.u_dashArray.value as number
   }
+  /** Set the dash length. */
   set dashArray(value: number) {
     this.uniforms.u_dashArray.value = value
   }
@@ -540,6 +673,7 @@ export class Polyline extends Mesh {
   get dashRatio(): number {
     return this.uniforms.u_dashRatio.value as number
   }
+  /** Set the gap fraction. */
   set dashRatio(value: number) {
     this.uniforms.u_dashRatio.value = value
   }
@@ -548,6 +682,7 @@ export class Polyline extends Mesh {
   get dashOffset(): number {
     return this.uniforms.u_dashOffset.value as number
   }
+  /** Set the dash offset. */
   set dashOffset(value: number) {
     this.uniforms.u_dashOffset.value = value
   }
@@ -556,6 +691,7 @@ export class Polyline extends Mesh {
   get visibility(): number {
     return this.uniforms.u_visibility.value as number
   }
+  /** Set how much of the line is drawn. */
   set visibility(value: number) {
     this.uniforms.u_visibility.value = value
   }
@@ -566,8 +702,9 @@ export class Polyline extends Mesh {
       ? (this.uniforms.u_map.value as Texture)
       : null
   }
+  /** Set the texture, or null for none. */
   set map(value: Texture | null) {
-    this.uniforms.u_map.value = value ?? blank(this.gl)
+    this.uniforms.u_map.value = value ?? blankTexture(this.gl)
     this.uniforms.u_useMap.value = value ? 1 : 0
   }
 
@@ -575,6 +712,7 @@ export class Polyline extends Mesh {
   get repeat(): [number, number] {
     return this.uniforms.u_repeat.value as [number, number]
   }
+  /** Set the repeat: a number for along the line only, or `[along, across]`. */
   set repeat(value: number | [number, number]) {
     const repeat = this.uniforms.u_repeat.value as number[]
     repeat[0] = typeof value === 'number' ? value : value[0]

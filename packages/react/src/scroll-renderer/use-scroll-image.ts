@@ -15,6 +15,7 @@ import type { ScrollSceneSetup } from './use-scroll-scene'
  * `onBeforeRender`/`onAfterRender` may change between renders - the latest
  * ones are always called. All other options are captured when the scene is
  * created.
+ * @category Types
  */
 export type UseScrollImageOptions = Omit<
   ScrollImageOptions,
@@ -53,6 +54,7 @@ export type UseScrollImageOptions = Omit<
  * @param setup - Builds the scene's GL content; may return a cleanup function.
  * @param options - Forwarded to the `ScrollImage` constructor.
  * @returns A ref holding the live `ScrollImage`, or `null` before creation.
+ * @category Hooks
  */
 export function useScrollImage(
   elementRef: RefObject<HTMLElement | null>,

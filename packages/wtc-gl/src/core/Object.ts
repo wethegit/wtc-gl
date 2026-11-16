@@ -4,12 +4,18 @@ import { composeMat4, multiplyMat4, quatFromEuler } from './matrix'
 
 /**
  * Class representing an object. This provides basic transformations for sub-objects and shouldn't be instanciated directly.
+ * @category Core
  **/
 export class Obj {
   /**
    * The parent of this object.
    */
   parent?: Obj | null
+  /**
+   * A name for the object, for finding it again. Set from the node names
+   * when loading a glTF.
+   */
+  name: string = ''
   /**
    * The children of this object
    */
@@ -141,7 +147,7 @@ export class Obj {
 
   /**
    * Update the fill world matrix of this object basically used for recursively looping down the hierarchy when a change in the RTS matrix is changed on this.
-   * @param force Even is this is not set to world matrix update, force it. Used when looping down past the first iteration.
+   * @param force - Even if this is not set to world matrix update, force it. Used when looping down past the first iteration.
    */
   updateMatrixWorld(force?: boolean): void {
     if (this.matrixAutoUpdate) this.updateMatrix()

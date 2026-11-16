@@ -1,27 +1,24 @@
-#version 300 es
-precision highp float;
+// Prefixed with the version, precision and wtc-gl's litShading
 
 in vec3 v_normal;
-in vec3 v_view;
+in vec3 v_position;
 in vec2 v_uv;
 in vec3 v_barycentric;
 
-// 0 lit, 1 normals, 2 uv checker
+// 0 lit, 1 uv checker. The normals view swaps in wtc-gl's NormalProgram.
 uniform int u_mode;
 // 1 to draw each triangle's edges
 uniform float u_edges;
 uniform vec3 u_colour;
+uniform mat4 u_viewMatrix;
 
 out vec4 colour;
 
-// Lit here until wtc-gl has a built-in lit program: one directional light, a
-// sky/ground hemisphere and a soft rim
+// wtc-gl's lighting, from the shared Lights, plus a soft rim
 vec3 shade(vec3 base, vec3 n) {
-  vec3 light = normalize(vec3(-0.45, 0.7, 0.55));
-  float diffuse = max(dot(n, light), 0.0);
-  float hemisphere = n.y * 0.5 + 0.5;
-  float rim = pow(1.0 - max(dot(n, normalize(v_view)), 0.0), 3.0);
-  return base * (0.42 + 0.6 * diffuse + 0.14 * hemisphere) + rim * 0.1;
+  vec3 view = normalize(-v_position);
+  float rim = pow(1.0 - max(dot(n, view), 0.0), 3.0);
+  return litShade(base, n, view, mat3(u_viewMatrix), 0.0, 1.0) + rim * 0.1;
 }
 
 void main() {
@@ -31,8 +28,6 @@ void main() {
 
   vec3 c;
   if (u_mode == 1) {
-    c = n * 0.5 + 0.5;
-  } else if (u_mode == 2) {
     // 8 × 8 checks with a red u = 0 edge and a green v = 0 edge, so the seams
     // and the direction of the uvs show
     vec2 cell = floor(v_uv * 8.0);

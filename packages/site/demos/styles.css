@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+/* The top bar shared with every demo, and the fonts */
+@import './nav.css';
 
 *,
 *::before,
@@ -17,7 +18,7 @@
   --text: #dde0ee;
   --muted: rgba(221, 224, 238, 0.45);
   --accent: #4a9eff;
-  --mono: monospace;
+  --mono: var(--nav-mono);
 }
 
 html {
@@ -66,48 +67,6 @@ a {
   z-index: 0;
 }
 
-/* ── nav ── */
-.nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 3em;
-  height: 3.5em;
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px) saturate(180%);
-  background: var(--bg-80);
-}
-.nav__brand {
-  font-weight: 600;
-  font-size: 0.875em;
-  letter-spacing: 0.01em;
-  color: var(--text);
-}
-.nav__brand a {
-  color: inherit;
-}
-.nav__brand span {
-  opacity: 0.35;
-  margin: 0 0.35em;
-}
-.nav__links {
-  display: flex;
-  gap: 2em;
-  list-style: none;
-}
-.nav__links a {
-  color: var(--muted);
-  font-size: 0.82em;
-}
-.nav__links a:hover {
-  color: var(--text);
-}
-
 /* ── content wrapper ── */
 .content {
   position: relative;
@@ -117,9 +76,10 @@ a {
 /* ── typography ── */
 .tag {
   display: inline-block;
-  font-size: 0.68em;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 1.2em;
@@ -135,15 +95,15 @@ h3 {
 
 h1 {
   font-size: clamp(3em, 8vw, 6.5em);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.035em;
   margin-bottom: 0.25em;
 }
 
 h2 {
   font-size: clamp(1.6em, 3vw, 2.5em);
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 1.2em;
 }
 
@@ -187,9 +147,9 @@ pre {
 .chip {
   font-family: var(--mono);
   font-size: 0.8em;
-  padding: 0.45em 1em;
+  padding: 0.45em 1.1em;
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: 999px;
   background: var(--surface);
   color: var(--muted);
   user-select: all;
@@ -198,8 +158,8 @@ pre {
 .btn {
   font-size: 0.82em;
   font-weight: 600;
-  padding: 0.55em 1.3em;
-  border-radius: 5px;
+  padding: 0.6em 1.4em;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
   background: var(--accent);
@@ -230,36 +190,6 @@ pre {
   text-decoration: underline;
 }
 
-/* ── demo breadcrumb nav (fullscreen demos) ── */
-.demo-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  padding: 0 2em;
-  height: 3em;
-  background: rgba(7, 7, 14, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  font-family: system-ui, sans-serif;
-  font-size: 14px;
-  gap: 0.5em;
-}
-.demo-nav__brand {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 600;
-}
-.demo-nav__sep {
-  color: rgba(255, 255, 255, 0.3);
-}
-.demo-nav__title {
-  color: rgba(221, 224, 238, 0.7);
-}
-
 /* ── fullscreen canvas demo ── */
 html.demo-fullscreen,
 html.demo-fullscreen body {
@@ -279,7 +209,8 @@ html.demo-fullscreen canvas {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 0 3em;
+  /* Clear the top bar and its row of section links */
+  padding: calc(var(--nav-offset) + 2em) 3em 2em;
 }
 .hero__text {
   max-width: 700px;

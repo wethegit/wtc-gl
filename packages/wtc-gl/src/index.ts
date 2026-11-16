@@ -9,7 +9,9 @@ export * from './core/Uniform'
 export * from './core/Texture'
 export * from './core/VideoTexture'
 export * from './core/Camera'
+export * from './core/InstancedMesh'
 export * from './core/DollyCamera'
+export * from './core/FlyCamera'
 export * from './core/RenderTarget'
 export * from './core/TransformFeedback'
 
@@ -25,6 +27,7 @@ export * from './geometry/Lathe'
 export * from './geometry/Capsule'
 export * from './geometry/Tube'
 export * from './geometry/Extrude'
+export * from './geometry/manifold'
 export * from './geometry/PointCloud'
 
 export * from './path/Path'
@@ -41,10 +44,38 @@ export type { RotationMinimisingFramesOptions } from './path/frames'
 
 export * from './line/Polyline'
 
+export * from './lighting/Lights'
+export * from './lighting/LitProgram'
+export * from './lighting/Shadow'
+
+export * from './helpers/NormalProgram'
+export * from './helpers/WireMesh'
+export * from './helpers/AxesHelper'
+export * from './helpers/GridHelper'
+export * from './helpers/VertexNormalsHelper'
+export * from './helpers/FaceNormalsHelper'
+
+export * from './interaction/Raycast'
+
+export * from './loaders/GLTFLoader'
+export type {
+  GLTFAccessor,
+  GLTFBufferView,
+  GLTFCamera,
+  GLTFMaterial,
+  GLTFNode,
+  GLTFPrimitive,
+  GLTFTextureInfo
+} from './loaders/gltf/types'
+export { materialProgram } from './loaders/gltf/materials'
+export type { ProgramFlags } from './loaders/gltf/materials'
+
 export * from './ext/Framebuffer'
 
 export * from './recipes/FragmentShader'
 export * from './recipes/ParticleSimulation'
+export * from './recipes/GPUSimulation'
+export * from './recipes/Stage'
 export * from './recipes/ScrollRenderer'
 
 /**

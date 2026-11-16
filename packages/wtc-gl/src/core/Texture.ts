@@ -8,6 +8,7 @@ let ID = 1
  * Sources that can be uploaded as an image. `ImageBitmap` ignores `flipY` and
  * `premultiplyAlpha`; set `imageOrientation` and `premultiplyAlpha` in
  * `createImageBitmap` instead.
+ * @category Core
  */
 export type TextureImage =
   | HTMLImageElement
@@ -20,6 +21,7 @@ export type TextureImage =
  * Typed arrays that can be uploaded as texture data. The array type has to
  * match `type`, e.g. `Uint8Array` with `gl.UNSIGNED_BYTE`, `Float32Array`
  * with `gl.FLOAT`, `Uint16Array` with `gl.HALF_FLOAT` or `gl.UNSIGNED_SHORT`.
+ * @category Core
  */
 export type TextureData =
   | Float32Array
@@ -33,29 +35,63 @@ export type TextureData =
 
 type ImageTypes = TextureImage
 
+/**
+ * Options for `Texture.fromURL`: texture options, and a signal to abort.
+ * @category Core
+ */
+export type TextureLoadOptions = Partial<TextureOptions> & {
+  /** Aborts the fetch when signalled. */
+  signal?: AbortSignal
+}
+
+/**
+ * Options for creating a {@link Texture}.
+ * @category Core
+ */
 export interface TextureOptions {
+  /** The image to upload, or six images (+X, -X, +Y, -Y, +Z, -Z) for a cube map. */
   image: ImageTypes | ImageTypes[]
+  /** Typed array data for a data texture. Needs `width` and `height`. */
   data: TextureData | null
+  /** The binding point, e.g. `gl.TEXTURE_2D` or `gl.TEXTURE_CUBE_MAP`. @default gl.TEXTURE_2D */
   target: GLenum
+  /** The data type of the pixels, e.g. `gl.UNSIGNED_BYTE`, `gl.FLOAT` or `gl.HALF_FLOAT`. @default gl.UNSIGNED_BYTE */
   type: GLenum
+  /** The format of the pixel data. @default gl.RGBA */
   format: GLenum
+  /** The format the texture is stored in on the GPU, e.g. `gl.RGBA32F`. @default the same as `format` */
   internalFormat: GLenum
+  /** Horizontal wrapping: `gl.CLAMP_TO_EDGE`, `gl.REPEAT` or `gl.MIRRORED_REPEAT`. @default gl.CLAMP_TO_EDGE */
   wrapS: GLenum
+  /** Vertical wrapping: `gl.CLAMP_TO_EDGE`, `gl.REPEAT` or `gl.MIRRORED_REPEAT`. @default gl.CLAMP_TO_EDGE */
   wrapT: GLenum
+  /** Whether to generate mipmaps after each upload. @default true */
   generateMipmaps: boolean
+  /** The filter used when the texture is drawn smaller. @default gl.NEAREST_MIPMAP_LINEAR with mipmaps, otherwise gl.LINEAR */
   minFilter: GLenum
+  /** The filter used when the texture is drawn larger. @default gl.LINEAR */
   magFilter: GLenum
+  /** Whether to premultiply the colour by alpha on upload. Ignored for `ImageBitmap`s. @default false */
   premultiplyAlpha: boolean
+  /** The row alignment of the pixel data, in bytes. @default 4 */
   unpackAlignment: 1 | 2 | 4 | 8
+  /** Whether to flip the image vertically on upload. Ignored for `ImageBitmap`s. @default true for gl.TEXTURE_2D, otherwise false */
   flipY: boolean
+  /** The anisotropic filtering level, capped at the device's maximum. 0 turns it off. @default 0 */
   anisotropy: number
+  /** For a depth texture, the comparison a `sampler2DShadow` makes, or null for none. @default null */
+  compareFunc: GLenum | null
+  /** The mipmap level the image is uploaded to. @default 0 */
   level: number
+  /** The width in pixels, for data textures and render targets. Images set their own. */
   width: number
+  /** The height in pixels, for data textures and render targets. Images set their own. @default the same as `width` */
   height: number
 }
 
 /**
  * A texture class contains image data for use in a shader. Along with the image data, the texture contains state variable that determine how secondary conditions, like wrapping and interpolation work.
+ * @category Core
  */
 export class Texture {
   /**
@@ -132,7 +168,8 @@ export class Texture {
   wrapT: GLenum
 
   /**
-   * Whether to generate mip maps for this texture. This requires that the texture be power of 2 in size
+   * Whether to generate mipmaps for this texture. WebGL2 can mipmap textures
+   * of any size.
    * @default true
    */
   generateMipmaps: boolean
@@ -156,6 +193,14 @@ export class Texture {
    */
   anisotropy: number
   /**
+   * For a depth texture, compare against a reference value when sampled
+   * instead of returning the depth: `gl.LEQUAL`, `gl.LESS` and so on. A
+   * shader reads it with a `sampler2DShadow`, and LINEAR filtering then
+   * gives 2×2 percentage-closer filtering for free. Null for no comparison.
+   * @default null
+   */
+  compareFunc: GLenum | null
+  /**
    * A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
    * @default 0
    */
@@ -165,6 +210,7 @@ export class Texture {
    * The image store
    */
   store: {
+    /** The image last uploaded, compared with `image` to see if it changed. */
     image?: ImageTypes | ImageTypes[]
   }
   /**
@@ -181,25 +227,59 @@ export class Texture {
   #contextVersion: number
 
   /**
-   * Create a render target object.
-   * @param {WTCGLRenderingContext} gl - The WTCGL Rendering context
-   * @param __namedParameters - The parameters to initialise the renderer.
-   * @param target - The binding point for the frame buffers.
-   * @param type - The texture type. Typically one of gl.UNSIGNED_BYTE, gl.FLOAT, gl.HALF_FLOAT
-   * @param format - The texture format.
-   * @param internalFormat - the texture internalFormat.
-   * @param wrapS - Wrapping
-   * @param wrapT - Wrapping
-   * @param generateMipmaps - Whether to generate mips for this texture
-   * @param minFilter - The filter to use when rendering smaller
-   * @param magFilter - The filter to use when enlarging
-   * @param premultiplyAlpha - Whether to use premultiplied alpha for stored textures.
-   * @param flipY - Whether to flip the Y component of the supplied image
-   * @param anistropy - The anistropic filtering level for the texture.
-   * @param unpackAlignment - The unpack alignment for pixel stores.
-   * @param level - A GLint specifying the level of detail. Level 0 is the base image level and level n is the nth mipmap reduction level. Only relevant if we have mipmaps.
-   * @param width - The width of the render target.
-   * @param height - The height of the render target.
+   * Load an image from a URL into a texture. It's fetched, then decoded off
+   * the main thread with `createImageBitmap`, which also does the flipping
+   * and premultiplying (`flipY` and `premultiplyAlpha` here). Rejects if the
+   * request fails.
+   *
+   * ```ts
+   * const texture = await Texture.fromURL(gl, '/photo.jpg', { wrapS: gl.REPEAT })
+   * ```
+   * @param gl - The WTCGL rendering context.
+   * @param url - Where the image is.
+   * @param options - Texture options, plus a `signal` to abort the request.
+   */
+  static async fromURL(
+    gl: WTCGLRenderingContext,
+    url: string,
+    { signal, ...options }: TextureLoadOptions = {}
+  ): Promise<Texture> {
+    const response = await fetch(url, { signal })
+    if (!response.ok) {
+      throw new Error(
+        `Texture.fromURL: ${url} failed with ${response.status} ${response.statusText}`
+      )
+    }
+    return Texture.fromBlob(gl, await response.blob(), options)
+  }
+
+  /**
+   * Decode an image blob into a texture, as `fromURL` does once it has
+   * fetched one.
+   * @param gl - The WTCGL rendering context.
+   * @param blob - The encoded image, e.g. a PNG or JPEG.
+   * @param options - Texture options.
+   */
+  static async fromBlob(
+    gl: WTCGLRenderingContext,
+    blob: Blob,
+    options: Partial<TextureOptions> = {}
+  ): Promise<Texture> {
+    // Every 2D texture is flipped by default; an ImageBitmap has to be
+    // flipped as it's decoded instead
+    const { flipY = true, premultiplyAlpha = false } = options
+    const image = await createImageBitmap(blob, {
+      imageOrientation: flipY ? 'flipY' : 'from-image',
+      premultiplyAlpha: premultiplyAlpha ? 'premultiply' : 'none',
+      colorSpaceConversion: 'none'
+    })
+    return new Texture(gl, { ...options, image })
+  }
+
+  /**
+   * Create a texture. Nothing is uploaded until it's first used.
+   * @param gl - The WTCGL Rendering context
+   * @param options - The texture's source and sampling settings; see {@link TextureOptions}.
    */
   constructor(
     gl: WTCGLRenderingContext,
@@ -219,6 +299,7 @@ export class Texture {
       unpackAlignment = 4,
       flipY = target == gl.TEXTURE_2D ? true : false,
       anisotropy = 0,
+      compareFunc = null,
       level = 0,
       width, // used for RenderTargets or Data Textures
       height = width
@@ -247,6 +328,7 @@ export class Texture {
       anisotropy,
       this.gl.renderer.parameters.maxAnisotropy
     )
+    this.compareFunc = compareFunc
     this.level = level
 
     if (width) this.width = width
@@ -299,45 +381,21 @@ export class Texture {
     ] = this.id
   }
 
-  /**
-   * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
-   * @param textureUnit The texture unit to update against.
-   * @returns
-   */
-  update(textureUnit = 0) {
-    const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
+  /** Whether a filter, wrap, anisotropy or comparison setting has changed since it was last applied. */
+  #samplerChanged(): boolean {
+    const state = this.state
+    return (
+      this.minFilter !== state.minFilter ||
+      this.magFilter !== state.magFilter ||
+      this.wrapS !== state.wrapS ||
+      this.wrapT !== state.wrapT ||
+      this.anisotropy !== state.anisotropy ||
+      this.compareFunc !== state.compareFunc
+    )
+  }
 
-    // Make sure that texture is bound to its texture unit
-    if (
-      needsUpdate ||
-      this.gl.renderer.state.textureUnits[textureUnit] !== this.id
-    ) {
-      // set active texture unit to perform texture functions
-      this.gl.renderer.activeTexture = textureUnit
-      this.bind()
-    }
-
-    if (!needsUpdate) return
-    this.needsUpdate = false
-
-    if (this.flipY !== this.gl.renderer.state.flipY) {
-      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
-      this.gl.renderer.state.flipY = this.flipY
-    }
-
-    if (this.premultiplyAlpha !== this.gl.renderer.state.premultiplyAlpha) {
-      this.gl.pixelStorei(
-        this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
-        this.premultiplyAlpha
-      )
-      this.gl.renderer.state.premultiplyAlpha = this.premultiplyAlpha
-    }
-
-    if (this.unpackAlignment !== this.gl.renderer.state.unpackAlignment) {
-      this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
-      this.gl.renderer.state.unpackAlignment = this.unpackAlignment
-    }
-
+  /** Apply the changed filter, wrap, anisotropy and comparison settings to the bound texture. */
+  #applySampler(): void {
     if (this.minFilter !== this.state.minFilter) {
       this.gl.texParameteri(
         this.target,
@@ -366,7 +424,7 @@ export class Texture {
       this.state.wrapT = this.wrapT
     }
 
-    if (this.anisotropy && this.anisotropy !== this.state.anisotropy) {
+    if (this.anisotropy !== this.state.anisotropy) {
       const ext = this.gl.renderer.getExtension(
         'EXT_texture_filter_anisotropic'
       )
@@ -374,9 +432,80 @@ export class Texture {
         this.gl.texParameterf(
           this.target,
           ext.TEXTURE_MAX_ANISOTROPY_EXT,
-          this.anisotropy
+          // 1 is off; 0 means the same
+          Math.max(1, this.anisotropy)
         )
       this.state.anisotropy = this.anisotropy
+    }
+
+    if (this.compareFunc !== this.state.compareFunc) {
+      if (this.compareFunc === null) {
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_COMPARE_MODE,
+          this.gl.NONE
+        )
+      } else {
+        if (this.state.compareFunc === null) {
+          this.gl.texParameteri(
+            this.target,
+            this.gl.TEXTURE_COMPARE_MODE,
+            this.gl.COMPARE_REF_TO_TEXTURE
+          )
+        }
+        this.gl.texParameteri(
+          this.target,
+          this.gl.TEXTURE_COMPARE_FUNC,
+          this.compareFunc
+        )
+      }
+      this.state.compareFunc = this.compareFunc
+    }
+  }
+
+  /**
+   * Update the texture in graphics memory to the internal image and perform various state updates on an as-needs basis.
+   * @param textureUnit - The texture unit to update against.
+   */
+  update(textureUnit = 0) {
+    const needsUpdate = !(this.image === this.store.image && !this.needsUpdate)
+    // Filters, wrapping and comparison apply as soon as they change, without
+    // re-uploading the image
+    const samplerChanged = this.#samplerChanged()
+
+    // Make sure that texture is bound to its texture unit, and active when
+    // its parameters are about to be set
+    if (
+      needsUpdate ||
+      samplerChanged ||
+      this.gl.renderer.state.textureUnits[textureUnit] !== this.id
+    ) {
+      // set active texture unit to perform texture functions
+      this.gl.renderer.activeTexture = textureUnit
+      this.bind()
+    }
+
+    if (samplerChanged) this.#applySampler()
+
+    if (!needsUpdate) return
+    this.needsUpdate = false
+
+    if (this.flipY !== this.gl.renderer.state.flipY) {
+      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, this.flipY)
+      this.gl.renderer.state.flipY = this.flipY
+    }
+
+    if (this.premultiplyAlpha !== this.gl.renderer.state.premultiplyAlpha) {
+      this.gl.pixelStorei(
+        this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
+        this.premultiplyAlpha
+      )
+      this.gl.renderer.state.premultiplyAlpha = this.premultiplyAlpha
+    }
+
+    if (this.unpackAlignment !== this.gl.renderer.state.unpackAlignment) {
+      this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, this.unpackAlignment)
+      this.gl.renderer.state.unpackAlignment = this.unpackAlignment
     }
 
     if (this.image || this.data) {
@@ -512,6 +641,7 @@ function defaultTextureState(gl: WTCGLRenderingContext): WTCGLTextureState {
     magFilter: gl.LINEAR,
     wrapS: gl.REPEAT,
     wrapT: gl.REPEAT,
-    anisotropy: 0
+    anisotropy: 0,
+    compareFunc: null
   }
 }

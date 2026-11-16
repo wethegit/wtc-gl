@@ -4,4 +4,4 @@ ES6 WebGL2 library for simple WebGL work. Much of it has been adapted from and i
 
 Version 2 requires WebGL2. If you're upgrading from 1.x, the [changelog](https://github.com/wethegit/wtc-gl/blob/master/packages/wtc-gl/CHANGELOG.md) lists what changed and how to migrate.
 
-See [the documentation](https://wethegit.github.io/wtc-gl/) for details.
+See [the documentation](https://wethegit.github.io/wtc-gl/docs/) for guides, live examples and the API reference, and [the demos](https://wethegit.github.io/wtc-gl/demos/) for larger examples.

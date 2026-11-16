@@ -5,7 +5,10 @@ import { Renderer, type RendererOptions } from '../../core/Renderer'
 import type { Uniform } from '../../core/Uniform'
 import { ScrollScene } from './ScrollScene'
 
-/** Options passed to the {@link ScrollRenderer} constructor. */
+/**
+ * Options passed to the {@link ScrollRenderer} constructor.
+ * @category Recipes
+ */
 export interface ScrollRendererOptions {
   /**
    * Props forwarded to the underlying {@link Renderer}. `autoClear` is always
@@ -116,6 +119,7 @@ export interface ScrollRendererOptions {
  * // body (or another non-positioned ancestor) so the canvas is document-relative
  * document.body.appendChild(renderer.canvas)
  * renderer.addScene(new ScrollScene({ element, scene, margin: renderer.overscanPx }))
+ * @category Recipes
  */
 export class ScrollRenderer {
   /** The underlying {@link Renderer} instance. */
@@ -131,6 +135,7 @@ export class ScrollRenderer {
   #scenes: ScrollScene[] = []
   #lastTime: number = 0
   #playing: boolean = false
+  #frame: number = 0
   #cleared: boolean = false
   #resizeObserver: ResizeObserver | null = null
   #layout: 'fixed' | 'absolute'
@@ -141,9 +146,16 @@ export class ScrollRenderer {
   #canvasHeight: number = 0
   /** Absolute layout: how far the canvas top sits above the viewport top, in CSS px. */
   #offsetY: number = 0
-  // Reused for each scene's viewport, rather than allocated per scene per frame
+  // Reused for each scene's viewport and scissor rect, rather than allocated
+  // per scene per frame
   #sceneViewport: [Vec2, Vec2] = [new Vec2(), new Vec2()]
+  #sceneScissor: [Vec2, Vec2] = [new Vec2(), new Vec2()]
 
+  /**
+   * Make the renderer and size it. The render loop starts when `playing` is
+   * set to `true`.
+   * @param options - Renderer options, layout and callbacks.
+   */
   constructor({
     rendererProps = {},
     layout = 'fixed',
@@ -308,7 +320,7 @@ export class ScrollRenderer {
     const delta = Math.min(t - this.#lastTime, 50)
     this.#lastTime = t
 
-    if (this.#playing) requestAnimationFrame(this.render)
+    if (this.#playing) this.#frame = requestAnimationFrame(this.render)
 
     this.onBeforeRender(delta)
 
@@ -343,8 +355,6 @@ export class ScrollRenderer {
     this.renderer.bindFramebuffer()
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-    gl.enable(gl.SCISSOR_TEST)
 
     for (const scrollScene of this.#scenes) {
       if (!scrollScene.visible) continue
@@ -391,28 +401,30 @@ export class ScrollRenderer {
       }
 
       if (scrollScene.clipToViewport) {
-        gl.scissor(x, y, width, height)
+        // Through the renderer, so its record of the scissor test stays true
+        const scissor = this.#sceneScissor
+        scissor[0].x = width
+        scissor[0].y = height
+        scissor[1].x = x
+        scissor[1].y = y
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
           clear: scrollScene.clearOnRender,
-          viewport: vp
+          viewport: vp,
+          scissor
         })
       } else {
-        gl.disable(gl.SCISSOR_TEST)
         this.renderer.render({
           scene: scrollScene.scene,
           camera: scrollScene.camera,
           clear: false,
           viewport: vp
         })
-        gl.enable(gl.SCISSOR_TEST)
       }
 
       scrollScene.onAfterRender(delta, rect)
     }
-
-    gl.disable(gl.SCISSOR_TEST)
 
     this.onAfterRender(delta)
   }
@@ -423,9 +435,12 @@ export class ScrollRenderer {
    */
   set playing(v: boolean) {
     if (!this.#playing && v) {
-      requestAnimationFrame(this.render)
+      this.#frame = requestAnimationFrame(this.render)
       this.#playing = true
     } else if (!v) {
+      // Cancel the requested frame, so stopping and starting again within a
+      // frame doesn't run two loops
+      cancelAnimationFrame(this.#frame)
       this.#lastTime = 0
       this.#playing = false
     }

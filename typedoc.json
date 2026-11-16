@@ -1,6 +1,0 @@
-{
-  "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["packages/wtc-gl/src/index.ts"],
-  "tsconfig": "packages/wtc-gl/tsconfig.json",
-  "out": "docs"
-}

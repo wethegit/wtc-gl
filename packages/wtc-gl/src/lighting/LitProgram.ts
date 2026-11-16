@@ -1,0 +1,385 @@
+import type { WTCGLRenderingContext } from '../types'
+import { Program } from '../core/Program'
+import { Texture } from '../core/Texture'
+import { Uniform } from '../core/Uniform'
+import { blankTexture } from '../core/blankTexture'
+import { Lights } from './Lights'
+import type { Shadow } from './Shadow'
+
+import shadingSource from './lit-shading.glsl'
+import shadowSource from './shadow-shading.glsl'
+import litVertex from './lit.vert'
+import litFragment from './lit.frag'
+
+type LitShaderOptions = {
+  flatShading: boolean
+  vertexColours: boolean
+  doubleSided: boolean
+  instanced: boolean
+  shadow: boolean
+}
+
+/** The vertex and fragment sources for a set of shader options. */
+function litSources(options: LitShaderOptions) {
+  const defines =
+    (options.flatShading ? '#define FLAT_SHADING\n' : '') +
+    (options.vertexColours ? '#define VERTEX_COLOURS\n' : '') +
+    (options.doubleSided ? '#define DOUBLE_SIDED\n' : '') +
+    (options.instanced ? '#define INSTANCED\n' : '') +
+    (options.shadow ? '#define SHADOW\n' : '')
+  const shadow = options.shadow ? `${shadowSource}\n` : ''
+  return {
+    vertex: `#version 300 es\n${defines}${litVertex}`,
+    fragment: `#version 300 es\n${defines}precision highp float;\n${shadingSource}\n${shadow}${litFragment}`
+  }
+}
+
+/**
+ * The lighting `LitProgram` uses, as GLSL for custom shaders: the `Lights`
+ * uniforms and
+ *
+ * `vec3 litShade(base, normal, view, viewRotation, specular, shininess[, shadow])`
+ *
+ * where `normal` and `view` (towards the camera) are view-space unit vectors
+ * and `viewRotation` is `mat3(u_viewMatrix)`. The optional `shadow` scales
+ * the directional light, from `shadowFactor` in `shadowShading`. Add it after the shader's
+ * precision statement, and spread `lights.uniforms` into the program's
+ * uniforms. It doesn't declare `u_viewMatrix`, so the shader can.
+ * @category Lighting
+ */
+export const litShading: string = shadingSource
+
+/**
+ * Options for `LitProgram`. Every property is optional.
+ * @category Lighting
+ */
+export interface LitProgramOptions {
+  /** The lights to share. @default a new `Lights()` */
+  lights: Lights
+  /** The surface colour, in sRGB. The lighting is done in sRGB. @default [1, 1, 1] */
+  colour: [number, number, number]
+  /** The surface alpha, multiplied with the map's alpha. @default 1 */
+  opacity: number
+  /** A texture multiplied with the colour, read with the `uv` attribute. @default null */
+  map: Texture | null
+  /** The strength of a Blinn-Phong highlight. 0 is plain Lambert. @default 0 */
+  specular: number
+  /** How tight the highlight is. @default 32 */
+  shininess: number
+  /** Discard fragments with a lower alpha. @default 0 */
+  alphaTest: number
+  /** Light the surface gives off, added after the lighting. @default [0, 0, 0] */
+  emissive: [number, number, number]
+  /**
+   * A texture multiplied with `emissive`, read with the `uv` attribute.
+   * @default null
+   */
+  emissiveMap: Texture | null
+  /** Multiply by a `colour` attribute (vec3). @default false */
+  vertexColours: boolean
+  /** Shade each triangle flat, from its face normal. @default false */
+  flatShading: boolean
+  /** Draw and light the back faces too. @default false */
+  doubleSided: boolean
+  /**
+   * Read each instance's matrix and colour from `InstancedMesh`. The colour
+   * multiplies the surface colour. @default false
+   */
+  instanced: boolean
+  /**
+   * Receive a `Shadow` from the directional light. Its casters are added to
+   * the shadow, not here. @default null
+   */
+  shadow: Shadow | null
+  /** Whether to blend, and draw after the opaque meshes. @default opacity < 1 */
+  transparent: boolean
+  /** Whether to test against the depth buffer. @default true */
+  depthTest: boolean
+  /** Whether to write to the depth buffer. @default true */
+  depthWrite: boolean
+}
+
+/**
+ * A program that lights any mesh with a `position` and `normal`: Lambert
+ * diffuse, an optional Blinn-Phong highlight, and a colour, a texture `map`
+ * (read with `uv`) or both. The light comes from `Lights`, one directional
+ * light, a sky/ground hemisphere and ambient, which many programs can share.
+ *
+ * ```ts
+ * const lights = new Lights()
+ * const mesh = new Mesh(gl, {
+ *   geometry: new Sphere(gl),
+ *   program: new LitProgram(gl, { lights, colour: [1, 0.4, 0.2], specular: 0.5 })
+ * })
+ * ```
+ *
+ * It needs a camera to draw: the lighting is done in view space, from the
+ * matrices the mesh sets. Everything can be changed after the program is
+ * made: changing `vertexColours`, `flatShading`, `doubleSided`, `instanced`
+ * (for `InstancedMesh`) or `shadow` recompiles the shaders with `setShaders`, while the
+ * colour, opacity, map, emissive, specular and shininess are just uniforms.
+ *
+ * For a custom shader with the same lighting, use `litShading`.
+ * @category Lighting
+ */
+export class LitProgram extends Program {
+  /** The lights, whose uniforms this program shares. */
+  readonly lights: Lights
+
+  // The options the shaders are built from
+  #shader: LitShaderOptions
+  #shadow: Shadow | null
+
+  constructor(
+    gl: WTCGLRenderingContext,
+    {
+      lights = new Lights(),
+      colour = [1, 1, 1],
+      opacity = 1,
+      map = null,
+      specular = 0,
+      shininess = 32,
+      alphaTest = 0,
+      emissive = [0, 0, 0],
+      emissiveMap = null,
+      vertexColours = false,
+      flatShading = false,
+      doubleSided = false,
+      instanced = false,
+      shadow = null,
+      transparent = opacity < 1,
+      depthTest = true,
+      depthWrite = true
+    }: Partial<LitProgramOptions> = {}
+  ) {
+    const uniforms: Record<string, Uniform> = {
+      ...lights.uniforms,
+      ...shadow?.uniforms,
+      u_colour: new Uniform({
+        name: 'colour',
+        value: [...colour],
+        kind: 'float_vec3'
+      }),
+      u_opacity: new Uniform({
+        name: 'opacity',
+        value: opacity,
+        kind: 'float'
+      }),
+      u_map: new Uniform({
+        name: 'map',
+        value: map ?? blankTexture(gl),
+        kind: 'texture'
+      }),
+      u_useMap: new Uniform({
+        name: 'useMap',
+        value: map ? 1 : 0,
+        kind: 'float'
+      }),
+      u_specular: new Uniform({
+        name: 'specular',
+        value: specular,
+        kind: 'float'
+      }),
+      u_shininess: new Uniform({
+        name: 'shininess',
+        value: shininess,
+        kind: 'float'
+      }),
+      u_alphaTest: new Uniform({
+        name: 'alphaTest',
+        value: alphaTest,
+        kind: 'float'
+      }),
+      u_emissive: new Uniform({
+        name: 'emissive',
+        value: [...emissive],
+        kind: 'float_vec3'
+      }),
+      u_emissiveMap: new Uniform({
+        name: 'emissiveMap',
+        value: emissiveMap ?? blankTexture(gl),
+        kind: 'texture'
+      }),
+      u_useEmissiveMap: new Uniform({
+        name: 'useEmissiveMap',
+        value: emissiveMap ? 1 : 0,
+        kind: 'float'
+      }),
+      u_premultiplied: new Uniform({
+        name: 'premultiplied',
+        value: gl.renderer?.premultipliedAlpha ? 1 : 0,
+        kind: 'float'
+      })
+    }
+
+    const shader = {
+      flatShading,
+      vertexColours,
+      doubleSided,
+      instanced,
+      shadow: !!shadow
+    }
+    super(gl, {
+      ...litSources(shader),
+      uniforms,
+      transparent,
+      depthTest,
+      depthWrite,
+      cullFace: doubleSided ? 0 : gl.BACK
+    })
+
+    this.lights = lights
+    this.#shader = shader
+    this.#shadow = shadow
+  }
+
+  /**
+   * The shadow this program receives, or null. Changing it to or from null
+   * recompiles; swapping one shadow for another doesn't.
+   */
+  get shadow(): Shadow | null {
+    return this.#shadow
+  }
+  /** Set the shadow this program receives, or null for none. */
+  set shadow(value: Shadow | null) {
+    if (value === this.#shadow) return
+    const uniforms = this.uniforms as Record<string, Uniform>
+    if (this.#shadow) {
+      for (const name of Object.keys(this.#shadow.uniforms)) {
+        delete uniforms[name]
+      }
+    }
+    if (value) Object.assign(uniforms, value.uniforms)
+    this.#shadow = value
+    this.#setShader('shadow', !!value)
+  }
+
+  /** Shade each triangle flat, from its face normal. Recompiles. */
+  get flatShading(): boolean {
+    return this.#shader.flatShading
+  }
+  /** Set whether to shade each triangle flat. Recompiles when it changes. */
+  set flatShading(value: boolean) {
+    this.#setShader('flatShading', value)
+  }
+
+  /** Multiply by a `colour` attribute. Recompiles. */
+  get vertexColours(): boolean {
+    return this.#shader.vertexColours
+  }
+  /** Set whether to multiply by a `colour` attribute. Recompiles when it changes. */
+  set vertexColours(value: boolean) {
+    this.#setShader('vertexColours', value)
+  }
+
+  /** Draw and light the back faces too. Recompiles. */
+  get doubleSided(): boolean {
+    return this.#shader.doubleSided
+  }
+  /** Set whether to draw and light the back faces. Recompiles when it changes. */
+  set doubleSided(value: boolean) {
+    if (this.#setShader('doubleSided', value)) {
+      this.cullFace = value ? 0 : this.gl.BACK
+    }
+  }
+
+  /** Read each instance's matrix and colour from `InstancedMesh`. Recompiles. */
+  get instanced(): boolean {
+    return this.#shader.instanced
+  }
+  /** Set whether to read per-instance matrices and colours. Recompiles when it changes. */
+  set instanced(value: boolean) {
+    this.#setShader('instanced', value)
+  }
+
+  /** Change one shader option and recompile. Returns whether it changed. */
+  #setShader(key: keyof LitShaderOptions, value: boolean): boolean {
+    if (this.#shader[key] === value) return false
+    this.#shader = { ...this.#shader, [key]: value }
+    this.setShaders(litSources(this.#shader))
+    return true
+  }
+
+  /** The surface colour. */
+  get colour(): [number, number, number] {
+    return [...(this.uniforms.u_colour.value as number[])] as [
+      number,
+      number,
+      number
+    ]
+  }
+  /** Set the surface colour, in sRGB. */
+  set colour(value: ArrayLike<number>) {
+    const c = this.uniforms.u_colour.value as number[]
+    c[0] = value[0]
+    c[1] = value[1]
+    c[2] = value[2]
+  }
+
+  /** The surface alpha, multiplied with the map's alpha. */
+  get opacity(): number {
+    return this.uniforms.u_opacity.value as number
+  }
+  /** Set the surface alpha. This doesn't change `transparent`. */
+  set opacity(value: number) {
+    this.uniforms.u_opacity.value = value
+  }
+
+  /** The texture multiplied with the colour, or null for none. */
+  get map(): Texture | null {
+    return this.uniforms.u_useMap.value
+      ? (this.uniforms.u_map.value as Texture)
+      : null
+  }
+  /** Set the texture multiplied with the colour, or null for none. */
+  set map(value: Texture | null) {
+    this.uniforms.u_map.value = value ?? blankTexture(this.gl)
+    this.uniforms.u_useMap.value = value ? 1 : 0
+  }
+
+  /** Light the surface gives off, added after the lighting. */
+  get emissive(): [number, number, number] {
+    return [...(this.uniforms.u_emissive.value as number[])] as [
+      number,
+      number,
+      number
+    ]
+  }
+  /** Set the light the surface gives off. */
+  set emissive(value: ArrayLike<number>) {
+    const e = this.uniforms.u_emissive.value as number[]
+    e[0] = value[0]
+    e[1] = value[1]
+    e[2] = value[2]
+  }
+
+  /** The texture multiplied with `emissive`, or null for none. */
+  get emissiveMap(): Texture | null {
+    return this.uniforms.u_useEmissiveMap.value
+      ? (this.uniforms.u_emissiveMap.value as Texture)
+      : null
+  }
+  /** Set the texture multiplied with `emissive`, or null for none. */
+  set emissiveMap(value: Texture | null) {
+    this.uniforms.u_emissiveMap.value = value ?? blankTexture(this.gl)
+    this.uniforms.u_useEmissiveMap.value = value ? 1 : 0
+  }
+
+  /** The strength of the Blinn-Phong highlight. 0 is plain Lambert. */
+  get specular(): number {
+    return this.uniforms.u_specular.value as number
+  }
+  /** Set the strength of the Blinn-Phong highlight. */
+  set specular(value: number) {
+    this.uniforms.u_specular.value = value
+  }
+
+  /** How tight the highlight is. */
+  get shininess(): number {
+    return this.uniforms.u_shininess.value as number
+  }
+  /** Set how tight the highlight is. */
+  set shininess(value: number) {
+    this.uniforms.u_shininess.value = value
+  }
+}
